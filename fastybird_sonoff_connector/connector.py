@@ -41,7 +41,10 @@ from fastybird_metadata.types import ControlAction
 from kink import inject
 
 # Library libs
-from fastybird_sonoff_connector.entities import SonoffConnectorEntity, SonoffDeviceEntity
+from fastybird_sonoff_connector.entities import (
+    SonoffConnectorEntity,
+    SonoffDeviceEntity,
+)
 from fastybird_sonoff_connector.logger import Logger
 
 
