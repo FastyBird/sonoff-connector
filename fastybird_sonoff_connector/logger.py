@@ -118,6 +118,6 @@ class Logger:
         return {
             "connector": {
                 "type": CONNECTOR_NAME,
-                "id": self.__connector_id.__str__(),
+                "id": str(self.__connector_id),
             },
         }
