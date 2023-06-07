@@ -22,9 +22,8 @@ and is licensed under [Apache2](http://www.apache.org/licenses/LICENSE-2.0).
 
 ### Features:
 
-- Support for Sonoff Gen1 and Gen2 devices, allowing users to connect and control a wide range of Sonoff devices
+- Support for Sonoff DIY and cloud devices, allowing users to connect and control a wide range of Sonoff devices
 - Automated device discovery feature, which automatically detects and adds Sonoff devices to the FastyBird ecosystem
-- Support for Sonoff device authentication using a username and password, providing an extra layer of security for connected devices
 - Sonoff Connector management for the [FastyBird](https://www.fastybird.com) [IoT](https://en.wikipedia.org/wiki/Internet_of_things) [devices module](https://github.com/FastyBird/devices-module), allowing users to easily manage and monitor Sonoff devices
 - Advanced device management features, such as controlling power status, measuring energy consumption, and reading sensor data
 - [{JSON:API}](https://jsonapi.org/) schemas for full API access, providing a standardized and consistent way for developers to access and manipulate Sonoff device data
