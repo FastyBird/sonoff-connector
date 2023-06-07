@@ -1,0 +1,178 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "UIID33 RGB Strip Controller",
+  "type": "object",
+  "properties": {
+    "sledOnline": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["on", "off"]
+        }
+      ],
+      "description": "Network Indicator Switch,turn on (on), turn off (off)",
+      "default": null
+    },
+    "fwVersion": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The current firmware version number, e.g. 3.4.0",
+      "default": null
+    },
+    "chipid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Chip id, generally considered to be a fixed parameter of a chip. Each chip is unique",
+      "default": null
+    },
+    "ssid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "default": null
+    },
+    "rssi": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer"
+        }
+      ],
+      "description": "WiFi signal strength, Unit: dBm,e.g. -55",
+      "default": null
+    },
+    "switch": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["on", "off"]
+        }
+      ],
+      "description": "Switches of channels: turn on (on), turn off (off)",
+      "default": null
+    },
+    "light_type": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2
+        }
+      ],
+      "description": "Type, 1 color light, 2 white light",
+      "default": null
+    },
+    "bright": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 100
+        }
+      ],
+      "description": "Brightness, Range: 10-100, The higher the value, the brighter it is",
+      "default": null
+    },
+    "colorR": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        }
+      ],
+      "description": "R value, Red Outlet Range 0-255",
+      "default": null
+    },
+    "colorG": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        }
+      ],
+      "description": "G value, Red Outlet Range 0-255",
+      "default": null
+    },
+    "colorB": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        }
+      ],
+      "description": "B value, Red Outlet Range 0-255",
+      "default": null
+    },
+    "mode": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        }
+      ],
+      "description": "Mode, there are 3 modes: 1 static, 2 gradual, 3 jump",
+      "default": null
+    },
+    "speed": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        }
+      ],
+      "description": "Speed, range: 0-100, The higher the value, the faster the speed",
+      "default": null
+    }
+  }
+}

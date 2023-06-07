@@ -1,0 +1,149 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "UIID19 Three-Speed Humidifier",
+  "type": "object",
+  "properties": {
+    "sledOnline": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["on", "off"]
+        }
+      ],
+      "description": "Network Indicator Switch,turn on (on), turn off (off)",
+      "default": null
+    },
+    "fwVersion": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The current firmware version number, e.g. 3.4.0",
+      "default": null
+    },
+    "chipid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Chip id, generally considered to be a fixed parameter of a chip. Each chip is unique",
+      "default": null
+    },
+    "ssid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "default": null
+    },
+    "rssi": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer"
+        }
+      ],
+      "description": "WiFi signal strength, Unit: dBm,e.g. -55",
+      "default": null
+    },
+    "switch": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["on", "off"]
+        }
+      ],
+      "description": "Switch, turn on (on), turn off (off)",
+      "default": null
+    },
+    "mode": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["normal"]
+        }
+      ],
+      "description": "Mode, normal mode (normal). Send the switch command with this field",
+      "default": null
+    },
+    "state": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        }
+      ],
+      "description": "Level, 3 levels",
+      "default": null
+    },
+    "water": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        }
+      ],
+      "description": "Capacity, 0 Shortage; 1 Normal",
+      "default": null
+    },
+    "temperature": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 50
+        }
+      ],
+      "description": "Current Temp., Device Report, Unit: Degrees Celsius",
+      "default": null
+    },
+    "humidity": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 20,
+          "maximum": 90
+        }
+      ],
+      "description": "Current Humidity Percentage, Device Report",
+      "default": null
+    }
+  }
+}

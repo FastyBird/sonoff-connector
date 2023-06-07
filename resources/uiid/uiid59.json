@@ -1,0 +1,192 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "UIID59 Light Strip",
+  "type": "object",
+  "properties": {
+    "sledOnline": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["on", "off"]
+        }
+      ],
+      "description": "Network Indicator Switch,turn on (on), turn off (off)",
+      "default": null
+    },
+    "fwVersion": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The current firmware version number, e.g. 3.4.0",
+      "default": null
+    },
+    "chipid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Chip id, generally considered to be a fixed parameter of a chip. Each chip is unique",
+      "default": null
+    },
+    "ssid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "default": null
+    },
+    "rssi": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer"
+        }
+      ],
+      "description": "WiFi signal strength, Unit: dBm,e.g. -55",
+      "default": null
+    },
+    "switch": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["on", "off"]
+        }
+      ],
+      "description": "Switch, turn on (on), turn off (off)",
+      "default": null
+    },
+    "light_type": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2
+        }
+      ],
+      "description": "Light Type, 1 color light(Color Plate), 2 white light(color temperature)",
+      "default": null
+    },
+    "bright": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      ],
+      "description": "Brightness, Range 1-100, The higher the value, the brighter it is",
+      "default": null
+    },
+    "colorR": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        }
+      ],
+      "description": "R value, Red Outlet Range 0-255",
+      "default": null
+    },
+    "colorG": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        }
+      ],
+      "description": "G value, Red Outlet Range 0-255",
+      "default": null
+    },
+    "colorB": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        }
+      ],
+      "description": "B value, Red Outlet Range 0-255",
+      "default": null
+    },
+    "mode": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        }
+      ],
+      "description": "There are 12 modes: 1 Colorful (normal), 2 Colorful Gradient, 3 Colorful Breath, 4 DIY Gradient, 5 DIY Pulse, 6 DIY Breath, 7 DIY Strobe, 8 RGB Gradient, 9 RGB Pulse, 10 RGB Breath, 11 RGB Strobe, 12 Music Visualization",
+      "default": null
+    },
+    "speed": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        }
+      ],
+      "description": "Fast and slow speed of change of light strip between different colors, Value Range 1-100, The higher the value, the faster the speed",
+      "default": null
+    },
+    "sensitive": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        }
+      ],
+      "description": "The sensitivity of the light changes in Music Visualization mode, Value Range 1-10, The higher the value, the higher the sensitivity",
+      "default": null
+    }
+  }
+}

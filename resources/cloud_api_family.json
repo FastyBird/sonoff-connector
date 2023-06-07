@@ -1,0 +1,88 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "properties" : {
+    "error" : {
+      "type" : "integer"
+    },
+    "data" : {
+      "type": "object",
+      "properties": {
+        "familyList": {
+          "type": "array",
+          "description": "Home list",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Home ID"
+              },
+              "apikey": {
+                "type": "string",
+                "description": "User apikey"
+              },
+              "name": {
+                "type": "string",
+                "description": "Home name"
+              },
+              "index": {
+                "type": "integer",
+                "description": "Sequence number of the home, which could be negative"
+              },
+              "roomList": {
+                "type": "array",
+                "description": "Room list",
+                "uniqueItems": true,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Room ID"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Room name"
+                    },
+                    "index": {
+                      "type": "integer",
+                      "description": "Sequence number of the room, which could be negative"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "index"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "id",
+              "apikey",
+              "name",
+              "index"
+            ]
+          }
+        },
+        "currentFamilyId": {
+          "type": "string",
+          "description": "The ID of the current home"
+        }
+      },
+      "required" : [
+        "familyList",
+        "currentFamilyId"
+      ]
+    },
+    "msg" : {
+      "type" : "string"
+    }
+  },
+  "required" : [
+    "error",
+    "msg"
+  ]
+}

@@ -1,0 +1,167 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "UIID5 Power Detection Single-Channel Plug",
+  "type": "object",
+  "properties": {
+    "sledOnline": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["on", "off"]
+        }
+      ],
+      "description": "Network Indicator Switch,turn on (on), turn off (off)",
+      "default": null
+    },
+    "fwVersion": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The current firmware version number, e.g. 3.4.0",
+      "default": null
+    },
+    "chipid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Chip id, generally considered to be a fixed parameter of a chip. Each chip is unique",
+      "default": null
+    },
+    "ssid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "default": null
+    },
+    "rssi": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer"
+        }
+      ],
+      "description": "WiFi signal strength, Unit: dBm,e.g. -55",
+      "default": null
+    },
+    "switch": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["on", "off"]
+        }
+      ],
+      "description": "Switches of channels: turn on (on), turn off (off)",
+      "default": null
+    },
+    "power": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Power, Unit: W,e.g. 1800.01",
+      "default": null
+    },
+    "voltage": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Voltage, Unit: V,e.g. 220.00",
+      "default": null
+    },
+    "current": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Current, Unit: A,e.g. 1.00",
+      "default": null
+    },
+    "oneKwh": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["start", "stop", "get"]
+        }
+      ],
+      "description": "Counting the electricity consumption: Start counting (start), stop counting(stop), refresh (get), Unit: KW.H",
+      "default": null
+    },
+    "startTime": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Start time for counting the current electricity consumption, Zero Time Zone",
+      "default": null
+    },
+    "endTime": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Stop time for counting the current electricity consumption, Zero Time Zone",
+      "default": null
+    },
+    "oneKwhData": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 50000
+        }
+      ],
+      "description": "The current electricity consumption value is expressed as a decimal string, accurate to 2 decimal places. Unit: KW.H,Value Range: [0‐50000], e.g. 110.32",
+      "default": null
+    }
+  }
+}

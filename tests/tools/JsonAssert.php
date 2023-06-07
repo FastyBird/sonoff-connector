@@ -1,12 +1,14 @@
 <?php declare(strict_types = 1);
 
-namespace Tests\Tools;
+namespace FastyBird\Connector\Sonoff\Tests\Tools;
 
 use Closure;
 use Nette\StaticClass;
 use Nette\Utils;
-use Tester\Assert;
-use Tester\AssertException;
+use PHPUnit\Framework\ExpectationFailedException;
+use PHPUnit\Framework\TestCase;
+use SebastianBergmann\Comparator\ComparisonFailure;
+use function sprintf;
 
 class JsonAssert
 {
@@ -14,19 +16,16 @@ class JsonAssert
 	use StaticClass;
 
 	/**
-	 * @param string $fixturePath
-	 * @param string $actualJson
-	 * @param Closure|null $transformFixture
-	 *
-	 * @throws AssertException
+	 * @throws ExpectationFailedException
 	 *
 	 * @throws Utils\JsonException
 	 */
 	public static function assertFixtureMatch(
 		string $fixturePath,
 		string $actualJson,
-		?Closure $transformFixture = null
-	): void {
+		Closure|null $transformFixture = null,
+	): void
+	{
 		$expectation = Utils\FileSystem::read($fixturePath);
 
 		if ($transformFixture !== null) {
@@ -37,37 +36,36 @@ class JsonAssert
 	}
 
 	/**
-	 * @param string $expectedJson
-	 * @param string $actualJson
-	 *
-	 * @throws AssertException
+	 * @throws ExpectationFailedException
 	 *
 	 * @throws Utils\JsonException
 	 */
 	public static function assertMatch(
 		string $expectedJson,
-		string $actualJson
-	): void {
+		string $actualJson,
+	): void
+	{
 		$decodedExpectedJson = self::jsonDecode($expectedJson, 'Expected-json');
 		$decodedInput = self::jsonDecode($actualJson, 'Actual-json');
 
 		try {
-			Assert::equal($decodedExpectedJson, $decodedInput);
+			TestCase::assertEquals($decodedExpectedJson, $decodedInput);
 
-		} catch (AssertException $e) {
-			throw new AssertException(
+		} catch (ExpectationFailedException) {
+			throw new ExpectationFailedException(
 				'%1 should be equal to %2',
-				self::makeJsonPretty($expectedJson),
-				self::makeJsonPretty($actualJson)
+				new ComparisonFailure(
+					$expectedJson,
+					$actualJson,
+					self::makeJsonPretty($expectedJson),
+					self::makeJsonPretty($actualJson),
+				),
 			);
 		}
 	}
 
 	/**
-	 * @param string $input
-	 * @param string $nameForMessage
-	 *
-	 * @return mixed[]
+	 * @return array<mixed>
 	 *
 	 * @throws Utils\JsonException
 	 */
@@ -79,17 +77,16 @@ class JsonAssert
 
 		try {
 			return Utils\Json::decode($input, Utils\Json::FORCE_ARRAY);
-
 		} catch (Utils\JsonException $e) {
-			throw new Utils\JsonException(sprintf('%s is invalid: "%s"', $nameForMessage, $e->getMessage()), $e->getCode(), $e);
+			throw new Utils\JsonException(
+				sprintf('%s is invalid: "%s"', $nameForMessage, $e->getMessage()),
+				$e->getCode(),
+				$e,
+			);
 		}
 	}
 
 	/**
-	 * @param string $jsonString
-	 *
-	 * @return string
-	 *
 	 * @throws Utils\JsonException
 	 */
 	private static function makeJsonPretty(string $jsonString): string

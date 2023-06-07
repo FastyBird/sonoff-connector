@@ -1,0 +1,77 @@
+{
+  "sledOnline": {
+    "name": "Status LED",
+    "type": "device",
+    "data_type": "enum",
+    "format": ["on", "off"],
+    "settable": true,
+    "queryable": false
+  },
+  "fwVersion": {
+    "name": "Firmware version",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "chipid": {
+    "name": "Chip ID",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "ssid": {
+    "name": "Wifi SSID",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "rssi": {
+    "name": "Wifi RSSI",
+    "type": "device",
+    "data_type": "char",
+    "settable": false,
+    "queryable": false
+  },
+  "dusty": {
+    "name": "Dusty",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [1, 10],
+    "settable": false,
+    "queryable": false
+  },
+  "noise": {
+    "name": "Noise",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [1, 10],
+    "settable": false,
+    "queryable": false
+  },
+  "light": {
+    "name": "Light",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [1, 10],
+    "settable": false,
+    "queryable": false
+  },
+  "temperature": {
+    "name": "Temperature",
+    "type": "channel",
+    "data_type": "uchar",
+    "settable": false,
+    "queryable": false
+  },
+  "humidity": {
+    "name": "Humidity",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [1, 100],
+    "settable": false,
+    "queryable": false
+  }
+}

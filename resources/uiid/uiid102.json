@@ -1,0 +1,130 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "UIID102 WiFi Door Magnet",
+  "type": "object",
+  "properties": {
+    "sledOnline": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["on", "off"]
+        }
+      ],
+      "description": "Network Indicator Switch,turn on (on), turn off (off)",
+      "default": null
+    },
+    "fwVersion": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The current firmware version number, e.g. 3.4.0",
+      "default": null
+    },
+    "chipid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Chip id, generally considered to be a fixed parameter of a chip. Each chip is unique",
+      "default": null
+    },
+    "ssid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "default": null
+    },
+    "rssi": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer"
+        }
+      ],
+      "description": "WiFi signal strength, Unit: dBm,e.g. -55",
+      "default": null
+    },
+    "switch": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["on", "off"]
+        }
+      ],
+      "description": "Switch Status: on means turn on,off means turn off",
+      "default": null
+    },
+    "battery": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Current voltage value, ranging from 0-3V, with lowVolAlarm to determine whether the device is in low battery mode. Note: lowVolAlarm is the parameter in the devConfig object, When battery<lowVolAlarm, low battery , When battery>=lowVolAlarm, it shows full battery",
+      "default": null
+    },
+    "type": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        }
+      ],
+      "description": "Type of Push, the server side determines whether to push notifications to the App based on this type, 1: Short press to trigger and push after exiting the hibernation state; 2: Push message after opening the door; 3: Push message after closing the door; 4: Push messages at regular intervals, e.g. every hour; 5: Short press twice (double click) to close",
+      "default": null
+    },
+    "lastUpdateTime": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The last time reported by the device, the App side determines whether the device is offline based on the difference between the time recorded in this field and the current time, which is not reported by the device and is added by the server side",
+      "default": null
+    },
+    "actionTime": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Time when the device last opened or closed the door, this field is not reported by the device and is added by the server",
+      "default": null
+    }
+  }
+}

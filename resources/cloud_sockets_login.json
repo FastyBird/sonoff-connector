@@ -1,0 +1,33 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "properties" : {
+    "IP" : {
+      "type" : "string",
+      "description": "The IP address of the server for persistent connection"
+    },
+    "port" : {
+      "type" : "integer",
+      "description": "The port of the server for persistent connection"
+    },
+    "domain" : {
+      "type" : "string",
+      "description": "The domain name of the persistent connection server. Currently only the app will return the domain name. The android client should choose to establish a long connection by IP, which can avoid the problems caused by DNS resolution. The js version of the client cannot skip the certificate check, so only the IP can be used"
+    },
+    "error" : {
+      "type" : "integer",
+      "description": "error = 0 === success"
+    },
+    "reason" : {
+      "type" : "string",
+      "description": "OK === success"
+    }
+  },
+  "required" : [
+    "IP",
+    "port",
+    "domain",
+    "error",
+    "reason"
+  ]
+}

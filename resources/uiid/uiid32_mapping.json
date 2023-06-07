@@ -1,0 +1,104 @@
+{
+  "sledOnline": {
+    "name": "Status LED",
+    "type": "device",
+    "data_type": "enum",
+    "format": ["on", "off"],
+    "settable": true,
+    "queryable": false
+  },
+  "fwVersion": {
+    "name": "Firmware version",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "chipid": {
+    "name": "Chip ID",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "ssid": {
+    "name": "Wifi SSID",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "rssi": {
+    "name": "Wifi RSSI",
+    "type": "device",
+    "data_type": "char",
+    "settable": false,
+    "queryable": false
+  },
+  "switch": {
+    "name": "Switch",
+    "type": "channel",
+    "data_type": "switch",
+    "format": [
+      ["switch_on", "on", "on"],
+      ["switch_off", "off", "off"]
+    ],
+    "settable": true,
+    "queryable": false
+  },
+  "power": {
+    "name": "Power",
+    "type": "channel",
+    "data_type": "float",
+    "settable": false,
+    "queryable": false,
+    "unit": "W"
+  },
+  "voltage": {
+    "name": "Voltage",
+    "type": "channel",
+    "data_type": "float",
+    "settable": false,
+    "queryable": false,
+    "unit": "V"
+  },
+  "current": {
+    "name": "Current",
+    "type": "channel",
+    "data_type": "float",
+    "settable": false,
+    "queryable": false,
+    "unit": "A"
+  },
+  "oneKwh": {
+    "name": "Electricity consumption",
+    "type": "channel",
+    "data_type": "enum",
+    "format": ["start", "stop", "get"],
+    "settable": true,
+    "queryable": false
+  },
+  "startTime": {
+    "name": "Consumption started",
+    "type": "channel",
+    "data_type": "datetime",
+    "settable": false,
+    "queryable": false
+  },
+  "endTime": {
+    "name": "Consumption ended",
+    "type": "channel",
+    "data_type": "datetime",
+    "settable": false,
+    "queryable": false
+  },
+  "oneKwhData": {
+    "name": "Current consumption",
+    "type": "channel",
+    "data_type": "float",
+    "minimum": 0,
+    "maximum": 50000,
+    "settable": false,
+    "queryable": false
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "sledOnline": {
+    "name": "Status LED",
+    "type": "device",
+    "data_type": "enum",
+    "format": ["on", "off"],
+    "settable": true,
+    "queryable": false
+  },
+  "fwVersion": {
+    "name": "Firmware version",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "chipid": {
+    "name": "Chip ID",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "ssid": {
+    "name": "Wifi SSID",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "rssi": {
+    "name": "Wifi RSSI",
+    "type": "device",
+    "data_type": "char",
+    "settable": false,
+    "queryable": false
+  },
+  "fan": {
+    "name": "Switch",
+    "type": "channel",
+    "data_type": "switch",
+    "format": [
+      ["switch_on", "on", "on"],
+      ["switch_off", "off", "off"]
+    ],
+    "settable": true,
+    "queryable": false
+  },
+  "speed": {
+    "name": "Fan speed",
+    "type": "channel",
+    "data_type": "enum",
+    "format": ["slow", "moderate", "fast"],
+    "settable": true,
+    "queryable": false
+  },
+  "mode": {
+    "name": "Fan mode",
+    "type": "channel",
+    "data_type": "enum",
+    "format": ["normal", "natural", "sleep"],
+    "settable": true,
+    "queryable": false
+  },
+  "shake": {
+    "name": "Shake",
+    "type": "channel",
+    "data_type": "enum",
+    "format": ["on", "off"],
+    "settable": true,
+    "queryable": false
+  }
+}

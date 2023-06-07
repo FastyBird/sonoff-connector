@@ -1,0 +1,26 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "properties" : {
+    "error" : {
+      "type" : "integer",
+      "description": "Error code"
+    },
+    "apikey" : {
+      "type" : "string",
+      "description": "User apikey"
+    },
+    "deviceid" : {
+      "type" : "string",
+      "description": "Device ID"
+    },
+    "sequence" : {
+      "type" : "string",
+      "description": "Timestamp accurate to milliseconds"
+    },
+    "params" : {
+      "type" : "object",
+      "description": "Parameters which will be passed transparently. The server will not verify this filed."
+    }
+  }
+}

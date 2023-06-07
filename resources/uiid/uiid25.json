@@ -1,0 +1,192 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "UIID25 Aroma Diffuser",
+  "type": "object",
+  "properties": {
+    "sledOnline": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["on", "off"]
+        }
+      ],
+      "description": "Network Indicator Switch,turn on (on), turn off (off)",
+      "default": null
+    },
+    "fwVersion": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The current firmware version number, e.g. 3.4.0",
+      "default": null
+    },
+    "chipid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Chip id, generally considered to be a fixed parameter of a chip. Each chip is unique",
+      "default": null
+    },
+    "ssid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "default": null
+    },
+    "rssi": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer"
+        }
+      ],
+      "description": "WiFi signal strength, Unit: dBm,e.g. -55",
+      "default": null
+    },
+    "switch": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["on", "off"]
+        }
+      ],
+      "description": "Switches of channels: turn on (on), turn off (off)",
+      "default": null
+    },
+    "state": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2
+        }
+      ],
+      "description": "Mist Level, 1 small, 2 big, default small, Memorable",
+      "default": null
+    },
+    "water": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        }
+      ],
+      "description": "Water Capacity, 0 Shortage, 1 Normal",
+      "default": null
+    },
+    "lightswitch": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        }
+      ],
+      "description": "Light Switch, 0 turn off, 1 turn on",
+      "default": null
+    },
+    "lightmode": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        }
+      ],
+      "description": "Light Mode, 1 7-color light, 2 Specify a color, 3 Night Light",
+      "default": null
+    },
+    "lightRcolor": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        }
+      ],
+      "description": "Light Color, R Channel, Non-negative integer, Value Range 0-255",
+      "default": null
+    },
+    "lightGcolor": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        }
+      ],
+      "description": "Light Color, G Channel, Non-negative integer, Value Range 0-255",
+      "default": null
+    },
+    "lightBcolor": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        }
+      ],
+      "description": "Light Color, B Channel, Non-negative integer, Value Range 0-255",
+      "default": null
+    },
+    "lightbright": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        }
+      ],
+      "description": "Light Brightness, Value Range 0-100, default brightness is 100 when adjusting color",
+      "default": null
+    }
+  }
+}

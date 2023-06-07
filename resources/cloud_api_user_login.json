@@ -1,0 +1,104 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "properties" : {
+    "error" : {
+      "type" : "integer"
+    },
+    "data" : {
+      "type" : "object",
+      "properties" : {
+        "user" : {
+          "type" : "object",
+          "properties" : {
+            "countryCode" : {
+              "type" : "string",
+              "description": "Area Code starting with \"+\", such as \"+86\""
+            },
+            "phoneNumber" : {
+              "type" : "string",
+              "description": "User mobile number with country code such as +8615815725225"
+            },
+            "email" : {
+              "type" : "string",
+              "description": "User email. Either mobile number or email is required"
+            },
+            "apikey" : {
+              "type" : "string",
+              "description": "User ID"
+            },
+            "nickname" : {
+              "type" : "string",
+              "description": "User nickname"
+            },
+            "wxServiceId" : {
+              "type" : "string",
+              "description": "WeChat Service Account"
+            },
+            "wxAppId" : {
+              "type" : "string",
+              "description": "AppID of WeChat service account"
+            },
+            "wxId" : {
+              "type" : "string",
+              "description": "WeChat user ID"
+            },
+            "wxOpenId" : {
+              "type" : "string",
+              "description": "WeChat user Open ID"
+            },
+            "yanKanYunInfo" : {
+              "type" : "object",
+              "description": "Yaokan Cloud account"
+            },
+            "accountLevel" : {
+              "type" : "integer",
+              "enum": [10, 20, 30],
+              "description": "Account level 10=Free 20=Advanced 30=Pro"
+            },
+            "levelExpiredAt" : {
+              "type" : "integer",
+              "description": "Subscription expiration timestamp, which is accurate to milliseconds. If this field is empty or 0, it means there is no expiration time"
+            },
+            "denyRecharge" : {
+              "type" : "boolean",
+              "description": "Whether the current account is allowed to extend subscription period. When this field is empty or the value is false, the current account can be recharged. Otherwise, recharge is prohibited"
+            },
+            "accountConsult" : {
+              "type" : "boolean",
+              "description": "Inquired subscription plans or not"
+            },
+            "ipCountry" : {
+              "type" : "string",
+              "description": "Server side works out the country and region of the user based on requester ip. Please refer to alpha-2 version of the list of country codes here. When \"Get User Information\" or \"Homepage\" interface (with the getUser parameter) is called, this field will be returned by the server side"
+            }
+          }
+        },
+        "at" : {
+          "type" : "string",
+          "description": "Access token"
+        },
+        "rt" : {
+          "type" : "string",
+          "description": "Refresh token"
+        },
+        "region" : {
+          "type" : "string",
+          "enum": ["cn", "as", "us", "eu"],
+          "description": "Region server to which the user belongs"
+        }
+      },
+      "required": [
+        "region"
+      ]
+    },
+    "msg" : {
+      "type" : "string"
+    }
+  },
+  "required" : [
+    "error",
+    "data",
+    "msg"
+  ]
+}

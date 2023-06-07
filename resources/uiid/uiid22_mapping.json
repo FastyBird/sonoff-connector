@@ -1,0 +1,105 @@
+{
+  "sledOnline": {
+    "name": "Status LED",
+    "type": "device",
+    "data_type": "enum",
+    "format": ["on", "off"],
+    "settable": true,
+    "queryable": false
+  },
+  "fwVersion": {
+    "name": "Firmware version",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "chipid": {
+    "name": "Chip ID",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "ssid": {
+    "name": "Wifi SSID",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "rssi": {
+    "name": "Wifi RSSI",
+    "type": "device",
+    "data_type": "char",
+    "settable": false,
+    "queryable": false
+  },
+  "state": {
+    "name": "Switch",
+    "type": "channel",
+    "data_type": "switch",
+    "format": [
+      ["switch_on", "on", "on"],
+      ["switch_off", "off", "off"]
+    ],
+    "settable": true,
+    "queryable": false
+  },
+  "channel0": {
+    "name": "Cold light brightness",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [0, 255],
+    "settable": true,
+    "queryable": false
+  },
+  "channel1": {
+    "name": "Warm light brightness",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [0, 255],
+    "settable": true,
+    "queryable": false
+  },
+  "type": {
+    "name": "Light type info",
+    "type": "channel",
+    "data_type": "enum",
+    "format": ["cold", "middle", "warm"],
+    "settable": false,
+    "queryable": false
+  },
+  "channel2": {
+    "name": "Red color",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [0, 255],
+    "settable": true,
+    "queryable": false
+  },
+  "channel3": {
+    "name": "Green color",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [0, 255],
+    "settable": true,
+    "queryable": false
+  },
+  "channel4": {
+    "name": "Blue color",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [0, 255],
+    "settable": true,
+    "queryable": false
+  },
+  "zyx_mode": {
+    "name": "Bulb light mode",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [1, 6],
+    "settable": true,
+    "queryable": false
+  }
+}

@@ -1,21 +1,20 @@
 #
 # Connector DI configuration
 #
-# @license      More in LICENSE.md
-# @copyright    https://www.fastybird.com
-# @author       Adam Kadlec <adam.kadlec@fastybird.com>
-# @package      FastyBird:SonoffConnector!
-# @subpackage   config
-# @since        0.1.0
+# @license        More in LICENSE.md
+# @copyright      https://www.fastybird.com
+# @author         Adam Kadlec <adam.kadlec@fastybird.com>
+# @package        FastyBird:SonoffConnector!
+# @subpackage     config
+# @since          1.0.0
 #
-# @date         22.01.22
+# @date           06.05.23
 
 php:
     date.timezone: Europe/Prague
 
 extensions:
     contributteTranslation              : Contributte\Translation\DI\TranslationExtension
-    contributeFlysystem                 : Contributte\Flysystem\DI\FlysystemExtension
     nettrineAnnotations                 : Nettrine\Annotations\DI\AnnotationsExtension
     nettrineCache                       : Nettrine\Cache\DI\CacheExtension
     nettrineDbal                        : Nettrine\DBAL\DI\DbalExtension
@@ -29,20 +28,22 @@ extensions:
     ipubDoctrineTimestampable           : IPub\DoctrineTimestampable\DI\DoctrineTimestampableExtension
     ipubPhone                           : IPub\Phone\DI\PhoneExtension
     fbDateTimeFactory                   : FastyBird\DateTimeFactory\DI\DateTimeFactoryExtension
-    fbExchange                          : FastyBird\Exchange\DI\ExchangeExtension
     fbJsonApi                           : FastyBird\JsonApi\DI\JsonApiExtension
-    fbMetadata                          : FastyBird\Metadata\DI\MetadataExtension
     fbSimpleAuth                        : FastyBird\SimpleAuth\DI\SimpleAuthExtension
-    fbDevicesModule                     : FastyBird\DevicesModule\DI\DevicesModuleExtension
+    fbMetadataLibrary                   : FastyBird\Library\Metadata\DI\MetadataExtension
+    fbExchangeLibrary                   : FastyBird\Library\Exchange\DI\ExchangeExtension
+    fbDevicesModule                     : FastyBird\Module\Devices\DI\DevicesExtension
 
 services:
-    - {factory: Symfony\Component\Console\Application}
     - {factory: IPub\SlimRouter\Http\ResponseFactory}
     -
         factory: IPub\SlimRouter\Routing\Router
         setup:
             - addMiddleware(@fbJsonApi.middlewares.jsonapi)
-    - {factory: React\EventLoop\Loop::get}
+    - {
+      create: React\EventLoop\Factory::create()
+      type: React\EventLoop\LoopInterface
+    }
 
 contributteTranslation:
     locales:
@@ -50,14 +51,7 @@ contributteTranslation:
         fallback: [en_US, en]
     localeResolvers: []
     dirs:
-        - %appDir%/../vendor/fastybird/json-api/src/Translations
-        - %appDir%/../vendor/fastybird/devices-module/src/Translations
-
-contributeFlysystem:
-	filesystem:
-		default:
-			adapter: League\Flysystem\Local\LocalFilesystemAdapter(%tempDir%)
-			autowired: true
+        - %vendorDir%/fastybird/json-api/src/Translations
 
 nettrineDbal:
     connection:
@@ -70,7 +64,7 @@ nettrineDbal:
         user: root
         password: root
         charset: utf8
-        wrapperClass: \Tests\Tools\ConnectionWrapper
+        wrapperClass: \FastyBird\Connector\Sonoff\Tests\Tools\ConnectionWrapper
 
         types:
             uuid_binary:

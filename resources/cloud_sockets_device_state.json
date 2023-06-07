@@ -1,0 +1,38 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "properties" : {
+    "apikey" : {
+      "type" : "string",
+      "description": "Current User apikey (available from the login interface) or the apikey of the master account (available from the interface for obtaining Thing list)"
+    },
+    "deviceid" : {
+      "type" : "string",
+      "description": "Device ID"
+    },
+    "action" : {
+      "type" : "string",
+      "description": "Fixed parameter: sysmsg"
+    },
+    "params" : {
+      "type" : "object",
+      "description": "Parameters: {k:v}",
+      "properties": {
+        "online": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "ts" : {
+      "type" : "integer",
+      "description": "Timestamp accurate to seconds"
+    }
+  },
+  "required" : [
+    "apikey",
+    "deviceid",
+    "action",
+    "params"
+  ]
+}

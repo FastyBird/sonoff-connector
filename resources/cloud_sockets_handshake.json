@@ -1,0 +1,43 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "properties" : {
+    "error" : {
+      "type" : "integer",
+      "description": "Error code"
+    },
+    "apikey" : {
+      "type" : "string",
+      "description": "User apikey"
+    },
+    "config" : {
+      "type" : "object",
+      "description": "Configuration",
+      "properties" : {
+        "hb" : {
+          "type" : "integer",
+          "enum": [0, 1],
+          "description": "Heartbeat, whether to send heartbeats to keep alive. 0: No, 1: Yes"
+        },
+        "hbInterval" : {
+          "type" : "integer",
+          "description": "Heartbeat interval, in seconds. The client needs to add 7 to this value as the interval to send keep the ping heartbeat alive. If it is not offered, the heartbeat interval will be 90 seconds by default"
+        }
+      },
+      "required": [
+        "hb",
+        "hbInterval"
+      ]
+    },
+    "sequence" : {
+      "type" : "string",
+      "description": "Timestamp accurate to milliseconds"
+    }
+  },
+  "required" : [
+    "error",
+    "apikey",
+    "config",
+    "sequence"
+  ]
+}

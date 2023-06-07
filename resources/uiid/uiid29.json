@@ -1,0 +1,181 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description":"UIID29 GSM/4G Dual-Channel Switch or Plug" ,
+  "type": "object",
+  "properties": {
+    "sledOnline": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["on", "off"]
+        }
+      ],
+      "description": "Network Indicator Switch,turn on (on), turn off (off)",
+      "default": null
+    },
+    "fwVersion": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The current firmware version number, e.g. 3.4.0",
+      "default": null
+    },
+    "chipid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Chip id, generally considered to be a fixed parameter of a chip. Each chip is unique",
+      "default": null
+    },
+    "ssid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "default": null
+    },
+    "rssi": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer"
+        }
+      ],
+      "description": "WiFi signal strength, Unit: dBm,e.g. -55",
+      "default": null
+    },
+    "switches": {
+      "type": "object",
+      "description": "Switch status of all channels",
+      "patternProperties": {
+        "^[0-9]$": {
+          "type": "object",
+          "properties": {
+            "switch": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string",
+                  "enum": ["on", "off"]
+                }
+              ],
+              "description": "Switches of channels: turn on (on), turn off (off)",
+              "default": null
+            },
+            "outlet": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10,
+              "description": "Value Range 0-3,Indicates channels 1-4 respectively, cannot be repeated"
+            }
+          },
+          "required": ["outlet"]
+        }
+      }
+    },
+    "configure": {
+      "type": "object",
+      "description": "Power-up hold status for all channels",
+      "patternProperties": {
+        "^[0-9]$": {
+          "type": "object",
+          "properties": {
+            "startup": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "on",
+                    "stay",
+                    "off"
+                  ]
+                }
+              ],
+              "description": "Power-up hold status for specific channels, power on(on), power on hold (stay), power off (off)",
+              "default": null
+            },
+            "outlet": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10,
+              "description": "Value Range 0-3,Indicates channels 1-4 respectively, cannot be repeated"
+            }
+          },
+          "required": ["outlet"]
+        }
+      }
+    },
+    "pulses": {
+      "type": "object",
+      "description": "Power-up hold status for all channels",
+      "patternProperties": {
+        "^[0-9]$": {
+          "type": "object",
+          "properties": {
+            "pulse": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "on",
+                    "off"
+                  ]
+                }
+              ],
+              "description": "Settings of inching: turn on (on), turn off (off)",
+              "default": null
+            },
+            "pulseWidth": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "integer",
+                  "minimum": 500,
+                  "maximum": 3600000
+                }
+              ],
+              "description": "Duration of Inching,Value Range: 500-3600000 (Unit: milliseconds: 0.5 s-3600 s), Only supports setting an integer multiple of 500 millisecond (i.e., 0.5 seconds)",
+              "default": null
+            },
+            "outlet": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10,
+              "description": "Value Range 0-3,Indicates channels 1-4 respectively, cannot be repeated"
+            }
+          },
+          "required": ["outlet"]
+        }
+      }
+    }
+  }
+}

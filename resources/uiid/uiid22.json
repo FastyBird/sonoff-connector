@@ -1,0 +1,167 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "UIID22 RGB 5-Color Bulb Light",
+  "type": "object",
+  "properties": {
+    "sledOnline": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["on", "off"]
+        }
+      ],
+      "description": "Network Indicator Switch,turn on (on), turn off (off)",
+      "default": null
+    },
+    "fwVersion": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The current firmware version number, e.g. 3.4.0",
+      "default": null
+    },
+    "chipid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Chip id, generally considered to be a fixed parameter of a chip. Each chip is unique",
+      "default": null
+    },
+    "ssid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "default": null
+    },
+    "rssi": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer"
+        }
+      ],
+      "description": "WiFi signal strength, Unit: dBm,e.g. -55",
+      "default": null
+    },
+    "state": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["on", "off"]
+        }
+      ],
+      "description": "Switch, turn on (on), turn off (off)",
+      "default": null
+    },
+    "channel0": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Bulb Lamp Channel 1: Indicates cold light, Value Range 25-255",
+      "default": null
+    },
+    "channel1": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Bulb Lamp Channel 2: Indicates warm light, Value Range 25-255",
+      "default": null
+    },
+    "type": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["cold", "middle", "warm"]
+        }
+      ],
+      "description": "When channel0>channel1, it's cold light (cold); When channel0=channel1, it's middle light (middle); When channel0<channel1, it's warm light (warm)",
+      "default": null
+    },
+    "channel2": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "R value, red channel range 0-255",
+      "default": null
+    },
+    "channel3": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "R value, red channel range 0-255",
+      "default": null
+    },
+    "channel4": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "B value, red channel range 0-255",
+      "default": null
+    },
+    "zyx_mode": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6
+        }
+      ],
+      "description": "Bulb light mode/scene: 1 White Light Mode; 2 Color Light Mode; 3 Good Night Scene; 4 Reading Scene; 5 Party Scene; 6 Leisure Scene",
+      "default": null
+    }
+  }
+}

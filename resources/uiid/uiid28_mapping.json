@@ -1,0 +1,38 @@
+{
+  "sledOnline": {
+    "name": "Status LED",
+    "type": "device",
+    "data_type": "enum",
+    "format": ["on", "off"],
+    "settable": true,
+    "queryable": false
+  },
+  "fwVersion": {
+    "name": "Firmware version",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "chipid": {
+    "name": "Chip ID",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "ssid": {
+    "name": "Wifi SSID",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "rssi": {
+    "name": "Wifi RSSI",
+    "type": "device",
+    "data_type": "char",
+    "settable": false,
+    "queryable": false
+  }
+}

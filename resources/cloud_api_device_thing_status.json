@@ -1,0 +1,25 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "type" : "object",
+  "properties" : {
+    "error" : {
+      "type" : "integer"
+    },
+    "data" : {
+      "type": "object",
+      "properties": {
+        "params" : {
+          "type" : "object",
+          "description": "Parameters which will be passed transparently. The server will not verify this filed."
+        }
+      }
+    },
+    "msg" : {
+      "type" : "string"
+    }
+  },
+  "required" : [
+    "error",
+    "msg"
+  ]
+}

@@ -1,0 +1,120 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "UIID28 RFBridge",
+  "type": "object",
+  "properties": {
+    "sledOnline": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["on", "off"]
+        }
+      ],
+      "description": "Network Indicator Switch,turn on (on), turn off (off)",
+      "default": null
+    },
+    "fwVersion": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The current firmware version number, e.g. 3.4.0",
+      "default": null
+    },
+    "chipid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Chip id, generally considered to be a fixed parameter of a chip. Each chip is unique",
+      "default": null
+    },
+    "ssid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "default": null
+    },
+    "rssi": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer"
+        }
+      ],
+      "description": "WiFi signal strength, Unit: dBm,e.g. -55",
+      "default": null
+    },
+    "remote_type": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["1", "2", "3", "4", "5", "6"]
+        }
+      ],
+      "description": "Remote Control Type: 1 Single button; 2 Dual button; 3 Three buttons; 4 Four buttons; 5 Curtain; 6 Alarm",
+      "default": null
+    },
+    "cmd": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["capture", "captureCancel", "edit", "transmit", "trigger"]
+        }
+      ],
+      "description": "Instruction, Enter button learning mode (capture); Exit learning mode (captureCancel); Edit channel list (edit); Trigger buttons (transmit); Trigger notifications from devices (trigger)",
+      "default": null
+    },
+    "rfChl": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer"
+        }
+      ],
+      "description": "The serial number of the button, which needs to be incremented when adding",
+      "default": null
+    },
+    "rfList": {
+      "patternProperties": {
+        "^[0-9]$": {
+          "type": "object",
+          "properties": {
+            "rfChl": {
+              "type": "integer"
+            },
+            "rfVal": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

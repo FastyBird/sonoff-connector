@@ -1,0 +1,204 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "UIID103 Dual-Color Cold and Warm Light_Support with tuning and scenes",
+  "type": "object",
+  "properties": {
+    "sledOnline": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["on", "off"]
+        }
+      ],
+      "description": "Network Indicator Switch,turn on (on), turn off (off)",
+      "default": null
+    },
+    "fwVersion": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The current firmware version number, e.g. 3.4.0",
+      "default": null
+    },
+    "chipid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Chip id, generally considered to be a fixed parameter of a chip. Each chip is unique",
+      "default": null
+    },
+    "ssid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "default": null
+    },
+    "rssi": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer"
+        }
+      ],
+      "description": "WiFi signal strength, Unit: dBm,e.g. -55",
+      "default": null
+    },
+    "pVer": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Current protocol version number, capability negotiation. Consistent with the last version of the current protocol, e.g. {\"pVer\":\"2.0\"}. Once the device is online, you need to upload",
+      "default": null
+    },
+    "white": {
+      "type": "object",
+      "description": "Value in white light mode",
+      "properties": {
+        "br": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Brightness (brighteness)"
+        },
+        "ct": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255,
+          "description": "Color Temperature (color temperature)"
+        }
+      }
+    },
+    "bright": {
+      "type": "object",
+      "properties": {
+        "br": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Brightness (brighteness)"
+        },
+        "ct": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255,
+          "description": "Color Temperature (color temperature)"
+        }
+      }
+    },
+    "read": {
+      "type": "object",
+      "properties": {
+        "br": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Brightness (brighteness)"
+        },
+        "ct": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255,
+          "description": "Color Temperature (color temperature)"
+        }
+      }
+    },
+    "computer": {
+      "type": "object",
+      "properties": {
+        "br": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Brightness (brighteness)"
+        },
+        "ct": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255,
+          "description": "Color Temperature (color temperature)"
+        }
+      }
+    },
+    "nightLight": {
+      "type": "object",
+      "properties": {
+        "br": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Brightness (brighteness)"
+        },
+        "ct": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255,
+          "description": "Color Temperature (color temperature)"
+        }
+      }
+    },
+    "ops_mode": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["DIY", "ewelink"]
+        }
+      ],
+      "description": "This field is common in long connection and DIY mode; DIY enters DIY mode; eweLink returns to eweLink mode",
+      "default": null
+    },
+    "switch": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["on", "off"]
+        }
+      ],
+      "description": "Light Switch: turn on (on), turn off (off)",
+      "default": null
+    },
+    "ltype": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["white", "bright", "read", "computer", "nightLight"]
+        }
+      ],
+      "description": "Light Mode",
+      "default": null
+    }
+  }
+}

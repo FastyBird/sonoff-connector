@@ -1,0 +1,121 @@
+{
+  "sledOnline": {
+    "name": "Status LED",
+    "type": "device",
+    "data_type": "enum",
+    "format": ["on", "off"],
+    "settable": true,
+    "queryable": false
+  },
+  "fwVersion": {
+    "name": "Firmware version",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "chipid": {
+    "name": "Chip ID",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "ssid": {
+    "name": "Wifi SSID",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "rssi": {
+    "name": "Wifi RSSI",
+    "type": "device",
+    "data_type": "char",
+    "settable": false,
+    "queryable": false
+  },
+  "switch": {
+    "name": "Switch",
+    "type": "channel",
+    "data_type": "switch",
+    "format": [
+      ["switch_on", "on", "on"],
+      ["switch_off", "off", "off"]
+    ],
+    "settable": true,
+    "queryable": false
+  },
+  "state": {
+    "name": "Mist level",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [1, 2],
+    "settable": true,
+    "queryable": false
+  },
+  "mode": {
+    "name": "Mode",
+    "type": "channel",
+    "data_type": "enum",
+    "format": ["normal"],
+    "settable": true,
+    "queryable": false
+  },
+  "water": {
+    "name": "Water capacity",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [0, 1],
+    "settable": false,
+    "queryable": false
+  },
+  "lightswitch": {
+    "name": "Light switch",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [0, 1],
+    "settable": true,
+    "queryable": false
+  },
+  "lightmode": {
+    "name": "Light mode",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [1, 3],
+    "settable": true,
+    "queryable": false
+  },
+  "lightRcolor": {
+    "name": "Red color",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [0, 255],
+    "settable": true,
+    "queryable": false
+  },
+  "lightGcolor": {
+    "name": "Green color",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [0, 255],
+    "settable": true,
+    "queryable": false
+  },
+  "lightBcolor": {
+    "name": "Blue color",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [0, 255],
+    "settable": true,
+    "queryable": false
+  },
+  "lightbright": {
+    "name": "Light brightness",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [0, 100],
+    "settable": true,
+    "queryable": false
+  }
+}
