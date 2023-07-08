@@ -87,9 +87,6 @@ You will then be asked to provide a connector identifier and name:
  > My Sonoff
 ```
 
-> **NOTE:**
-If you choose the cloud or MQTT broker mode, you will be prompted to answer additional questions.
-
 After providing the necessary information, your new [Sonoff](https://sonoff.tech) connector will be ready for use.
 
 ```shell
@@ -111,7 +108,7 @@ through a console command or from the [FastyBird](https://www.fastybird.com) [Io
 To manually trigger device discovery, use the following command:
 
 ```shell
-php bin/fb-console fb:shelly-connector:discover
+php bin/fb-console fb:sonoff-connector:discover
 ```
 
 > **NOTE:**

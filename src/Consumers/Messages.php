@@ -114,7 +114,7 @@ final class Messages
 				return;
 			}
 		}
-		/*
+
 		$this->logger->error(
 			'Message could not be consumed',
 			[
@@ -122,7 +122,7 @@ final class Messages
 				'type' => 'consumer',
 				'message' => $entity->toArray(),
 			],
-		);*/
+		);
 	}
 
 	public function isEmpty(): bool
