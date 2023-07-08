@@ -143,6 +143,9 @@ class SonoffExtension extends DI\CompilerExtension
 			->getResultDefinition()
 			->setType(API\CloudWs::class);
 
+		$builder->addDefinition($this->prefix('api.httpClient'), new DI\Definitions\ServiceDefinition())
+			->setType(API\HttpClientFactory::class);
+
 		$builder->addDefinition(
 			$this->prefix('consumers.messages.device.status'),
 			new DI\Definitions\ServiceDefinition(),

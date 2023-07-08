@@ -32,9 +32,7 @@ use Psr\Log;
 use React\Datagram;
 use React\Dns;
 use React\EventLoop;
-use React\Http;
 use React\Promise;
-use React\Socket\Connector;
 use RuntimeException;
 use stdClass;
 use Throwable;
@@ -79,8 +77,6 @@ final class LanApi
 
 	public const ERROR_INVALID_PARAMETER = 422;
 
-	private const CONNECTION_TIMEOUT = 10;
-
 	private const MDNS_ADDRESS = '224.0.0.251';
 
 	private const MDNS_PORT = 5_353;
@@ -99,12 +95,9 @@ final class LanApi
 
 	private Log\LoggerInterface $logger;
 
-	private GuzzleHttp\Client|null $client = null;
-
-	private Http\Browser|null $asyncClient = null;
-
 	public function __construct(
 		private readonly string $identifier,
+		private readonly HttpClientFactory $httpClientFactory,
 		private readonly DateTimeFactory\Factory $dateTimeFactory,
 		private readonly EventLoop\LoopInterface $eventLoop,
 		Log\LoggerInterface|null $logger = null,
@@ -529,7 +522,7 @@ final class LanApi
 
 		if ($async) {
 			try {
-				$request = $this->getClient()->request(
+				$request = $this->httpClientFactory->createClient()->request(
 					$method,
 					$requestPath,
 					$headers,
@@ -598,7 +591,7 @@ final class LanApi
 			return $deferred->promise();
 		} else {
 			try {
-				$response = $this->getClient(false)->request(
+				$response = $this->httpClientFactory->createClient(false)->request(
 					$method,
 					$requestPath,
 					[
@@ -670,36 +663,6 @@ final class LanApi
 
 				return false;
 			}
-		}
-	}
-
-	/**
-	 * @return ($async is true ? Http\Browser : GuzzleHttp\Client)
-	 *
-	 * @throws InvalidArgumentException
-	 */
-	private function getClient(bool $async = true): GuzzleHttp\Client|Http\Browser
-	{
-		if ($async) {
-			if ($this->asyncClient === null) {
-				$this->asyncClient = new Http\Browser(
-					new Connector(
-						[
-							'timeout' => self::CONNECTION_TIMEOUT,
-						],
-						$this->eventLoop,
-					),
-					$this->eventLoop,
-				);
-			}
-
-			return $this->asyncClient;
-		} else {
-			if ($this->client === null) {
-				$this->client = new GuzzleHttp\Client();
-			}
-
-			return $this->client;
 		}
 	}
 

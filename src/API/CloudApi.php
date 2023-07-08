@@ -32,10 +32,7 @@ use Nette;
 use Nette\Utils;
 use Psr\Http\Message;
 use Psr\Log;
-use React\EventLoop;
-use React\Http;
 use React\Promise;
-use React\Socket\Connector;
 use RuntimeException;
 use stdClass;
 use Throwable;
@@ -63,8 +60,6 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 	use Nette\SmartObject;
 	use Evenement\EventEmitterTrait;
-
-	private const CONNECTION_TIMEOUT = 10;
 
 	private const USER_LOGIN_API_ENDPOINT = '/v2/user/login';
 
@@ -100,19 +95,15 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 	private Log\LoggerInterface $logger;
 
-	private GuzzleHttp\Client|null $client = null;
-
-	private Http\Browser|null $asyncClient = null;
-
 	public function __construct(
 		private readonly string $identifier,
 		private readonly string $username,
 		private readonly string $password,
 		private readonly string $appId,
 		private readonly string $appSecret,
+		private readonly HttpClientFactory $httpClientFactory,
 		private readonly MetadataSchemas\Validator $schemaValidator,
 		private readonly DateTimeFactory\Factory $dateTimeFactory,
-		private readonly EventLoop\LoopInterface $eventLoop,
 		Types\Region|null $region = null,
 		Log\LoggerInterface|null $logger = null,
 	)
@@ -139,9 +130,6 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 	public function disconnect(): void
 	{
-		$this->client = null;
-		$this->asyncClient = null;
-
 		$this->accessToken = null;
 		$this->refreshToken = null;
 		$this->user = null;
@@ -1170,7 +1158,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 		if ($async) {
 			try {
-				$request = $this->getClient()->request(
+				$request = $this->httpClientFactory->createClient()->request(
 					$method,
 					$requestPath,
 					$headers,
@@ -1239,7 +1227,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 			return $deferred->promise();
 		} else {
 			try {
-				$response = $this->getClient(false)->request(
+				$response = $this->httpClientFactory->createClient(false)->request(
 					$method,
 					$requestPath,
 					[
@@ -1329,36 +1317,6 @@ final class CloudApi implements Evenement\EventEmitterInterface
 		}
 
 		return Types\CloudApiEndpoint::get(Types\CloudApiEndpoint::ENDPOINT_CHINA);
-	}
-
-	/**
-	 * @return ($async is true ? Http\Browser : GuzzleHttp\Client)
-	 *
-	 * @throws InvalidArgumentException
-	 */
-	private function getClient(bool $async = true): GuzzleHttp\Client|Http\Browser
-	{
-		if ($async) {
-			if ($this->asyncClient === null) {
-				$this->asyncClient = new Http\Browser(
-					new Connector(
-						[
-							'timeout' => self::CONNECTION_TIMEOUT,
-						],
-						$this->eventLoop,
-					),
-					$this->eventLoop,
-				);
-			}
-
-			return $this->asyncClient;
-		} else {
-			if ($this->client === null) {
-				$this->client = new GuzzleHttp\Client();
-			}
-
-			return $this->client;
-		}
 	}
 
 	/**
