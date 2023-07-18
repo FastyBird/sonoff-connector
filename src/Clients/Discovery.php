@@ -74,8 +74,6 @@ final class Discovery implements Evenement\EventEmitterInterface
 	/** @var array<string, Entities\Clients\DiscoveredDeviceLocal> */
 	private array $foundLocalDevices = [];
 
-	private Log\LoggerInterface $logger;
-
 	public function __construct(
 		private readonly Entities\SonoffConnector $connector,
 		private readonly API\LanApiFactory $lanApiFactory,
@@ -83,11 +81,9 @@ final class Discovery implements Evenement\EventEmitterInterface
 		private readonly Consumers\Messages $consumer,
 		private readonly MetadataSchemas\Validator $schemaValidator,
 		private readonly EventLoop\LoopInterface $eventLoop,
-		Log\LoggerInterface|null $logger = null,
+		private readonly Log\LoggerInterface $logger = new Log\NullLogger(),
 	)
 	{
-		$this->logger = $logger ?? new Log\NullLogger();
-
 		$this->discoveredDevices = new SplObjectStorage();
 	}
 

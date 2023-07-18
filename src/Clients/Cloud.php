@@ -53,8 +53,6 @@ final class Cloud extends ClientProcess implements Client
 
 	private API\CloudWs $cloudWs;
 
-	private Log\LoggerInterface $logger;
-
 	/**
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
@@ -77,7 +75,7 @@ final class Cloud extends ClientProcess implements Client
 		private readonly DevicesModels\Devices\Properties\PropertiesRepository $devicePropertiesRepository,
 		private readonly DevicesModels\Channels\Properties\PropertiesRepository $channelPropertiesRepository,
 		private readonly EventDispatcher\EventDispatcherInterface|null $dispatcher = null,
-		Log\LoggerInterface|null $logger = null,
+		private readonly Log\LoggerInterface $logger = new Log\NullLogger(),
 	)
 	{
 		parent::__construct(
@@ -89,8 +87,6 @@ final class Cloud extends ClientProcess implements Client
 			$dateTimeFactory,
 			$eventLoop,
 		);
-
-		$this->logger = $logger ?? new Log\NullLogger();
 
 		$this->cloudApiApi = $cloudApiApiFactory->create(
 			$this->connector->getIdentifier(),

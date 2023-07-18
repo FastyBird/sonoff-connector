@@ -53,8 +53,6 @@ final class Lan extends ClientProcess implements Client
 
 	private API\LanApi $lanApiApi;
 
-	private Log\LoggerInterface $logger;
-
 	public function __construct(
 		Entities\SonoffConnector $connector,
 		DevicesModels\Devices\DevicesRepository $devicesRepository,
@@ -71,7 +69,7 @@ final class Lan extends ClientProcess implements Client
 		private readonly DevicesModels\Devices\Properties\PropertiesRepository $devicePropertiesRepository,
 		private readonly DevicesModels\Channels\Properties\PropertiesRepository $channelPropertiesRepository,
 		private readonly EventDispatcher\EventDispatcherInterface|null $dispatcher = null,
-		Log\LoggerInterface|null $logger = null,
+		private readonly Log\LoggerInterface $logger = new Log\NullLogger(),
 	)
 	{
 		parent::__construct(
@@ -83,8 +81,6 @@ final class Lan extends ClientProcess implements Client
 			$dateTimeFactory,
 			$eventLoop,
 		);
-
-		$this->logger = $logger ?? new Log\NullLogger();
 
 		$this->lanApiApi = $lanApiApiFactory->create(
 			$this->connector->getIdentifier(),

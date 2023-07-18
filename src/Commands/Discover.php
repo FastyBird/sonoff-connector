@@ -76,8 +76,6 @@ class Discover extends Console\Command\Command
 
 	private Clients\Discovery|null $client = null;
 
-	private Log\LoggerInterface $logger;
-
 	public function __construct(
 		private readonly Clients\DiscoveryFactory $clientFactory,
 		private readonly Consumers\Messages $consumer,
@@ -87,12 +85,10 @@ class Discover extends Console\Command\Command
 		private readonly DateTimeFactory\Factory $dateTimeFactory,
 		private readonly EventLoop\LoopInterface $eventLoop,
 		private readonly EventDispatcher\EventDispatcherInterface|null $dispatcher = null,
-		Log\LoggerInterface|null $logger = null,
+		private readonly Log\LoggerInterface $logger = new Log\NullLogger(),
 		string|null $name = null,
 	)
 	{
-		$this->logger = $logger ?? new Log\NullLogger();
-
 		parent::__construct($name);
 	}
 

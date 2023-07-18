@@ -93,8 +93,6 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 	private Types\Region $region;
 
-	private Log\LoggerInterface $logger;
-
 	public function __construct(
 		private readonly string $identifier,
 		private readonly string $username,
@@ -105,12 +103,10 @@ final class CloudApi implements Evenement\EventEmitterInterface
 		private readonly MetadataSchemas\Validator $schemaValidator,
 		private readonly DateTimeFactory\Factory $dateTimeFactory,
 		Types\Region|null $region = null,
-		Log\LoggerInterface|null $logger = null,
+		private readonly Log\LoggerInterface $logger = new Log\NullLogger(),
 	)
 	{
 		$this->region = $region ?? Types\Region::get(Types\Region::REGION_EUROPE);
-
-		$this->logger = $logger ?? new Log\NullLogger();
 	}
 
 	/**
