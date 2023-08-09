@@ -16,6 +16,7 @@
 namespace FastyBird\Connector\Sonoff\Clients;
 
 use FastyBird\Connector\Sonoff\Entities;
+use FastyBird\Library\Metadata\Entities as MetadataEntities;
 use FastyBird\Module\Devices\Entities as DevicesEntities;
 use React\Promise;
 
@@ -45,7 +46,7 @@ interface Client
 	 */
 	public function writeDeviceProperty(
 		Entities\SonoffDevice $device,
-		DevicesEntities\Devices\Properties\Dynamic $property,
+		DevicesEntities\Devices\Properties\Dynamic|MetadataEntities\DevicesModule\DeviceDynamicProperty $property,
 	): Promise\PromiseInterface;
 
 	/**
@@ -54,7 +55,7 @@ interface Client
 	public function writeChannelProperty(
 		Entities\SonoffDevice $device,
 		DevicesEntities\Channels\Channel $channel,
-		DevicesEntities\Channels\Properties\Dynamic $property,
+		DevicesEntities\Channels\Properties\Dynamic|MetadataEntities\DevicesModule\ChannelDynamicProperty $property,
 	): Promise\PromiseInterface;
 
 }

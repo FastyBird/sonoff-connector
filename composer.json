@@ -52,7 +52,6 @@
     "react/datagram": "^1.8",
     "react/http": "^1.7",
     "react/promise": "~2.2",
-    "swaggest/json-schema": "^0.12",
     "symplify/vendor-patches": "^11.2"
   },
   "require-dev": {

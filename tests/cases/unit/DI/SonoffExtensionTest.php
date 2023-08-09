@@ -2,6 +2,7 @@
 
 namespace FastyBird\Connector\Sonoff\Tests\Cases\Unit\DI;
 
+use Error;
 use FastyBird\Connector\Sonoff\Hydrators;
 use FastyBird\Connector\Sonoff\Schemas;
 use FastyBird\Connector\Sonoff\Tests\Cases\Unit\BaseTestCase;
@@ -14,6 +15,7 @@ final class SonoffExtensionTest extends BaseTestCase
 	/**
 	 * @throws BootstrapExceptions\InvalidArgument
 	 * @throws Nette\DI\MissingServiceException
+	 * @throws Error
 	 */
 	public function testServicesRegistration(): void
 	{

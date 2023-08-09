@@ -21,6 +21,7 @@ use FastyBird\Connector\Sonoff\API;
 use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\DateTimeFactory;
+use FastyBird\Library\Metadata\Entities as MetadataEntities;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Entities as DevicesEntities;
@@ -93,7 +94,7 @@ abstract class ClientProcess
 	 */
 	public function writeDeviceProperty(
 		Entities\SonoffDevice $device,
-		DevicesEntities\Devices\Properties\Dynamic $property,
+		DevicesEntities\Devices\Properties\Dynamic|MetadataEntities\DevicesModule\DeviceDynamicProperty $property,
 	): Promise\PromiseInterface
 	{
 		$state = $this->devicePropertiesStates->getValue($property);
@@ -109,7 +110,7 @@ abstract class ClientProcess
 	public function writeChannelProperty(
 		Entities\SonoffDevice $device,
 		DevicesEntities\Channels\Channel $channel,
-		DevicesEntities\Channels\Properties\Dynamic $property,
+		DevicesEntities\Channels\Properties\Dynamic|MetadataEntities\DevicesModule\ChannelDynamicProperty $property,
 	): Promise\PromiseInterface
 	{
 		$state = $this->channelPropertiesStates->getValue($property);
@@ -131,7 +132,8 @@ abstract class ClientProcess
 	protected function writeProperty(
 		DevicesStates\DeviceProperty|DevicesStates\ChannelProperty|null $state,
 		Entities\SonoffDevice $device,
-		DevicesEntities\Devices\Properties\Dynamic|DevicesEntities\Channels\Properties\Dynamic $property,
+		// phpcs:ignore SlevomatCodingStandard.Files.LineLength.LineTooLong
+		DevicesEntities\Devices\Properties\Dynamic|DevicesEntities\Channels\Properties\Dynamic|MetadataEntities\DevicesModule\DeviceDynamicProperty|MetadataEntities\DevicesModule\ChannelDynamicProperty $property,
 		string|null $group = null,
 		int|null $index = null,
 	): Promise\PromiseInterface
