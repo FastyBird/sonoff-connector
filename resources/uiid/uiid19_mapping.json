@@ -36,6 +36,7 @@
     "queryable": false
   },
   "switch": {
+    "group": "humidifier",
     "name": "Switch",
     "type": "channel",
     "data_type": "switch",
@@ -47,6 +48,7 @@
     "queryable": false
   },
   "mode": {
+    "group": "humidifier",
     "name": "Mode",
     "type": "channel",
     "data_type": "enum",
@@ -55,6 +57,7 @@
     "queryable": false
   },
   "state": {
+    "group": "humidifier",
     "name": "Level",
     "type": "channel",
     "data_type": "uchar",
@@ -63,6 +66,7 @@
     "queryable": false
   },
   "water": {
+    "group": "humidifier",
     "name": "Water state",
     "type": "channel",
     "data_type": "uchar",
@@ -71,6 +75,7 @@
     "queryable": false
   },
   "temperature": {
+    "group": "humidifier",
     "name": "Temperature",
     "type": "channel",
     "data_type": "uchar",
@@ -79,6 +84,7 @@
     "queryable": false
   },
   "humidity": {
+    "group": "humidifier",
     "name": "Humidity",
     "type": "channel",
     "data_type": "uchar",

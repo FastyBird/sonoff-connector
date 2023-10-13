@@ -36,6 +36,7 @@
     "queryable": false
   },
   "switch": {
+    "group": "thermostat",
     "name": "Switch",
     "type": "channel",
     "data_type": "switch",
@@ -47,6 +48,7 @@
     "queryable": false
   },
   "startup": {
+    "group": "thermostat",
     "name": "Switch startup state",
     "type": "channel",
     "data_type": "enum",
@@ -55,6 +57,7 @@
     "queryable": false
   },
   "pulse": {
+    "group": "thermostat",
     "name": "Switch pulse",
     "type": "channel",
     "data_type": "enum",
@@ -63,6 +66,7 @@
     "queryable": false
   },
   "pulseWidth": {
+    "group": "thermostat",
     "name": "Switch pulse time",
     "type": "channel",
     "data_type": "uint",
@@ -71,6 +75,7 @@
     "queryable": false
   },
   "mainSwitch": {
+    "group": "thermostat",
     "name": "Main switch",
     "type": "channel",
     "data_type": "switch",
@@ -82,6 +87,7 @@
     "queryable": false
   },
   "deviceType": {
+    "group": "thermostat",
     "name": "Control mode",
     "type": "channel",
     "data_type": "enum",
@@ -90,6 +96,7 @@
     "queryable": false
   },
   "sensorType": {
+    "group": "thermostat",
     "name": "Sensor type",
     "type": "channel",
     "data_type": "enum",
@@ -98,6 +105,7 @@
     "queryable": false
   },
   "currentHumidity": {
+    "group": "thermostat",
     "name": "Measured humidity",
     "type": "channel",
     "data_type": "float",
@@ -105,6 +113,7 @@
     "queryable": false
   },
   "currentTemperature": {
+    "group": "thermostat",
     "name": "Measured temperature",
     "type": "channel",
     "data_type": "float",

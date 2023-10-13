@@ -1,7 +1,7 @@
 <?php declare(strict_types = 1);
 
 /**
- * Transformer.php
+ * Entity.php
  *
  * @license        More in LICENSE.md
  * @copyright      https://www.fastybird.com
@@ -15,6 +15,8 @@
 
 namespace FastyBird\Connector\Sonoff\Entities\Clients;
 
+use Orisai\ObjectMapper;
+
 /**
  * Sonoff base message data entity interface
  *
@@ -23,7 +25,7 @@ namespace FastyBird\Connector\Sonoff\Entities\Clients;
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-interface Entity
+interface Entity extends ObjectMapper\MappedObject
 {
 
 	/**

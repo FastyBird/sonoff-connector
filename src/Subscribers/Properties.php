@@ -75,7 +75,7 @@ final class Properties implements Common\EventSubscriber
 
 		$findDevicePropertyQuery = new DevicesQueries\FindDeviceProperties();
 		$findDevicePropertyQuery->forDevice($entity);
-		$findDevicePropertyQuery->byIdentifier(Types\DevicePropertyIdentifier::IDENTIFIER_STATE);
+		$findDevicePropertyQuery->byIdentifier(Types\DevicePropertyIdentifier::STATE);
 
 		$stateProperty = $this->propertiesRepository->findOneBy($findDevicePropertyQuery);
 
@@ -92,8 +92,8 @@ final class Properties implements Common\EventSubscriber
 				'format' => [
 					MetadataTypes\ConnectionState::STATE_CONNECTED,
 					MetadataTypes\ConnectionState::STATE_DISCONNECTED,
-					MetadataTypes\ConnectionState::STATE_STOPPED,
 					MetadataTypes\ConnectionState::STATE_LOST,
+					MetadataTypes\ConnectionState::STATE_ALERT,
 					MetadataTypes\ConnectionState::STATE_UNKNOWN,
 				],
 				'settable' => false,
@@ -103,15 +103,15 @@ final class Properties implements Common\EventSubscriber
 			$this->propertiesManager->create(Utils\ArrayHash::from([
 				'device' => $entity,
 				'entity' => DevicesEntities\Devices\Properties\Dynamic::class,
-				'identifier' => Types\DevicePropertyIdentifier::IDENTIFIER_STATE,
-				'name' => Helpers\Name::createName(Types\DevicePropertyIdentifier::IDENTIFIER_STATE),
+				'identifier' => Types\DevicePropertyIdentifier::STATE,
+				'name' => Helpers\Name::createName(Types\DevicePropertyIdentifier::STATE),
 				'dataType' => MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_ENUM),
 				'unit' => null,
 				'format' => [
 					MetadataTypes\ConnectionState::STATE_CONNECTED,
 					MetadataTypes\ConnectionState::STATE_DISCONNECTED,
-					MetadataTypes\ConnectionState::STATE_STOPPED,
 					MetadataTypes\ConnectionState::STATE_LOST,
+					MetadataTypes\ConnectionState::STATE_ALERT,
 					MetadataTypes\ConnectionState::STATE_UNKNOWN,
 				],
 				'settable' => false,

@@ -34,7 +34,7 @@ final class SonoffConnector extends DevicesSchemas\Connectors\Connector
 	/**
 	 * Define entity schema type string
 	 */
-	public const SCHEMA_TYPE = MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF . '/connector/' . Entities\SonoffConnector::CONNECTOR_TYPE;
+	public const SCHEMA_TYPE = MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF . '/connector/' . Entities\SonoffConnector::TYPE;
 
 	public function getEntityClass(): string
 	{

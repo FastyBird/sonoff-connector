@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "UIID1770 Zigbee temperature sensor",
+  "type": "object",
+  "properties": {
+    "temperature": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer"
+        }
+      ],
+      "description": "Temperature, [-Infinity, 15] Cold; [16, 28] Comfy; [29, Infinity] Hot",
+      "default": null
+    },
+    "humidity": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 10000
+        }
+      ],
+      "description": "Humidity, [0,30] Dry ; [31,70] Normal ; [71,100] Moist",
+      "default": null
+    },
+    "battery": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      ],
+      "description": "Humidity, [0,30] Dry ; [31,70] Normal ; [71,100] Moist",
+      "default": null
+    }
+  }
+}

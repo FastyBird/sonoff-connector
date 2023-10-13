@@ -15,17 +15,25 @@
 
 namespace FastyBird\Connector\Sonoff\Connector;
 
+use BadMethodCallException;
+use FastyBird\Connector\Sonoff;
 use FastyBird\Connector\Sonoff\Clients;
-use FastyBird\Connector\Sonoff\Consumers;
 use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Exceptions;
+use FastyBird\Connector\Sonoff\Queue;
+use FastyBird\Connector\Sonoff\Writers;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
+use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Connectors as DevicesConnectors;
 use FastyBird\Module\Devices\Entities as DevicesEntities;
+use FastyBird\Module\Devices\Events as DevicesEvents;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
+use InvalidArgumentException;
 use Nette;
+use Psr\EventDispatcher as PsrEventDispatcher;
 use React\EventLoop;
 use ReflectionClass;
+use RuntimeException;
 use function array_key_exists;
 use function assert;
 use function React\Async\async;
@@ -45,9 +53,11 @@ final class Connector implements DevicesConnectors\Connector
 
 	private const QUEUE_PROCESSING_INTERVAL = 0.01;
 
-	private Clients\Client|null $client = null;
+	private Clients\Client|Clients\Discovery|null $client = null;
 
-	private EventLoop\TimerInterface|null $consumerTimer = null;
+	private Writers\Writer|null $writer = null;
+
+	private EventLoop\TimerInterface|null $consumersTimer = null;
 
 	/**
 	 * @param array<Clients\ClientFactory> $clientsFactories
@@ -55,22 +65,41 @@ final class Connector implements DevicesConnectors\Connector
 	public function __construct(
 		private readonly DevicesEntities\Connectors\Connector $connector,
 		private readonly array $clientsFactories,
-		private readonly Consumers\Messages $consumer,
+		private readonly Clients\DiscoveryFactory $discoveryClientFactory,
+		private readonly Writers\WriterFactory $writerFactory,
+		private readonly Queue\Queue $queue,
+		private readonly Queue\Consumers $consumers,
+		private readonly Sonoff\Logger $logger,
 		private readonly EventLoop\LoopInterface $eventLoop,
+		private readonly PsrEventDispatcher\EventDispatcherInterface|null $dispatcher = null,
 	)
 	{
 	}
 
 	/**
+	 * @throws BadMethodCallException
 	 * @throws DevicesExceptions\InvalidState
-	 * @throws DevicesExceptions\Terminate
 	 * @throws Exceptions\InvalidState
+	 * @throws Exceptions\CloudApiCall
+	 * @throws InvalidArgumentException
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws RuntimeException
 	 */
 	public function execute(): void
 	{
 		assert($this->connector instanceof Entities\SonoffConnector);
+
+		$this->logger->info(
+			'Starting Sonoff connector service',
+			[
+				'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+				'type' => 'connector',
+				'connector' => [
+					'id' => $this->connector->getId()->toString(),
+				],
+			],
+		);
 
 		$mode = $this->connector->getClientMode();
 
@@ -87,37 +116,126 @@ final class Connector implements DevicesConnectors\Connector
 			}
 		}
 
-		if ($this->client === null) {
-			throw new DevicesExceptions\Terminate('Connector client is not configured');
+		if (
+			$this->client === null
+			|| (
+				!$this->client instanceof Clients\Lan
+				&& !$this->client instanceof Clients\Cloud
+				&& !$this->client instanceof Clients\Auto
+			)
+		) {
+			$this->dispatcher?->dispatch(
+				new DevicesEvents\TerminateConnector(
+					MetadataTypes\ConnectorSource::get(MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF),
+					'Connector client is not configured',
+				),
+			);
+
+			return;
 		}
 
 		$this->client->connect();
 
-		$this->consumerTimer = $this->eventLoop->addPeriodicTimer(
+		$this->writer = $this->writerFactory->create($this->connector);
+		$this->writer->connect();
+
+		$this->consumersTimer = $this->eventLoop->addPeriodicTimer(
 			self::QUEUE_PROCESSING_INTERVAL,
 			async(function (): void {
-				$this->consumer->consume();
+				$this->consumers->consume();
 			}),
+		);
+
+		$this->logger->info(
+			'Sonoff connector service has been started',
+			[
+				'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+				'type' => 'connector',
+				'connector' => [
+					'id' => $this->connector->getId()->toString(),
+				],
+			],
 		);
 	}
 
 	public function discover(): void
 	{
-		// TODO: Implement it
+		assert($this->connector instanceof Entities\SonoffConnector);
+
+		$this->logger->info(
+			'Starting Sonoff connector discovery',
+			[
+				'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+				'type' => 'connector',
+				'connector' => [
+					'id' => $this->connector->getId()->toString(),
+				],
+			],
+		);
+
+		$this->client = $this->discoveryClientFactory->create($this->connector);
+
+		$this->client->on('finished', function (): void {
+			$this->dispatcher?->dispatch(
+				new DevicesEvents\TerminateConnector(
+					MetadataTypes\ConnectorSource::get(MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF),
+					'Devices discovery finished',
+				),
+			);
+		});
+
+		$this->consumersTimer = $this->eventLoop->addPeriodicTimer(
+			self::QUEUE_PROCESSING_INTERVAL,
+			async(function (): void {
+				$this->consumers->consume();
+			}),
+		);
+
+		$this->logger->info(
+			'Sonoff connector discovery has been started',
+			[
+				'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+				'type' => 'connector',
+				'connector' => [
+					'id' => $this->connector->getId()->toString(),
+				],
+			],
+		);
+
+		$this->client->discover();
 	}
 
+	/**
+	 * @throws DevicesExceptions\InvalidState
+	 * @throws Exceptions\InvalidState
+	 * @throws MetadataExceptions\InvalidArgument
+	 * @throws MetadataExceptions\InvalidState
+	 */
 	public function terminate(): void
 	{
 		$this->client?->disconnect();
 
-		if ($this->consumerTimer !== null) {
-			$this->eventLoop->cancelTimer($this->consumerTimer);
+		$this->writer?->disconnect();
+
+		if ($this->consumersTimer !== null && $this->queue->isEmpty()) {
+			$this->eventLoop->cancelTimer($this->consumersTimer);
 		}
+
+		$this->logger->info(
+			'Sonoff connector has been terminated',
+			[
+				'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+				'type' => 'connector',
+				'connector' => [
+					'id' => $this->connector->getId()->toString(),
+				],
+			],
+		);
 	}
 
 	public function hasUnfinishedTasks(): bool
 	{
-		return !$this->consumer->isEmpty() && $this->consumerTimer !== null;
+		return !$this->queue->isEmpty() && $this->consumersTimer !== null;
 	}
 
 }

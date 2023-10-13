@@ -33,43 +33,48 @@ class DevicePropertyIdentifier extends Consistence\Enum\Enum
 	/**
 	 * Define device states
 	 */
-	public const IDENTIFIER_IP_ADDRESS = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_IP_ADDRESS;
+	public const IP_ADDRESS = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_IP_ADDRESS;
 
-	public const IDENTIFIER_ADDRESS = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_ADDRESS;
+	public const ADDRESS = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_ADDRESS;
 
-	public const IDENTIFIER_STATE = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_STATE;
+	public const STATE = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_STATE;
 
-	public const IDENTIFIER_HARDWARE_MODEL = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_HARDWARE_MODEL;
+	public const HARDWARE_MODEL = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_HARDWARE_MODEL;
 
-	public const IDENTIFIER_HARDWARE_MAC_ADDRESS = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_HARDWARE_MAC_ADDRESS;
+	public const HARDWARE_MAC_ADDRESS = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_HARDWARE_MAC_ADDRESS;
 
-	public const IDENTIFIER_FIRMWARE_VERSION = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_FIRMWARE_VERSION;
+	public const FIRMWARE_VERSION = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_FIRMWARE_VERSION;
 
-	public const IDENTIFIER_RSSI = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_RSSI;
+	public const RSSI = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_RSSI;
 
-	public const IDENTIFIER_SSID = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_SSID;
+	public const SSID = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_SSID;
 
-	public const IDENTIFIER_STATUS_LED = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_STATUS_LED;
+	public const STATUS_LED = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_STATUS_LED;
 
-	public const IDENTIFIER_API_KEY = 'api_key';
+	public const API_KEY = 'api_key';
 
-	public const IDENTIFIER_DEVICE_KEY = 'device_key';
+	public const DEVICE_KEY = 'device_key';
 
-	public const IDENTIFIER_BRAND_NAME = 'brand_name';
+	public const BRAND_NAME = 'brand_name';
 
-	public const IDENTIFIER_BRAND_LOGO = 'brand_logo';
+	public const BRAND_LOGO = 'brand_logo';
 
-	public const IDENTIFIER_PRODUCT_MODEL = 'product_model';
+	public const PRODUCT_MODEL = 'product_model';
 
-	public const IDENTIFIER_PORT = 'port';
+	public const PORT = 'port';
 
-	public const IDENTIFIER_UIID = 'uiid';
+	public const UIID = 'uiid';
 
-	public const IDENTIFIER_STATUS_READING_DELAY = 'status_reading_delay';
+	public const STATE_READING_DELAY = 'state_reading_delay';
+
+	public function getValue(): string
+	{
+		return strval(parent::getValue());
+	}
 
 	public function __toString(): string
 	{
-		return strval(self::getValue());
+		return self::getValue();
 	}
 
 }

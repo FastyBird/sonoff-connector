@@ -1,0 +1,45 @@
+{
+  "error": 0,
+  "msg": "",
+  "data": {
+    "familyList": [
+      {
+        "id": "15483473418e0ab1093dbf66",
+        "apikey": "211d138d-14a1-433a-813a-1e945d4f259b",
+        "name": "My Home",
+        "index": 0,
+        "roomList": [
+          {
+            "id": "1478f7e38768ae00085229ef",
+            "name": "Room one",
+            "index": -1
+          },
+          {
+            "id": "12483473418eaa00093dbf63",
+            "name": "Room two",
+            "index": 0
+          },
+          {
+            "id": "12483473418eaa00093dbf64",
+            "name": "Other room",
+            "index": 1
+          },
+          {
+            "id": "12483473418eaa00093dbf65",
+            "name": "Living room",
+            "index": 2
+          },
+          {
+            "id": "1478f8dd9ff83a0009450de9",
+            "name": "Guests room",
+            "index": -2
+          }
+        ],
+        "familyType": 1,
+        "members": []
+      }
+    ],
+    "currentFamilyId": "15483473418e0ab1093dbf66",
+    "hasChangedCurrentFamily": false
+  }
+}

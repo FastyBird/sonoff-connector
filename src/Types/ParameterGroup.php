@@ -29,20 +29,54 @@ use function strval;
 class ParameterGroup extends Consistence\Enum\Enum
 {
 
-	/**
-	 * Define versions
-	 */
-	public const GROUP_SWITCHES = 'switches';
+	public const DEVICE = 'device';
 
-	public const GROUP_CONFIGURE = 'configure';
+	public const LIGHT = 'light';
 
-	public const GROUP_PULSES = 'pulses';
+	public const SWITCH = 'switch';
 
-	public const GROUP_RF_LIST = 'rfList';
+	public const THERMOSTAT = 'thermostat';
+
+	public const FAN = 'fan';
+
+	public const SENSOR = 'sensor';
+
+	public const HUMIDIFIER = 'humidifier';
+
+	public const OTHER = 'other';
+
+	public const BRIDGE = 'bridge';
+
+	public const SCENE_WHITE = 'white';
+
+	public const SCENE_BRIGHT = 'bright';
+
+	public const SCENE_READ = 'read';
+
+	public const SCENE_COMPUTER = 'computer';
+
+	public const SCENE_NIGHT_LIGHT = 'nightLight';
+
+	public const SCENE_COLOR = 'color';
+
+	public const SCENE_GOOD_NIGHT = 'goodNight';
+
+	public const SCENE_PARTY = 'party';
+
+	public const SCENE_LEISURE = 'leisure';
+
+	public const SCENE_SOFT = 'soft';
+
+	public const SCENE_COLORFUL = 'colorful';
+
+	public function getValue(): string
+	{
+		return strval(parent::getValue());
+	}
 
 	public function __toString(): string
 	{
-		return strval(self::getValue());
+		return self::getValue();
 	}
 
 }

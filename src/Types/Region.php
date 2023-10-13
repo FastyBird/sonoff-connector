@@ -29,20 +29,22 @@ use function strval;
 class Region extends Consistence\Enum\Enum
 {
 
-	/**
-	 * Define versions
-	 */
-	public const REGION_CHINA = 'cn';
+	public const CHINA = 'cn';
 
-	public const REGION_ASIA = 'as';
+	public const ASIA = 'as';
 
-	public const REGION_AMERICA = 'us';
+	public const AMERICA = 'us';
 
-	public const REGION_EUROPE = 'eu';
+	public const EUROPE = 'eu';
+
+	public function getValue(): string
+	{
+		return strval(parent::getValue());
+	}
 
 	public function __toString(): string
 	{
-		return strval(self::getValue());
+		return self::getValue();
 	}
 
 }

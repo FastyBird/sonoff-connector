@@ -32,17 +32,22 @@ class CloudSocketsEndpoint extends Consistence\Enum\Enum
 	/**
 	 * Define versions
 	 */
-	public const ENDPOINT_CHINA = 'https://cn-dispa.coolkit.cn';
+	public const CHINA = 'https://cn-dispa.coolkit.cn';
 
-	public const ENDPOINT_AMERICA = 'https://us-dispa.coolkit.cc';
+	public const AMERICA = 'https://us-dispa.coolkit.cc';
 
-	public const ENDPOINT_EUROPE = 'https://eu-dispa.coolkit.cc';
+	public const EUROPE = 'https://eu-dispa.coolkit.cc';
 
-	public const ENDPOINT_ASIA = 'https://as-dispa.coolkit.cc';
+	public const ASIA = 'https://as-dispa.coolkit.cc';
+
+	public function getValue(): string
+	{
+		return strval(parent::getValue());
+	}
 
 	public function __toString(): string
 	{
-		return strval(self::getValue());
+		return self::getValue();
 	}
 
 }

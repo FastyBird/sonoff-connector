@@ -41,5 +41,636 @@
     "data_type": "string",
     "settable": false,
     "queryable": false
+  },
+  "switch": {
+    "group": "switch",
+    "name": "Switch",
+    "type": "channel",
+    "data_type": "switch",
+    "format": [
+      ["switch_on", "on", "on"],
+      ["switch_off", "off", "off"]
+    ],
+    "settable": true,
+    "queryable": false
+  },
+  "ltype": {
+    "group": "light",
+    "name": "Light mode",
+    "type": "channel",
+    "data_type": "enum",
+    "format": ["white", "color", "bright", "goodNight", "read", "nightLight", "party", "leisure", "soft", "colorful"],
+    "settable": true,
+    "queryable": false
+  },
+  "white": {
+    "length": 1,
+    "properties": {
+      "br": {
+        "group": "white",
+        "name": "Brightness",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "ct": {
+        "group": "white",
+        "name": "Color temperature",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      }
+    }
+  },
+  "color": {
+    "length": 1,
+    "properties": {
+      "br": {
+        "group": "color",
+        "name": "Brightness",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "r": {
+        "group": "color",
+        "name": "Red color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "g": {
+        "group": "color",
+        "name": "Green color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "b": {
+        "group": "color",
+        "name": "Blue color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      }
+    }
+  },
+  "bright": {
+    "length": 1,
+    "properties": {
+      "br": {
+        "group": "bright",
+        "name": "Brightness",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "ct": {
+        "group": "bright",
+        "name": "Color temperature",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "r": {
+        "group": "bright",
+        "name": "Red color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "g": {
+        "group": "bright",
+        "name": "Green color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "b": {
+        "group": "bright",
+        "name": "Blue color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "name": {
+        "group": "bright",
+        "name": "Customized scene name",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "tf": {
+        "group": "bright",
+        "name": "Color Mode",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "sp": {
+        "group": "bright",
+        "name": "Speed of color change",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      }
+    }
+  },
+  "goodNight": {
+    "length": 1,
+    "properties": {
+      "br": {
+        "group": "goodNight",
+        "name": "Brightness",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "ct": {
+        "group": "goodNight",
+        "name": "Color temperature",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "r": {
+        "group": "goodNight",
+        "name": "Red color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "g": {
+        "group": "goodNight",
+        "name": "Green color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "b": {
+        "group": "goodNight",
+        "name": "Blue color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "name": {
+        "group": "goodNight",
+        "name": "Customized scene name",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "tf": {
+        "group": "goodNight",
+        "name": "Color Mode",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "sp": {
+        "group": "goodNight",
+        "name": "Speed of color change",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      }
+    }
+  },
+  "read": {
+    "length": 1,
+    "properties": {
+      "br": {
+        "group": "read",
+        "name": "Brightness",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "ct": {
+        "group": "read",
+        "name": "Color temperature",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "r": {
+        "group": "read",
+        "name": "Red color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "g": {
+        "group": "read",
+        "name": "Green color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "b": {
+        "group": "read",
+        "name": "Blue color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "name": {
+        "group": "read",
+        "name": "Customized scene name",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "tf": {
+        "group": "read",
+        "name": "Color Mode",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "sp": {
+        "group": "read",
+        "name": "Speed of color change",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      }
+    }
+  },
+  "nightLight": {
+    "length": 1,
+    "properties": {
+      "br": {
+        "group": "nightLight",
+        "name": "Brightness",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "ct": {
+        "group": "nightLight",
+        "name": "Color temperature",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "r": {
+        "group": "nightLight",
+        "name": "Red color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "g": {
+        "group": "nightLight",
+        "name": "Green color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "b": {
+        "group": "nightLight",
+        "name": "Blue color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "name": {
+        "group": "nightLight",
+        "name": "Customized scene name",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "tf": {
+        "group": "nightLight",
+        "name": "Color Mode",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "sp": {
+        "group": "nightLight",
+        "name": "Speed of color change",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      }
+    }
+  },
+  "party": {
+    "length": 1,
+    "properties": {
+      "br": {
+        "group": "party",
+        "name": "Brightness",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "ct": {
+        "group": "party",
+        "name": "Color temperature",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "r": {
+        "group": "party",
+        "name": "Red color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "g": {
+        "group": "party",
+        "name": "Green color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "b": {
+        "group": "party",
+        "name": "Blue color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "name": {
+        "group": "party",
+        "name": "Customized scene name",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "tf": {
+        "group": "party",
+        "name": "Color Mode",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "sp": {
+        "group": "party",
+        "name": "Speed of color change",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      }
+    }
+  },
+  "leisure": {
+    "length": 1,
+    "properties": {
+      "br": {
+        "group": "leisure",
+        "name": "Brightness",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "ct": {
+        "group": "leisure",
+        "name": "Color temperature",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "r": {
+        "group": "leisure",
+        "name": "Red color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "g": {
+        "group": "leisure",
+        "name": "Green color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "b": {
+        "group": "leisure",
+        "name": "Blue color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "name": {
+        "group": "leisure",
+        "name": "Customized scene name",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "tf": {
+        "group": "leisure",
+        "name": "Color Mode",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "sp": {
+        "group": "leisure",
+        "name": "Speed of color change",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      }
+    }
+  },
+  "soft": {
+    "length": 1,
+    "properties": {
+      "br": {
+        "group": "soft",
+        "name": "Brightness",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "ct": {
+        "group": "soft",
+        "name": "Color temperature",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "r": {
+        "group": "soft",
+        "name": "Red color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "g": {
+        "group": "soft",
+        "name": "Green color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "b": {
+        "group": "soft",
+        "name": "Blue color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "name": {
+        "group": "soft",
+        "name": "Customized scene name",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "tf": {
+        "group": "soft",
+        "name": "Color Mode",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "sp": {
+        "group": "soft",
+        "name": "Speed of color change",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      }
+    }
+  },
+  "colorful": {
+    "length": 1,
+    "properties": {
+      "br": {
+        "group": "colorful",
+        "name": "Brightness",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "ct": {
+        "group": "colorful",
+        "name": "Color temperature",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "r": {
+        "group": "colorful",
+        "name": "Red color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "g": {
+        "group": "colorful",
+        "name": "Green color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "b": {
+        "group": "colorful",
+        "name": "Blue color",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "name": {
+        "group": "colorful",
+        "name": "Customized scene name",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "tf": {
+        "group": "colorful",
+        "name": "Color Mode",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "sp": {
+        "group": "colorful",
+        "name": "Speed of color change",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      }
+    }
   }
 }

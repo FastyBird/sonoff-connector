@@ -1,0 +1,17 @@
+{
+  "fwVersion": {
+    "name": "Firmware version",
+    "type": "device",
+    "data_type": "string",
+    "settable": false,
+    "queryable": false
+  },
+  "temperature": {
+    "group": "sensor",
+    "name": "Temperature",
+    "type": "channel",
+    "data_type": "float",
+    "settable": false,
+    "queryable": false
+  }
+}

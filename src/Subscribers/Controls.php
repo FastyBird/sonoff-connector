@@ -40,8 +40,8 @@ final class Controls implements Common\EventSubscriber
 	use Nette\SmartObject;
 
 	public function __construct(
-		private readonly DevicesModels\Connectors\Controls\ControlsRepository $controlsRepository,
-		private readonly DevicesModels\Connectors\Controls\ControlsManager $controlsManager,
+		private readonly DevicesModels\Connectors\Controls\ControlsRepository $connectorsControlsRepository,
+		private readonly DevicesModels\Connectors\Controls\ControlsManager $connectorsControlsManager,
 	)
 	{
 	}
@@ -66,26 +66,26 @@ final class Controls implements Common\EventSubscriber
 		if ($entity instanceof Entities\SonoffConnector) {
 			$findConnectorControlQuery = new DevicesQueries\FindConnectorControls();
 			$findConnectorControlQuery->forConnector($entity);
-			$findConnectorControlQuery->byName(Types\ConnectorControlName::NAME_REBOOT);
+			$findConnectorControlQuery->byName(Types\ConnectorControlName::DISCOVER);
 
-			$rebootControl = $this->controlsRepository->findOneBy($findConnectorControlQuery);
+			$discoveryControl = $this->connectorsControlsRepository->findOneBy($findConnectorControlQuery);
 
-			if ($rebootControl === null) {
-				$this->controlsManager->create(Utils\ArrayHash::from([
-					'name' => Types\ConnectorControlName::NAME_REBOOT,
+			if ($discoveryControl === null) {
+				$this->connectorsControlsManager->create(Utils\ArrayHash::from([
+					'name' => Types\ConnectorControlName::DISCOVER,
 					'connector' => $entity,
 				]));
 			}
 
 			$findConnectorControlQuery = new DevicesQueries\FindConnectorControls();
 			$findConnectorControlQuery->forConnector($entity);
-			$findConnectorControlQuery->byName(Types\ConnectorControlName::NAME_DISCOVER);
+			$findConnectorControlQuery->byName(Types\ConnectorControlName::REBOOT);
 
-			$discoverControl = $this->controlsRepository->findOneBy($findConnectorControlQuery);
+			$rebootControl = $this->connectorsControlsRepository->findOneBy($findConnectorControlQuery);
 
-			if ($discoverControl === null) {
-				$this->controlsManager->create(Utils\ArrayHash::from([
-					'name' => Types\ConnectorControlName::NAME_DISCOVER,
+			if ($rebootControl === null) {
+				$this->connectorsControlsManager->create(Utils\ArrayHash::from([
+					'name' => Types\ConnectorControlName::REBOOT,
 					'connector' => $entity,
 				]));
 			}

@@ -32,13 +32,22 @@ class ChannelGroup extends Consistence\Enum\Enum
 	/**
 	 * Define versions
 	 */
-	public const GROUP_OUTLET = 'outlet';
+	public const SWITCHES = 'switches';
 
-	public const GROUP_RF_LIST = 'rfList';
+	public const CONFIGURE = 'configure';
+
+	public const PULSES = 'pulses';
+
+	public const RF_LIST = 'rfList';
+
+	public function getValue(): string
+	{
+		return strval(parent::getValue());
+	}
 
 	public function __toString(): string
 	{
-		return strval(self::getValue());
+		return self::getValue();
 	}
 
 }

@@ -32,17 +32,22 @@ class CloudApiEndpoint extends Consistence\Enum\Enum
 	/**
 	 * Define versions
 	 */
-	public const ENDPOINT_CHINA = 'https://cn-apia.coolkit.cn';
+	public const CHINA = 'https://cn-apia.coolkit.cn';
 
-	public const ENDPOINT_AMERICA = 'https://us-apia.coolkit.cc';
+	public const AMERICA = 'https://us-apia.coolkit.cc';
 
-	public const ENDPOINT_EUROPE = 'https://eu-apia.coolkit.cc';
+	public const EUROPE = 'https://eu-apia.coolkit.cc';
 
-	public const ENDPOINT_ASIA = 'https://as-apia.coolkit.cc';
+	public const ASIA = 'https://as-apia.coolkit.cc';
+
+	public function getValue(): string
+	{
+		return strval(parent::getValue());
+	}
 
 	public function __toString(): string
 	{
-		return strval(self::getValue());
+		return self::getValue();
 	}
 
 }

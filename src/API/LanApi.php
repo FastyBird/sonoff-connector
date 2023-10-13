@@ -15,20 +15,24 @@
 
 namespace FastyBird\Connector\Sonoff\API;
 
-use Clue\React\Multicast;
+use BadMethodCallException;
 use Evenement;
 use FastyBird\Connector\Sonoff;
 use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Exceptions;
+use FastyBird\Connector\Sonoff\Helpers;
+use FastyBird\Connector\Sonoff\Helpers\Transformer;
+use FastyBird\Connector\Sonoff\Services;
 use FastyBird\DateTimeFactory;
-use FastyBird\Library\Bootstrap\Helpers as BootstrapHelpers;
+use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
+use FastyBird\Library\Metadata\Schemas as MetadataSchemas;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
+use Fig\Http\Message\RequestMethodInterface;
 use GuzzleHttp;
 use InvalidArgumentException;
 use Nette;
 use Nette\Utils;
 use Psr\Http\Message;
-use Psr\Log;
 use React\Datagram;
 use React\Dns;
 use React\EventLoop;
@@ -44,14 +48,15 @@ use function boolval;
 use function count;
 use function explode;
 use function http_build_query;
+use function implode;
 use function intval;
 use function is_array;
 use function is_string;
 use function preg_match;
-use function property_exists;
 use function random_bytes;
 use function sprintf;
 use function strval;
+use const DIRECTORY_SEPARATOR;
 
 /**
  * Local LAN API interface
@@ -87,6 +92,13 @@ final class LanApi
 	// phpcs:ignore SlevomatCodingStandard.Files.LineLength.LineTooLong
 	private const MATCH_IP_ADDRESS = '/^((?:[0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])[.]){3}(?:[0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])$/';
 
+	private const GET_DEVICE_INFO_MESSAGE_SCHEMA_FILENAME = 'lan_api_get_device_info.json';
+
+	private const SET_DEVICE_STATE_MESSAGE_SCHEMA_FILENAME = 'lan_api_set_device_state.json';
+
+	/** @var array<string, string> */
+	private array $encodeKeys = [];
+
 	private Dns\Protocol\Parser $parser;
 
 	private Dns\Protocol\BinaryDumper $dumper;
@@ -94,71 +106,38 @@ final class LanApi
 	private Datagram\SocketInterface|null $server = null;
 
 	public function __construct(
-		private readonly string $identifier,
-		private readonly HttpClientFactory $httpClientFactory,
+		private readonly Services\HttpClientFactory $httpClientFactory,
+		private readonly Services\MulticastFactory $multicastFactory,
+		private readonly Helpers\Entity $entityHelper,
+		private readonly Sonoff\Logger $logger,
 		private readonly DateTimeFactory\Factory $dateTimeFactory,
 		private readonly EventLoop\LoopInterface $eventLoop,
-		private readonly Log\LoggerInterface $logger = new Log\NullLogger(),
+		private readonly MetadataSchemas\Validator $schemaValidator,
 	)
 	{
 		$this->parser = new Dns\Protocol\Parser();
 		$this->dumper = new Dns\Protocol\BinaryDumper();
 	}
 
+	/**
+	 * @throws BadMethodCallException
+	 * @throws Exceptions\InvalidState
+	 * @throws RuntimeException
+	 */
 	public function connect(): void
 	{
-		$factory = new Multicast\Factory($this->eventLoop);
-
-		try {
-			$this->server = $factory->createReceiver(self::MDNS_ADDRESS . ':' . self::MDNS_PORT);
-		} catch (Throwable $ex) {
-			$this->logger->error(
-				'Could not create mDNS server',
-				[
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'lan-api',
-					'exception' => BootstrapHelpers\Logger::buildException($ex),
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				],
-			);
-
-			return;
-		}
+		$this->server = $this->multicastFactory->create(self::MDNS_ADDRESS, self::MDNS_PORT);
 
 		$this->server->on('message', function ($message): void {
 			try {
 				$response = $this->parser->parseMessage($message);
 
-			} catch (InvalidArgumentException) {
-				$this->logger->warning(
-					'Invalid mDNS question response received',
-					[
-						'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-						'type' => 'lan-api',
-						'connector' => [
-							'identifier' => $this->identifier,
-						],
-					],
-				);
-
-				return;
+			} catch (InvalidArgumentException $ex) {
+				throw new Exceptions\InvalidState('Invalid mDNS question response received', $ex->getCode(), $ex);
 			}
 
 			if ($response->tc) {
-				$this->logger->warning(
-					'The server set the truncated bit although we issued a TCP request',
-					[
-						'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-						'type' => 'lan-api',
-						'connector' => [
-							'identifier' => $this->identifier,
-						],
-					],
-				);
-
-				return;
+				throw new Exceptions\InvalidState('The server set the truncated bit although we issued a TCP request');
 			}
 
 			$deviceIpAddress = null;
@@ -216,30 +195,78 @@ final class LanApi
 				&& is_string($deviceData['seq'])
 				&& array_key_exists('data1', $deviceData)
 			) {
-				$this->emit(
-					'message',
+				$dataEncrypted = array_key_exists('encrypt', $deviceData) && boolval($deviceData['encrypt']);
+
+				$data = array_filter(
 					[
-						new Entities\API\LanMessage(
-							$deviceData['id'],
-							$deviceIpAddress,
-							$deviceDomain,
-							$devicePort,
-							$deviceData['type'],
-							$deviceData['seq'],
-							array_key_exists('iv', $deviceData) ? $deviceData['iv'] : null,
-							array_key_exists('encrypt', $deviceData) && boolval($deviceData['encrypt']),
-							array_filter(
-								[
-									$deviceData['data1'],
-									array_key_exists('data2', $deviceData) ? $deviceData['data2'] : null,
-									array_key_exists('data3', $deviceData) ? $deviceData['data3'] : null,
-									array_key_exists('data4', $deviceData) ? $deviceData['data4'] : null,
-								],
-								static fn ($value) => $value !== null,
-							),
-						),
+						$deviceData['data1'],
+						array_key_exists('data2', $deviceData) ? $deviceData['data2'] : null,
+						array_key_exists('data3', $deviceData) ? $deviceData['data3'] : null,
+						array_key_exists('data4', $deviceData) ? $deviceData['data4'] : null,
 					],
+					static fn ($value) => $value !== null,
 				);
+
+				if (
+					($dataEncrypted && array_key_exists($deviceData['id'], $this->encodeKeys))
+					|| !$dataEncrypted
+				) {
+					if ($dataEncrypted) {
+						foreach ($data as $index => $row) {
+							$data[$index] = Transformer::decryptMessage(
+								$row,
+								$this->encodeKeys[$deviceData['id']],
+								array_key_exists('iv', $deviceData) ? strval($deviceData['iv']) : '',
+							);
+						}
+					}
+
+					$data = Utils\Json::decode(implode($data), Utils\Json::FORCE_ARRAY);
+					assert(is_array($data));
+
+					$this->emit(
+						'message',
+						[
+							$this->createEntity(
+								Entities\API\Lan\DeviceEvent::class,
+								Utils\ArrayHash::from([
+									'id' => $deviceData['id'],
+									'ip_address' => $deviceIpAddress,
+									'domain' => $deviceDomain,
+									'port' => $devicePort,
+									'type' => $deviceData['type'],
+									'seq' => $deviceData['seq'],
+									'iv' => array_key_exists('iv', $deviceData) ? $deviceData['iv'] : null,
+									'encrypt' => $dataEncrypted,
+									'data' => $this->createEntity(
+										Entities\API\Lan\DeviceEventData::class,
+										Utils\ArrayHash::from($data),
+									),
+								]),
+							),
+						],
+					);
+				} else {
+					$this->emit(
+						'message',
+						[
+							$this->createEntity(
+								Entities\API\Lan\DeviceEvent::class,
+								Utils\ArrayHash::from([
+									'id' => $deviceData['id'],
+									'ip_address' => $deviceIpAddress,
+									'domain' => $deviceDomain,
+									'port' => $devicePort,
+									'type' => $deviceData['type'],
+									'seq' => $deviceData['seq'],
+									'iv' => array_key_exists('iv', $deviceData) ? $deviceData['iv'] : null,
+									'encrypt' => true,
+									'data' => null,
+								]),
+							),
+						],
+					);
+				}
 			}
 		});
 
@@ -261,18 +288,22 @@ final class LanApi
 		$this->server?->close();
 	}
 
+	public function registerDeviceKey(string $deviceId, string $deviceKey): void
+	{
+		$this->encodeKeys[$deviceId] = $deviceKey;
+	}
+
 	/**
-	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : bool)
+	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : Entities\API\Lan\DeviceInfo)
 	 *
 	 * @throws Exceptions\LanApiCall
 	 */
 	public function getDeviceInfo(
 		string $id,
-		string|null $key,
 		string $ipAddress,
 		int $port,
 		bool $async = true,
-	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|bool
+	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Entities\API\Lan\DeviceInfo
 	{
 		$deferred = new Promise\Deferred();
 
@@ -283,10 +314,14 @@ final class LanApi
 		$payload->data = new stdClass();
 
 		try {
-			if ($key !== null) {
+			if (array_key_exists($id, $this->encodeKeys)) {
 				$iv = random_bytes(16);
 
-				$encrypted = Transformer::encryptMessage(Utils\Json::encode($payload->data), $key, base64_encode($iv));
+				$encrypted = Transformer::encryptMessage(
+					Utils\Json::encode($payload->data),
+					$this->encodeKeys[$id],
+					base64_encode($iv),
+				);
 
 				if ($encrypted === false) {
 					if ($async) {
@@ -316,30 +351,22 @@ final class LanApi
 			throw new Exceptions\LanApiCall('Could encode data for request');
 		}
 
-		$result = $this->callRequest(
-			'POST',
-			'http://' . $ipAddress . ':' . $port . '/zeroconf/info',
+		$request = $this->createRequest(
+			RequestMethodInterface::METHOD_POST,
+			sprintf('http://%s:%d/zeroconf/info', $ipAddress, $port),
 			[],
 			[],
 			$body,
-			$async,
 		);
+
+		$result = $this->callRequest($request, $async);
 
 		if ($result instanceof Promise\PromiseInterface) {
 			$result
-				->then(static function (Message\ResponseInterface $response) use ($deferred): void {
+				->then(function (Message\ResponseInterface $response) use ($deferred, $request): void {
 					try {
-						$result = Utils\Json::decode($response->getBody()->getContents());
-						assert($result instanceof stdClass);
-
-						if (property_exists($result, 'error') && intval($result->error) !== 0) {
-							$deferred->reject(
-								new Exceptions\LanApiCall('Read device status failed', intval($result->error)),
-							);
-						} else {
-							$deferred->resolve(true);
-						}
-					} catch (Utils\JsonException $ex) {
+						$deferred->resolve($this->parseGetDeviceInfo($request, $response));
+					} catch (Throwable $ex) {
 						$deferred->reject($ex);
 					}
 				})
@@ -350,11 +377,7 @@ final class LanApi
 			return $deferred->promise();
 		}
 
-		if ($result === false) {
-			throw new Exceptions\LanApiCall('Could send data to cloud server');
-		}
-
-		return true;
+		return $this->parseGetDeviceInfo($request, $result);
 	}
 
 	/**
@@ -362,15 +385,14 @@ final class LanApi
 	 *
 	 * @throws Exceptions\LanApiCall
 	 */
-	public function setDeviceStatus(
+	public function setDeviceState(
 		string $id,
-		string|null $key,
 		string $ipAddress,
 		int $port,
 		string $parameter,
 		string|int|float|bool $value,
 		string|null $group = null,
-		int|null $index = null,
+		int|null $outlet = null,
 		bool $async = true,
 	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|bool
 	{
@@ -378,11 +400,14 @@ final class LanApi
 
 		$params = new stdClass();
 
-		if ($group !== null && $index !== null) {
-			$params->{$group} = new stdClass();
-			$params->{$group}->{$index} = new stdClass();
-			$params->{$group}->{$index}->{$parameter} = $value;
-			$params->{$group}->{$index}->outlet = $index;
+		if ($group !== null && $outlet !== null) {
+			$item = new stdClass();
+			$item->{$parameter} = $value;
+			$item->outlet = $outlet;
+
+			$params->{$group} = [
+				$item,
+			];
 
 		} else {
 			$params->{$parameter} = $value;
@@ -395,10 +420,14 @@ final class LanApi
 		$payload->data = $params;
 
 		try {
-			if ($key !== null) {
+			if (array_key_exists($id, $this->encodeKeys)) {
 				$iv = random_bytes(16);
 
-				$encrypted = Transformer::encryptMessage(Utils\Json::encode($payload->data), $key, base64_encode($iv));
+				$encrypted = Transformer::encryptMessage(
+					Utils\Json::encode($payload->data),
+					$this->encodeKeys[$id],
+					base64_encode($iv),
+				);
 
 				if ($encrypted === false) {
 					if ($async) {
@@ -428,36 +457,24 @@ final class LanApi
 			throw new Exceptions\LanApiCall('Could encode data for request');
 		}
 
-		$result = $this->callRequest(
-			'POST',
-			'http://' . $ipAddress . ':' . $port . '/zeroconf/' . ($group ?? $parameter),
+		$request = $this->createRequest(
+			RequestMethodInterface::METHOD_POST,
+			sprintf('http://%s:%d/zeroconf/%s', $ipAddress, $port, ($group ?? $parameter)),
 			[
 				'Connection' => 'close',
 			],
 			[],
 			$body,
-			$async,
 		);
+
+		$result = $this->callRequest($request, $async);
 
 		if ($result instanceof Promise\PromiseInterface) {
 			$result
-				->then(static function (Message\ResponseInterface $response) use ($deferred, $id, $params): void {
+				->then(function (Message\ResponseInterface $response) use ($deferred, $request): void {
 					try {
-						$result = Utils\Json::decode($response->getBody()->getContents());
-						assert($result instanceof stdClass);
-
-						if (property_exists($result, 'error') && intval($result->error) !== 0) {
-							$deferred->reject(new Exceptions\LanApiCall('Write value to device failed'));
-						} else {
-							$deferred->resolve(new Entities\API\DeviceUpdated(
-								Sonoff\Constants::VALUE_NOT_AVAILABLE,
-								$id,
-								Utils\ArrayHash::from(
-									(array) Utils\Json::decode(Utils\Json::encode($params), Utils\Json::FORCE_ARRAY),
-								),
-							));
-						}
-					} catch (Utils\JsonException $ex) {
+						$deferred->resolve($this->parseSetDeviceState($request, $response));
+					} catch (Throwable $ex) {
 						$deferred->reject($ex);
 					}
 				})
@@ -468,116 +485,228 @@ final class LanApi
 			return $deferred->promise();
 		}
 
-		if ($result === false) {
-			throw new Exceptions\LanApiCall('Could send data to cloud server');
+		return $this->parseSetDeviceState($request, $result);
+	}
+
+	/**
+	 * @throws Exceptions\LanApiCall
+	 */
+	private function parseGetDeviceInfo(
+		Message\RequestInterface $request,
+		Message\ResponseInterface $response,
+	): Entities\API\Lan\DeviceInfo
+	{
+		$body = $this->validateResponseBody($request, $response, self::GET_DEVICE_INFO_MESSAGE_SCHEMA_FILENAME);
+
+		$error = $body->offsetGet('error');
+
+		$data = $body->offsetGet('data');
+		assert($data instanceof Utils\ArrayHash);
+
+		if ($error !== 0) {
+			throw new Exceptions\LanApiCall(
+				sprintf('Reading device info failed: %s', strval($body->offsetGet('message'))),
+				$request,
+				$response,
+				intval($error),
+			);
+		}
+
+		return $this->createEntity(Entities\API\Lan\DeviceInfo::class, $data);
+	}
+
+	/**
+	 * @throws Exceptions\LanApiCall
+	 */
+	private function parseSetDeviceState(
+		Message\RequestInterface $request,
+		Message\ResponseInterface $response,
+	): bool
+	{
+		$body = $this->validateResponseBody($request, $response, self::SET_DEVICE_STATE_MESSAGE_SCHEMA_FILENAME);
+
+		$error = $body->offsetGet('error');
+
+		$data = $body->offsetGet('data');
+		assert($data instanceof Utils\ArrayHash);
+
+		if ($error !== 0) {
+			throw new Exceptions\LanApiCall(
+				sprintf('Setting device state failed: %s', strval($body->offsetGet('message'))),
+				$request,
+				$response,
+				intval($error),
+			);
 		}
 
 		return true;
 	}
 
 	/**
-	 * @param array<string, mixed> $headers
-	 * @param array<string, mixed> $params
+	 * @template T of Entities\API\Entity
 	 *
-	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : Message\ResponseInterface|false)
+	 * @param class-string<T> $entity
+	 *
+	 * @return T
+	 *
+	 * @throws Exceptions\LanApiCall
+	 */
+	private function createEntity(string $entity, Utils\ArrayHash $data): Entities\API\Entity
+	{
+		try {
+			return $this->entityHelper->create(
+				$entity,
+				(array) Utils\Json::decode(Utils\Json::encode($data), Utils\Json::FORCE_ARRAY),
+			);
+		} catch (Exceptions\Runtime $ex) {
+			throw new Exceptions\LanApiCall('Could not map data to entity', null, null, $ex->getCode(), $ex);
+		} catch (Utils\JsonException $ex) {
+			throw new Exceptions\LanApiCall(
+				'Could not create entity from response',
+				null,
+				null,
+				$ex->getCode(),
+				$ex,
+			);
+		}
+	}
+
+	/**
+	 * @return ($throw is true ? Utils\ArrayHash : Utils\ArrayHash|false)
+	 *
+	 * @throws Exceptions\LanApiCall
+	 */
+	private function validateResponseBody(
+		Message\RequestInterface $request,
+		Message\ResponseInterface $response,
+		string $schemaFilename,
+		bool $throw = true,
+	): Utils\ArrayHash|bool
+	{
+		$body = $this->getResponseBody($request, $response);
+
+		try {
+			return $this->schemaValidator->validate(
+				$body,
+				$this->getSchema($schemaFilename),
+			);
+		} catch (MetadataExceptions\Logic | MetadataExceptions\MalformedInput | MetadataExceptions\InvalidData $ex) {
+			if ($throw) {
+				throw new Exceptions\LanApiCall(
+					'Could not validate received response payload',
+					$request,
+					$response,
+					$ex->getCode(),
+					$ex,
+				);
+			}
+
+			return false;
+		}
+	}
+
+	/**
+	 * @throws Exceptions\LanApiCall
+	 */
+	private function getResponseBody(
+		Message\RequestInterface $request,
+		Message\ResponseInterface $response,
+	): string
+	{
+		try {
+			$response->getBody()->rewind();
+
+			return $response->getBody()->getContents();
+		} catch (RuntimeException $ex) {
+			throw new Exceptions\LanApiCall(
+				'Could not get content from response body',
+				$request,
+				$response,
+				$ex->getCode(),
+				$ex,
+			);
+		}
+	}
+
+	/**
+	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : Message\ResponseInterface)
+	 *
+	 * @throws Exceptions\LanApiCall
 	 */
 	private function callRequest(
-		string $method,
-		string $requestPath,
-		array $headers = [],
-		array $params = [],
-		string|null $body = null,
+		Request $request,
 		bool $async = true,
-	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Message\ResponseInterface|false
+	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Message\ResponseInterface
 	{
 		$deferred = new Promise\Deferred();
 
 		$this->logger->debug(sprintf(
 			'Request: method = %s url = %s',
-			$method,
-			$requestPath,
+			$request->getMethod(),
+			$request->getUri(),
 		), [
 			'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
 			'type' => 'lan-api',
 			'request' => [
-				'method' => $method,
-				'url' => $requestPath,
-				'headers' => $headers,
-				'params' => $params,
-				'body' => $body,
-			],
-			'connector' => [
-				'identifier' => $this->identifier,
+				'method' => $request->getMethod(),
+				'url' => strval($request->getUri()),
+				'headers' => $request->getHeaders(),
+				'body' => $request->getContent(),
 			],
 		]);
 
-		if (count($params) > 0) {
-			$requestPath .= '?';
-			$requestPath .= http_build_query($params);
-		}
-
 		if ($async) {
 			try {
-				$request = $this->httpClientFactory->createClient()->request(
-					$method,
-					$requestPath,
-					$headers,
-					$body ?? '',
-				);
-
-				$request
+				$this->httpClientFactory
+					->create()
+					->send($request)
 					->then(
-						function (Message\ResponseInterface $response) use ($deferred, $method, $requestPath, $headers, $params, $body): void {
+						function (Message\ResponseInterface $response) use ($deferred, $request): void {
 							try {
 								$responseBody = $response->getBody()->getContents();
 
 								$response->getBody()->rewind();
 							} catch (RuntimeException $ex) {
-								throw new Exceptions\LanApiCall(
-									'Could not get content from response body',
-									$ex->getCode(),
-									$ex,
+								$deferred->reject(
+									new Exceptions\LanApiCall(
+										'Could not get content from response body',
+										$request,
+										$response,
+										$ex->getCode(),
+										$ex,
+									),
 								);
+
+								return;
 							}
 
 							$this->logger->debug('Received response', [
 								'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
 								'type' => 'lan-api',
 								'request' => [
-									'method' => $method,
-									'url' => $requestPath,
-									'headers' => $headers,
-									'params' => $params,
-									'body' => $body,
+									'method' => $request->getMethod(),
+									'url' => strval($request->getUri()),
+									'headers' => $request->getHeaders(),
+									'body' => $request->getContent(),
 								],
 								'response' => [
-									'status_code' => $response->getStatusCode(),
+									'code' => $response->getStatusCode(),
 									'body' => $responseBody,
-								],
-								'connector' => [
-									'identifier' => $this->identifier,
 								],
 							]);
 
 							$deferred->resolve($response);
 						},
-						function (Throwable $ex) use ($deferred, $method, $requestPath, $params, $body): void {
-							$this->logger->error('Calling api endpoint failed', [
-								'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-								'type' => 'lan-api',
-								'exception' => BootstrapHelpers\Logger::buildException($ex),
-								'request' => [
-									'method' => $method,
-									'url' => $requestPath,
-									'params' => $params,
-									'body' => $body,
-								],
-								'connector' => [
-									'identifier' => $this->identifier,
-								],
-							]);
-
-							$deferred->reject($ex);
+						static function (Throwable $ex) use ($deferred, $request): void {
+							$deferred->reject(
+								new Exceptions\LanApiCall(
+									'Calling api endpoint failed',
+									$request,
+									null,
+									$ex->getCode(),
+									$ex,
+								),
+							);
 						},
 					);
 			} catch (Throwable $ex) {
@@ -585,80 +714,93 @@ final class LanApi
 			}
 
 			return $deferred->promise();
-		} else {
+		}
+
+		try {
+			$response = $this->httpClientFactory
+				->create(false)
+				->send($request);
+
 			try {
-				$response = $this->httpClientFactory->createClient(false)->request(
-					$method,
-					$requestPath,
-					[
-						'headers' => $headers,
-						'body' => $body ?? '',
-					],
+				$responseBody = $response->getBody()->getContents();
+
+				$response->getBody()->rewind();
+			} catch (RuntimeException $ex) {
+				throw new Exceptions\LanApiCall(
+					'Could not get content from response body',
+					$request,
+					$response,
+					$ex->getCode(),
+					$ex,
 				);
-
-				try {
-					$responseBody = $response->getBody()->getContents();
-
-					$response->getBody()->rewind();
-				} catch (RuntimeException $ex) {
-					throw new Exceptions\LanApiCall('Could not get content from response body', $ex->getCode(), $ex);
-				}
-
-				$this->logger->debug('Received response', [
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'lan-api',
-					'request' => [
-						'method' => $method,
-						'url' => $requestPath,
-						'headers' => $headers,
-						'params' => $params,
-						'body' => $body,
-					],
-					'response' => [
-						'status_code' => $response->getStatusCode(),
-						'body' => $responseBody,
-					],
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				]);
-
-				return $response;
-			} catch (GuzzleHttp\Exception\GuzzleException | InvalidArgumentException $ex) {
-				$this->logger->error('Calling api endpoint failed', [
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'lan-api',
-					'exception' => BootstrapHelpers\Logger::buildException($ex),
-					'request' => [
-						'method' => $method,
-						'url' => $requestPath,
-						'params' => $params,
-						'body' => $body,
-					],
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				]);
-
-				return false;
-			} catch (Exceptions\LanApiCall $ex) {
-				$this->logger->error('Received payload is not valid', [
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'lan-api',
-					'exception' => BootstrapHelpers\Logger::buildException($ex),
-					'request' => [
-						'method' => $method,
-						'url' => $requestPath,
-						'params' => $params,
-						'body' => $body,
-					],
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				]);
-
-				return false;
 			}
+
+			$this->logger->debug('Received response', [
+				'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+				'type' => 'lan-api',
+				'request' => [
+					'method' => $request->getMethod(),
+					'url' => strval($request->getUri()),
+					'headers' => $request->getHeaders(),
+					'body' => $request->getContent(),
+				],
+				'response' => [
+					'code' => $response->getStatusCode(),
+					'body' => $responseBody,
+				],
+			]);
+
+			return $response;
+		} catch (GuzzleHttp\Exception\GuzzleException | InvalidArgumentException $ex) {
+			throw new Exceptions\LanApiCall(
+				'Calling api endpoint failed',
+				$request,
+				null,
+				$ex->getCode(),
+				$ex,
+			);
+		}
+	}
+
+	/**
+	 * @throws Exceptions\LanApiCall
+	 */
+	private function getSchema(string $schemaFilename): string
+	{
+		try {
+			$schema = Utils\FileSystem::read(
+				Sonoff\Constants::RESOURCES_FOLDER . DIRECTORY_SEPARATOR . $schemaFilename,
+			);
+		} catch (Nette\IOException) {
+			throw new Exceptions\LanApiCall('Validation schema for response could not be loaded');
+		}
+
+		return $schema;
+	}
+
+	/**
+	 * @param array<string, string|array<string>>|null $headers
+	 * @param array<string, mixed> $params
+	 *
+	 * @throws Exceptions\LanApiCall
+	 */
+	private function createRequest(
+		string $method,
+		string $url,
+		array|null $headers = null,
+		array $params = [],
+		string|null $body = null,
+	): Request
+	{
+		if (count($params) > 0) {
+			$url .= '?';
+			$url .= http_build_query($params);
+		}
+
+		try {
+			return new Request($method, $url, $headers, $body);
+		} catch (Exceptions\InvalidArgument $ex) {
+			throw new Exceptions\LanApiCall('Could not create request instance', null, null, $ex->getCode(), $ex);
 		}
 	}
 

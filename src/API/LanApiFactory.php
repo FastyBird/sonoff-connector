@@ -26,6 +26,6 @@ namespace FastyBird\Connector\Sonoff\API;
 interface LanApiFactory
 {
 
-	public function create(string $identifier): LanApi;
+	public function create(): LanApi;
 
 }

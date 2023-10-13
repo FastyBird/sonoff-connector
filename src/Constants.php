@@ -28,12 +28,18 @@ final class Constants
 
 	public const RESOURCES_FOLDER = __DIR__ . '/../resources';
 
-	public const DEFAULT_APP_ID = 'KOBxGJna5qkk3JLXw3LHLX3wSNiPjAVi';
+	public const COOLKIT_APP_ID = '4s1FXKC9FaGfoqXhmXSJneb3qcm1gOak'; // CoolKit application ID extracted from ha CoolKit addon
 
-	public const DEFAULT_APP_SECRET = '4v0sv6X5IM2ASIBiNDj6kGmSfxo40w7n';
+	public const COOLKIT_APP_SECRET = 'oKvCM06gvwkRbfetd6qWRrbC3rFrbIpV'; // CoolKit application secret extracted from ha CoolKit addon
+
+	public const DEFAULT_APP_ID = 'R8Oq3y0eSZSYdKccHlrQzT1ACCOUT9Gv'; // CoolKit application ID extracted from ha CoolKit addon
+
+	public const DEFAULT_APP_SECRET = '1ve5Qk9GXfUhKAn1svnKwpAlxXkMarru'; // CoolKit application secret extracted from ha CoolKit addon
 
 	public const VALUE_NOT_AVAILABLE = 'N/A';
 
 	public const CHANNEL_NAME = 'channel';
+
+	public const CHANNEL_GROUP = '/^(?P<group>[a-zA-Z]+)(_(?P<outlet>[0-9]+))?$/';
 
 }

@@ -41,5 +41,131 @@
     "data_type": "string",
     "settable": false,
     "queryable": false
+  },
+  "switch": {
+    "group": "switch",
+    "name": "Switch",
+    "type": "channel",
+    "data_type": "switch",
+    "format": [
+      ["switch_on", "on", "on"],
+      ["switch_off", "off", "off"]
+    ],
+    "settable": true,
+    "queryable": false
+  },
+  "ltype": {
+    "group": "light",
+    "name": "Light mode",
+    "type": "channel",
+    "data_type": "enum",
+    "format": ["white", "bright", "read", "computer", "nightLight"],
+    "settable": true,
+    "queryable": false
+  },
+  "white": {
+    "length": 1,
+    "properties": {
+      "br": {
+        "group": "white",
+        "name": "Brightness",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "ct": {
+        "group": "white",
+        "name": "Color temperature",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      }
+    }
+  },
+  "bright": {
+    "length": 1,
+    "properties": {
+      "br": {
+        "group": "bright",
+        "name": "Brightness",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "ct": {
+        "group": "bright",
+        "name": "Color temperature",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      }
+    }
+  },
+  "read": {
+    "length": 1,
+    "properties": {
+      "br": {
+        "group": "read",
+        "name": "Brightness",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "ct": {
+        "group": "read",
+        "name": "Color temperature",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      }
+    }
+  },
+  "computer": {
+    "length": 1,
+    "properties": {
+      "br": {
+        "group": "computer",
+        "name": "Brightness",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "ct": {
+        "group": "computer",
+        "name": "Color temperature",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      }
+    }
+  },
+  "nightLight": {
+    "length": 1,
+    "properties": {
+      "br": {
+        "group": "nightLight",
+        "name": "Brightness",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      },
+      "ct": {
+        "group": "nightLight",
+        "name": "Color temperature",
+        "type": "channel",
+        "data_type": "string",
+        "settable": true,
+        "queryable": false
+      }
+    }
   }
 }

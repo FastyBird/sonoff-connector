@@ -35,10 +35,11 @@
     "settable": false,
     "queryable": false
   },
-  "outlet": {
+  "switches": {
     "length": 4,
     "properties": {
       "switch": {
+        "group": "switch",
         "name": "Switch",
         "type": "channel",
         "data_type": "switch",

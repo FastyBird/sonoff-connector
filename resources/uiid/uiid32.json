@@ -189,6 +189,66 @@
       ],
       "description": "The current electricity consumption value is expressed as a decimal string, accurate to 2 decimal places. Unit: KW.H,Value Range: [0‐50000], e.g. 110.32",
       "default": null
+    },
+    "alarmType": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": ["p", "c", "v", "pc", "pv", "cv", "pcv"]
+        }
+      ],
+      "default": null
+    },
+    "alarmVValue": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer"
+          }
+        }
+      ],
+      "default": null
+    },
+    "alarmCValue": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer"
+          }
+        }
+      ],
+      "default": null
+    },
+    "alarmPValue": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer"
+          }
+        }
+      ],
+      "default": null
     }
   }
 }

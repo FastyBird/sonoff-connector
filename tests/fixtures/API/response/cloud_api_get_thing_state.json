@@ -1,0 +1,141 @@
+{
+  "error": 0,
+  "msg": "",
+  "data": {
+    "thingList": [
+      {
+        "itemType": 1,
+        "itemData": {
+          "name": "Moje zařízení191aa7",
+          "deviceid": "1000191aa7",
+          "apikey": "8afc44f6-49b1-4cc9-8fd2-b5b587682dda",
+          "extra": {
+            "description": "WWJG001083",
+            "brandId": "55e00a982ed643527f31425d",
+            "apmac": "d0:27:00:32:32:9f",
+            "mac": "d0:27:00:32:32:9e",
+            "ui": "四通道开关",
+            "modelInfo": "58e5f2d8baeb368720e25452",
+            "model": "PSF-A04-GL",
+            "manufacturer": "深圳创易智能系统有限公司",
+            "uiid": 9
+          },
+          "brandName": "ITEAD",
+          "brandLogo": "https://eu-ota.coolkit.cc/logo/cGgPZaVvWc9EjvwAjrx6avpM3MZYXtuE.png",
+          "showBrand": false,
+          "productModel": "Sonoff 4CH Pro",
+          "tags": {
+            "disable_timers": [
+              {
+                "mId": "6b3107b4-b2f2-4b0b-a037-d904956ef9a4",
+                "type": "once",
+                "at": "2017-12-14T07:32:00.000Z",
+                "coolkit_timer_type": "delay",
+                "enabled": 0,
+                "do": {
+                  "switch": "off",
+                  "outlet": 3
+                },
+                "period": "1"
+              },
+              {
+                "mId": "9feb21ee-5454-4b25-b143-c4ccd7dda7e2",
+                "type": "once",
+                "at": "2017-12-14T07:33:00.000Z",
+                "coolkit_timer_type": "delay",
+                "enabled": 0,
+                "do": {
+                  "switch": "on",
+                  "outlet": 3
+                },
+                "period": "1"
+              }
+            ]
+          },
+          "devConfig": {},
+          "settings": {
+            "opsNotify": 0,
+            "opsHistory": 1,
+            "alarmNotify": 1
+          },
+          "family": {
+            "familyid": "62483473418e0a00093dbf66",
+            "index": 4
+          },
+          "shareTo": [],
+          "devicekey": "55f2f10b-1b82-4c31-8aeb-428385bc20bb",
+          "online": false,
+          "params": {
+            "rssi": -42,
+            "staMac": "60:01:94:98:2F:05",
+            "password": "edgetipdo",
+            "timers": [
+              {
+                "coolkit_timer_type": "delay",
+                "at": "2017-12-14T07:33:00.000Z",
+                "mId": "9feb21ee-5454-4b25-b143-c4ccd7dda7e2",
+                "enabled": 1,
+                "do": {
+                  "switch": "on",
+                  "outlet": 3
+                },
+                "period": "1",
+                "type": "once"
+              }
+            ],
+            "switches": [
+              {
+                "switch": "off",
+                "outlet": 0
+              },
+              {
+                "switch": "off",
+                "outlet": 1
+              },
+              {
+                "switch": "off",
+                "outlet": 2
+              },
+              {
+                "switch": "on",
+                "outlet": 3
+              }
+            ],
+            "fwVersion": "2.0.1",
+            "configure": [
+              {
+                "startup": "on",
+                "outlet": 0
+              },
+              {
+                "startup": "on",
+                "outlet": 1
+              },
+              {
+                "startup": "on",
+                "outlet": 2
+              },
+              {
+                "startup": "on",
+                "outlet": 3
+              }
+            ],
+            "ssid": "FastyBird.com"
+          },
+          "denyFeatures": [
+            "localCtl",
+            "mutexLock",
+            "pulse",
+            "sled",
+            "allOnOff"
+          ],
+          "isSupportGroup": true,
+          "isSupportedOnMP": true,
+          "isSupportChannelSplit": true,
+          "deviceFeature": {}
+        },
+        "index": 4
+      }
+    ]
+  }
+}

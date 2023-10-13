@@ -29,7 +29,6 @@ interface CloudApiFactory
 {
 
 	public function create(
-		string $identifier,
 		string $username,
 		string $password,
 		string $appId,

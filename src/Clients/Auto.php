@@ -15,10 +15,9 @@
 
 namespace FastyBird\Connector\Sonoff\Clients;
 
-use FastyBird\Connector\Sonoff\API;
+use BadMethodCallException;
 use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Exceptions;
-use FastyBird\Connector\Sonoff\Writers;
 use FastyBird\DateTimeFactory;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
@@ -45,9 +44,6 @@ final class Auto extends ClientProcess implements Client
 
 	use Nette\SmartObject;
 
-	/** @var array<string> */
-	protected array $ignoredLanDevices = [];
-
 	private Lan $lanClient;
 
 	private Cloud $cloudClient;
@@ -60,9 +56,8 @@ final class Auto extends ClientProcess implements Client
 		DevicesUtilities\ChannelPropertiesStates $channelPropertiesStates,
 		DateTimeFactory\Factory $dateTimeFactory,
 		EventLoop\LoopInterface $eventLoop,
-		LanFactory $lanClientFactory,
-		CloudFactory $cloudClientFactory,
-		private readonly Writers\Writer $writer,
+		private readonly LanFactory $lanClientFactory,
+		private readonly CloudFactory $cloudClientFactory,
 	)
 	{
 		parent::__construct(
@@ -74,12 +69,10 @@ final class Auto extends ClientProcess implements Client
 			$dateTimeFactory,
 			$eventLoop,
 		);
-
-		$this->lanClient = $lanClientFactory->create($this->connector, true);
-		$this->cloudClient = $cloudClientFactory->create($this->connector, true);
 	}
 
 	/**
+	 * @throws BadMethodCallException
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\CloudApiCall
 	 * @throws InvalidArgumentException
@@ -89,6 +82,9 @@ final class Auto extends ClientProcess implements Client
 	 */
 	public function connect(): void
 	{
+		$this->lanClient = $this->lanClientFactory->create($this->connector, true);
+		$this->cloudClient = $this->cloudClientFactory->create($this->connector, true);
+
 		$this->processedDevices = [];
 		$this->processedDevicesCommands = [];
 
@@ -103,10 +99,14 @@ final class Auto extends ClientProcess implements Client
 
 		$this->cloudClient->connect();
 		$this->lanClient->connect();
-
-		$this->writer->connect($this->connector, $this);
 	}
 
+	/**
+	 * @throws DevicesExceptions\InvalidState
+	 * @throws Exceptions\InvalidState
+	 * @throws MetadataExceptions\InvalidArgument
+	 * @throws MetadataExceptions\InvalidState
+	 */
 	public function disconnect(): void
 	{
 		if ($this->handlerTimer !== null) {
@@ -117,58 +117,14 @@ final class Auto extends ClientProcess implements Client
 
 		$this->cloudClient->disconnect();
 		$this->lanClient->disconnect();
-
-		$this->writer->disconnect($this->connector, $this);
 	}
 
 	/**
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\InvalidState
 	 * @throws Exceptions\LanApiCall
-	 * @throws MetadataExceptions\InvalidArgument
-	 * @throws MetadataExceptions\InvalidState
-	 */
-	protected function writeState(
-		Entities\SonoffDevice $device,
-		string $parameter,
-		string|int|float|bool $value,
-		string|null $group = null,
-		int|null $index = null,
-	): Promise\PromiseInterface
-	{
-		$deferred = new Promise\Deferred();
-
-		if ($device->getIpAddress() !== null) {
-			$this->lanClient->writeState($device, $parameter, $value, $group, $index)
-				->then(static function () use ($deferred): void {
-					$deferred->resolve(true);
-				})
-				->otherwise(function () use ($deferred, $device, $parameter, $value, $group, $index): void {
-					$this->cloudClient->writeState($device, $parameter, $value, $group, $index)
-						->then(static function () use ($deferred): void {
-							$deferred->resolve(true);
-						})
-						->otherwise(static function (Throwable $ex) use ($deferred): void {
-							$deferred->reject($ex);
-						});
-				});
-		} else {
-			$this->cloudClient->writeState($device, $parameter, $value, $group, $index)
-				->then(static function () use ($deferred): void {
-					$deferred->resolve(true);
-				})
-				->otherwise(static function (Throwable $ex) use ($deferred): void {
-					$deferred->reject($ex);
-				});
-		}
-
-		return $deferred->promise();
-	}
-
-	/**
-	 * @throws DevicesExceptions\InvalidState
-	 * @throws Exceptions\CloudApiCall
-	 * @throws Exceptions\LanApiCall
+	 * @throws Exceptions\Runtime
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
 	 */
@@ -176,27 +132,12 @@ final class Auto extends ClientProcess implements Client
 	{
 		$deferred = new Promise\Deferred();
 
-		if ($device->getIpAddress() !== null && !in_array($device->getPlainId(), $this->ignoredDevices, true)) {
+		if ($device->getIpAddress() !== null && !in_array($device->getId()->toString(), $this->ignoredDevices, true)) {
 			$this->lanClient->readInformation($device)
 				->then(static function () use ($deferred): void {
 					$deferred->resolve(true);
 				})
 				->otherwise(function (Throwable $ex) use ($deferred, $device): void {
-					if (
-						in_array(
-							$ex->getCode(),
-							[
-								API\LanApi::ERROR_INVALID_JSON,
-								API\LanApi::ERROR_UNAUTHORIZED,
-								API\LanApi::ERROR_DEVICE_ID_INVALID,
-								API\LanApi::ERROR_INVALID_PARAMETER,
-							],
-							true,
-						)
-					) {
-						$this->ignoredLanDevices[] = $device->getPlainId();
-					}
-
 					$this->cloudClient->readInformation($device)
 						->then(static function () use ($deferred): void {
 							$deferred->resolve(true);
@@ -219,13 +160,17 @@ final class Auto extends ClientProcess implements Client
 	}
 
 	/**
+	 * @throws DevicesExceptions\InvalidState
+	 * @throws Exceptions\InvalidState
 	 * @throws Exceptions\CloudApiCall
+	 * @throws MetadataExceptions\InvalidArgument
+	 * @throws MetadataExceptions\InvalidState
 	 */
-	protected function readStatus(Entities\SonoffDevice $device): Promise\PromiseInterface
+	protected function readState(Entities\SonoffDevice $device): Promise\PromiseInterface
 	{
 		$deferred = new Promise\Deferred();
 
-		$this->cloudClient->readStatus($device)
+		$this->cloudClient->readState($device)
 			->then(static function () use ($deferred): void {
 				$deferred->resolve(true);
 			})

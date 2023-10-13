@@ -32,21 +32,30 @@ class ConnectorPropertyIdentifier extends Consistence\Enum\Enum
 	/**
 	 * Define device states
 	 */
-	public const IDENTIFIER_CLIENT_MODE = 'mode';
+	public const CLIENT_MODE = 'mode';
 
-	public const IDENTIFIER_USERNAME = 'username';
+	public const USERNAME = 'username';
 
-	public const IDENTIFIER_PASSWORD = 'password';
+	public const PASSWORD = 'password';
 
-	public const IDENTIFIER_REGION = 'region';
+	public const REGION = 'region';
 
-	public const IDENTIFIER_APP_ID = 'app_id';
+	public const APP_ID = 'app_id';
 
-	public const IDENTIFIER_APP_SECRET = 'app_secret';
+	public const APP_SECRET = 'app_secret';
+
+	public const GATEWAY_ID = 'gateway_id';
+
+	public const GATEWAY_API_KEY = 'gateway_api_key';
+
+	public function getValue(): string
+	{
+		return strval(parent::getValue());
+	}
 
 	public function __toString(): string
 	{
-		return strval(self::getValue());
+		return self::getValue();
 	}
 
 }

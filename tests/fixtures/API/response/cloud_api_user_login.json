@@ -1,0 +1,24 @@
+{
+  "error": 0,
+  "msg": "",
+  "data": {
+    "user": {
+      "timezone": {
+        "id": "Europe/Prague",
+        "offset": 2
+      },
+      "accountLevel": 10,
+      "countryCode": "+420",
+      "email": "john@doe.com",
+      "apikey": "ef5e67c2-bc35-47e8-a9ab-4d39469d6146",
+      "accountConsult": false,
+      "appForumEnterHide": true,
+      "appVersion": "4.35.0",
+      "denyRecharge": false,
+      "ipCountry": "CZ"
+    },
+    "at": "6adbb6150d2e0a039ff7fdbf4c4db4f9211e6362",
+    "rt": "4d719f56c01932097609d25603fd1b2c8f3e0bb6",
+    "region": "eu"
+  }
+}

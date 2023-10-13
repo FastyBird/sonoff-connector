@@ -1,0 +1,168 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "error": {
+      "type": "integer"
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "switch": {
+          "type": "string",
+          "enum": ["on", "off"]
+        },
+        "startup": {
+          "type": "string",
+          "enum": ["on", "off", "stay"]
+        },
+        "pulse": {
+          "type": "string",
+          "enum": ["on", "off"]
+        },
+        "pulseWidth": {
+          "type": "integer",
+          "minimum": 500,
+          "maximum": 3599500,
+          "multipleOf": 500
+        },
+        "ssid": {
+          "type": "string"
+        },
+        "otaUnlock": {
+          "type": "boolean"
+        },
+        "fwVersion": {
+          "type": "string"
+        },
+        "deviceid": {
+          "type": "string"
+        },
+        "bssid": {
+          "type": "string"
+        },
+        "signalStrength": {
+          "type": "integer"
+        },
+        "brightness": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "mode": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "brightmin": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 254
+        },
+        "brightmax": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 255
+        },
+        "sledOnline": {
+          "type": "string",
+          "enum": ["on", "off"]
+        },
+        "switches": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "properties": {
+              "switch": {
+                "type": "string",
+                "enum": ["on", "off"]
+              },
+              "outlet": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3
+              }
+            },
+            "required": [
+              "switch",
+              "outlet"
+            ]
+          }
+        },
+        "configure": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "properties": {
+              "startup": {
+                "type": "string",
+                "enum": ["on", "off", "stay"]
+              },
+              "outlet": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3
+              }
+            },
+            "required": [
+              "startup",
+              "outlet"
+            ]
+          }
+        },
+        "pulses": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "properties": {
+              "pulse": {
+                "type": "string",
+                "enum": ["on", "off"]
+              },
+              "switch": {
+                "type": "string",
+                "enum": ["on", "off"]
+              },
+              "width": {
+                "type": "integer",
+                "minimum": 500,
+                "maximum": 3599500,
+                "multipleOf": 500
+              },
+              "outlet": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3
+              }
+            },
+            "required": [
+              "pulse",
+              "switch",
+              "width",
+              "outlet"
+            ]
+          }
+        }
+      },
+      "required": [
+        "ssid",
+        "otaUnlock",
+        "fwVersion",
+        "deviceid",
+        "bssid",
+        "signalStrength"
+      ]
+    },
+    "seq" : {
+      "type" : "integer"
+    }
+  },
+  "required" : [
+    "error",
+    "data",
+    "seq"
+  ]
+}

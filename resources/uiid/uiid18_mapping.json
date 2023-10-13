@@ -36,6 +36,7 @@
     "queryable": false
   },
   "dusty": {
+    "group": "sensor",
     "name": "Dusty",
     "type": "channel",
     "data_type": "uchar",
@@ -44,6 +45,7 @@
     "queryable": false
   },
   "noise": {
+    "group": "sensor",
     "name": "Noise",
     "type": "channel",
     "data_type": "uchar",
@@ -52,6 +54,7 @@
     "queryable": false
   },
   "light": {
+    "group": "sensor",
     "name": "Light",
     "type": "channel",
     "data_type": "uchar",
@@ -60,6 +63,7 @@
     "queryable": false
   },
   "temperature": {
+    "group": "sensor",
     "name": "Temperature",
     "type": "channel",
     "data_type": "uchar",
@@ -67,6 +71,7 @@
     "queryable": false
   },
   "humidity": {
+    "group": "sensor",
     "name": "Humidity",
     "type": "channel",
     "data_type": "uchar",

@@ -36,6 +36,7 @@
     "queryable": false
   },
   "state": {
+    "group": "light",
     "name": "Switch",
     "type": "channel",
     "data_type": "switch",
@@ -47,6 +48,7 @@
     "queryable": false
   },
   "channel0": {
+    "group": "light",
     "name": "Cold light brightness",
     "type": "channel",
     "data_type": "uchar",
@@ -55,6 +57,7 @@
     "queryable": false
   },
   "channel1": {
+    "group": "light",
     "name": "Warm light brightness",
     "type": "channel",
     "data_type": "uchar",
@@ -63,6 +66,7 @@
     "queryable": false
   },
   "type": {
+    "group": "light",
     "name": "Light type info",
     "type": "channel",
     "data_type": "enum",

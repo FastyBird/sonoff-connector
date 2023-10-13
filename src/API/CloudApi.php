@@ -19,19 +19,23 @@ use DateTimeInterface;
 use Evenement;
 use FastyBird\Connector\Sonoff;
 use FastyBird\Connector\Sonoff\Entities;
+use FastyBird\Connector\Sonoff\Entities\API\Cloud\DeviceState;
+use FastyBird\Connector\Sonoff\Entities\API\Cloud\Family;
+use FastyBird\Connector\Sonoff\Entities\API\Cloud\Things;
 use FastyBird\Connector\Sonoff\Exceptions;
+use FastyBird\Connector\Sonoff\Helpers;
+use FastyBird\Connector\Sonoff\Services;
 use FastyBird\Connector\Sonoff\Types;
 use FastyBird\DateTimeFactory;
-use FastyBird\Library\Bootstrap\Helpers as BootstrapHelpers;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Schemas as MetadataSchemas;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
+use Fig\Http\Message\RequestMethodInterface;
 use GuzzleHttp;
 use InvalidArgumentException;
 use Nette;
 use Nette\Utils;
 use Psr\Http\Message;
-use Psr\Log;
 use React\Promise;
 use RuntimeException;
 use stdClass;
@@ -67,19 +71,27 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 	private const FAMILY_API_ENDPOINT = '/v2/family';
 
-	private const DEVICES_THING_API_ENDPOINT = '/v2/device/thing';
+	private const FAMILY_THINGS_API_ENDPOINT = '/v2/device/thing';
 
-	private const DEVICES_THING_STATUS_API_ENDPOINT = '/v2/device/thing/status';
+	private const THING_STATE_API_ENDPOINT = '/v2/device/thing/status';
+
+	private const ADD_THIRD_PARTY_DEVICE_API_ENDPOINT = '/v2/device/inherit/add-partner-device';
 
 	private const USER_LOGIN_MESSAGE_SCHEMA_FILENAME = 'cloud_api_user_login.json';
 
 	private const USER_REFRESH_MESSAGE_SCHEMA_FILENAME = 'cloud_api_user_refresh.json';
 
-	private const FAMILY_MESSAGE_SCHEMA_FILENAME = 'cloud_api_family.json';
+	private const GET_FAMILY_MESSAGE_SCHEMA_FILENAME = 'cloud_api_get_family.json';
 
-	private const DEVICES_THING_MESSAGE_SCHEMA_FILENAME = 'cloud_api_device_thing.json';
+	private const GET_FAMILY_THINGS_MESSAGE_SCHEMA_FILENAME = 'cloud_api_get_family_things.json';
 
-	private const DEVICES_THING_STATUS_MESSAGE_SCHEMA_FILENAME = 'cloud_api_device_thing_status.json';
+	private const GET_THING_STATE_MESSAGE_SCHEMA_FILENAME = 'cloud_api_get_thing_state.json';
+
+	private const SET_THING_STATE_MESSAGE_SCHEMA_FILENAME = 'cloud_api_set_thing_state.json';
+
+	private const ADD_THIRD_PARTY_DEVICE_MESSAGE_SCHEMA_FILENAME = 'cloud_api_add_third_party_device.json';
+
+	private const API_ERROR = 'cloud_api_error.json';
 
 	private const ACCESS_TOKEN_VALID_TIME = 30 * 24 * 60 * 60;
 
@@ -87,26 +99,26 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 	private string|null $refreshToken = null;
 
-	private Entities\API\User|null $user = null;
+	private Entities\API\Cloud\User|null $user = null;
 
 	private DateTimeInterface|null $tokensAcquired = null;
 
 	private Types\Region $region;
 
 	public function __construct(
-		private readonly string $identifier,
 		private readonly string $username,
 		private readonly string $password,
 		private readonly string $appId,
 		private readonly string $appSecret,
-		private readonly HttpClientFactory $httpClientFactory,
+		private readonly Services\HttpClientFactory $httpClientFactory,
+		private readonly Helpers\Entity $entityHelper,
+		private readonly Sonoff\Logger $logger,
 		private readonly MetadataSchemas\Validator $schemaValidator,
 		private readonly DateTimeFactory\Factory $dateTimeFactory,
 		Types\Region|null $region = null,
-		private readonly Log\LoggerInterface $logger = new Log\NullLogger(),
 	)
 	{
-		$this->region = $region ?? Types\Region::get(Types\Region::REGION_EUROPE);
+		$this->region = $region ?? Types\Region::get(Types\Region::EUROPE);
 	}
 
 	/**
@@ -152,19 +164,19 @@ final class CloudApi implements Evenement\EventEmitterInterface
 		return $this->region;
 	}
 
-	public function getUser(): Entities\API\User|null
+	public function getUser(): Entities\API\Cloud\User|null
 	{
 		return $this->user;
 	}
 
 	/**
-	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : Entities\API\Homes)
+	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : Family)
 	 *
 	 * @throws Exceptions\CloudApiCall
 	 */
-	public function getHomes(
+	public function getFamily(
 		bool $async = true,
-	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Entities\API\Homes
+	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Entities\API\Cloud\Family
 	{
 		if (!$this->isConnected()) {
 			$this->connect();
@@ -172,41 +184,33 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 		$deferred = new Promise\Deferred();
 
-		$result = $this->callRequest(
-			'GET',
-			self::FAMILY_API_ENDPOINT,
-			[
-				'Authorization' => 'Bearer ' . $this->accessToken,
-				'Content-Type' => 'application/json',
-			],
-			[],
-			null,
-			$async,
-		);
+		try {
+			$request = $this->createRequest(
+				RequestMethodInterface::METHOD_GET,
+				self::FAMILY_API_ENDPOINT,
+				[
+					'Authorization' => 'Bearer ' . $this->accessToken,
+					'Content-Type' => 'application/json',
+				],
+			);
+		} catch (Exceptions\CloudApiCall $ex) {
+			if ($async) {
+				return Promise\reject($ex);
+			}
+
+			throw $ex;
+		}
+
+		$result = $this->callRequest($request, $async);
 
 		if ($result instanceof Promise\PromiseInterface) {
 			$result
-				->then(function (Message\ResponseInterface $response) use ($deferred): void {
+				->then(function (Message\ResponseInterface $response) use ($deferred, $request): void {
 					try {
-						$responseBody = $response->getBody()->getContents();
-					} catch (RuntimeException $ex) {
-						$deferred->reject(
-							new Exceptions\CloudApiCall(
-								'Could not get content from response body',
-								$ex->getCode(),
-								$ex,
-							),
-						);
-
-						return;
+						$deferred->resolve($this->parseGetFamily($request, $response));
+					} catch (Throwable $ex) {
+						$deferred->reject($ex);
 					}
-
-					$entity = $this->parseHomesResponse(
-						$responseBody,
-						self::FAMILY_MESSAGE_SCHEMA_FILENAME,
-					);
-
-					$deferred->resolve($entity);
 				})
 				->otherwise(static function (Throwable $ex) use ($deferred): void {
 					$deferred->reject($ex);
@@ -215,31 +219,18 @@ final class CloudApi implements Evenement\EventEmitterInterface
 			return $deferred->promise();
 		}
 
-		if ($result === false) {
-			throw new Exceptions\CloudApiCall('Could load data from cloud server');
-		}
-
-		try {
-			$responseBody = $result->getBody()->getContents();
-		} catch (RuntimeException $ex) {
-			throw new Exceptions\CloudApiCall('Could not get content from response body', $ex->getCode(), $ex);
-		}
-
-		return $this->parseHomesResponse(
-			$responseBody,
-			self::FAMILY_MESSAGE_SCHEMA_FILENAME,
-		);
+		return $this->parseGetFamily($request, $result);
 	}
 
 	/**
-	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : Entities\API\ThingList)
+	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : Things)
 	 *
 	 * @throws Exceptions\CloudApiCall
 	 */
-	public function getHomeThings(
-		string $home,
+	public function getFamilyThings(
+		string $familyId,
 		bool $async = true,
-	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Entities\API\ThingList
+	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Entities\API\Cloud\Things
 	{
 		if (!$this->isConnected()) {
 			$this->connect();
@@ -247,44 +238,37 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 		$deferred = new Promise\Deferred();
 
-		$result = $this->callRequest(
-			'GET',
-			self::DEVICES_THING_API_ENDPOINT,
-			[
-				'Authorization' => 'Bearer ' . $this->accessToken,
-				'Content-Type' => 'application/json',
-			],
-			[
-				'num' => 0,
-				'familyId' => $home,
-			],
-			null,
-			$async,
-		);
+		try {
+			$request = $this->createRequest(
+				RequestMethodInterface::METHOD_GET,
+				self::FAMILY_THINGS_API_ENDPOINT,
+				[
+					'Authorization' => 'Bearer ' . $this->accessToken,
+					'Content-Type' => 'application/json',
+				],
+				[
+					'num' => 0,
+					'familyId' => $familyId,
+				],
+			);
+		} catch (Exceptions\CloudApiCall $ex) {
+			if ($async) {
+				return Promise\reject($ex);
+			}
+
+			throw $ex;
+		}
+
+		$result = $this->callRequest($request, $async);
 
 		if ($result instanceof Promise\PromiseInterface) {
 			$result
-				->then(function (Message\ResponseInterface $response) use ($deferred): void {
+				->then(function (Message\ResponseInterface $response) use ($deferred, $request): void {
 					try {
-						$responseBody = $response->getBody()->getContents();
-					} catch (RuntimeException $ex) {
-						$deferred->reject(
-							new Exceptions\CloudApiCall(
-								'Could not get content from response body',
-								$ex->getCode(),
-								$ex,
-							),
-						);
-
-						return;
+						$deferred->resolve($this->parseGetFamilyThings($request, $response));
+					} catch (Throwable $ex) {
+						$deferred->reject($ex);
 					}
-
-					$entity = $this->parseThingsResponse(
-						$responseBody,
-						self::DEVICES_THING_MESSAGE_SCHEMA_FILENAME,
-					);
-
-					$deferred->resolve($entity);
 				})
 				->otherwise(static function (Throwable $ex) use ($deferred): void {
 					$deferred->reject($ex);
@@ -293,32 +277,19 @@ final class CloudApi implements Evenement\EventEmitterInterface
 			return $deferred->promise();
 		}
 
-		if ($result === false) {
-			throw new Exceptions\CloudApiCall('Could load data from cloud server');
-		}
-
-		try {
-			$responseBody = $result->getBody()->getContents();
-		} catch (RuntimeException $ex) {
-			throw new Exceptions\CloudApiCall('Could not get content from response body', $ex->getCode(), $ex);
-		}
-
-		return $this->parseThingsResponse(
-			$responseBody,
-			self::DEVICES_THING_MESSAGE_SCHEMA_FILENAME,
-		);
+		return $this->parseGetFamilyThings($request, $result);
 	}
 
 	/**
-	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : ($itemType is 3 ? Entities\API\Group|false : Entities\API\Device|false))
+	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : ($itemType is 3 ? Entities\API\Cloud\Group : Entities\API\Cloud\Device))
 	 *
 	 * @throws Exceptions\CloudApiCall
 	 */
-	public function getSpecifiedThings(
+	public function getThing(
 		string $id,
 		int $itemType = 1,
 		bool $async = true,
-	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Entities\API\Device|Entities\API\Group|false
+	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Entities\API\Cloud\Device|Entities\API\Cloud\Group
 	{
 		if (!$this->isConnected()) {
 			$this->connect();
@@ -334,50 +305,56 @@ final class CloudApi implements Evenement\EventEmitterInterface
 		$payload->thingList = [$item];
 
 		try {
-			$result = $this->callRequest(
-				'POST',
-				self::DEVICES_THING_API_ENDPOINT,
+			$body = Utils\Json::encode($payload);
+		} catch (Utils\JsonException $ex) {
+			if ($async) {
+				return Promise\reject(new Exceptions\CloudApiCall(
+					'Message body could not be encoded',
+					null,
+					null,
+					$ex->getCode(),
+					$ex,
+				));
+			}
+
+			throw new Exceptions\CloudApiCall(
+				'Message body could not be encoded',
+				null,
+				null,
+				$ex->getCode(),
+				$ex,
+			);
+		}
+
+		try {
+			$request = $this->createRequest(
+				RequestMethodInterface::METHOD_POST,
+				self::FAMILY_THINGS_API_ENDPOINT,
 				[
 					'Authorization' => 'Bearer ' . $this->accessToken,
 					'Content-Type' => 'application/json',
 				],
 				[],
-				Utils\Json::encode($payload),
-				$async,
+				$body,
 			);
-		} catch (Utils\JsonException) {
+		} catch (Exceptions\CloudApiCall $ex) {
 			if ($async) {
-				return Promise\reject(new Exceptions\CloudApiCall('Could prepare data for request'));
+				return Promise\reject($ex);
 			}
 
-			throw new Exceptions\CloudApiCall('Could prepare data for request');
+			throw $ex;
 		}
+
+		$result = $this->callRequest($request, $async);
 
 		if ($result instanceof Promise\PromiseInterface) {
 			$result
-				->then(function (Message\ResponseInterface $response) use ($deferred, $id, $itemType): void {
+				->then(function (Message\ResponseInterface $response) use ($deferred, $request): void {
 					try {
-						$responseBody = $response->getBody()->getContents();
-					} catch (RuntimeException $ex) {
-						$deferred->reject(
-							new Exceptions\CloudApiCall(
-								'Could not get content from response body',
-								$ex->getCode(),
-								$ex,
-							),
-						);
-
-						return;
+						$deferred->resolve($this->parseGetThing($request, $response));
+					} catch (Throwable $ex) {
+						$deferred->reject($ex);
 					}
-
-					$entity = $this->parseThingResponse(
-						$id,
-						$itemType,
-						$responseBody,
-						self::DEVICES_THING_MESSAGE_SCHEMA_FILENAME,
-					);
-
-					$deferred->resolve($entity);
 				})
 				->otherwise(static function (Throwable $ex) use ($deferred): void {
 					$deferred->reject($ex);
@@ -386,34 +363,19 @@ final class CloudApi implements Evenement\EventEmitterInterface
 			return $deferred->promise();
 		}
 
-		if ($result === false) {
-			throw new Exceptions\CloudApiCall('Could load data from cloud server');
-		}
-
-		try {
-			$responseBody = $result->getBody()->getContents();
-		} catch (RuntimeException $ex) {
-			throw new Exceptions\CloudApiCall('Could not get content from response body', $ex->getCode(), $ex);
-		}
-
-		return $this->parseThingResponse(
-			$id,
-			$itemType,
-			$responseBody,
-			self::DEVICES_THING_MESSAGE_SCHEMA_FILENAME,
-		);
+		return $this->parseGetThing($request, $result);
 	}
 
 	/**
-	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : Entities\API\DeviceStatus)
+	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : DeviceState)
 	 *
 	 * @throws Exceptions\CloudApiCall
 	 */
-	public function getThingStatus(
+	public function getThingState(
 		string $id,
 		int $itemType = 1,
 		bool $async = true,
-	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Entities\API\DeviceStatus
+	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Entities\API\Cloud\DeviceState
 	{
 		if (!$this->isConnected()) {
 			$this->connect();
@@ -421,46 +383,37 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 		$deferred = new Promise\Deferred();
 
-		$result = $this->callRequest(
-			'GET',
-			self::DEVICES_THING_STATUS_API_ENDPOINT,
-			[
-				'Authorization' => 'Bearer ' . $this->accessToken,
-				'Content-Type' => 'application/json',
-			],
-			[
-				'type' => $itemType,
-				'id' => $id,
-			],
-			null,
-			$async,
-		);
+		try {
+			$request = $this->createRequest(
+				RequestMethodInterface::METHOD_GET,
+				self::THING_STATE_API_ENDPOINT,
+				[
+					'Authorization' => 'Bearer ' . $this->accessToken,
+					'Content-Type' => 'application/json',
+				],
+				[
+					'type' => $itemType,
+					'id' => $id,
+				],
+			);
+		} catch (Exceptions\CloudApiCall $ex) {
+			if ($async) {
+				return Promise\reject($ex);
+			}
+
+			throw $ex;
+		}
+
+		$result = $this->callRequest($request, $async);
 
 		if ($result instanceof Promise\PromiseInterface) {
 			$result
-				->then(function (Message\ResponseInterface $response) use ($deferred, $id, $itemType): void {
+				->then(function (Message\ResponseInterface $response) use ($deferred, $request, $id): void {
 					try {
-						$responseBody = $response->getBody()->getContents();
-					} catch (RuntimeException $ex) {
-						$deferred->reject(
-							new Exceptions\CloudApiCall(
-								'Could not get content from response body',
-								$ex->getCode(),
-								$ex,
-							),
-						);
-
-						return;
+						$deferred->resolve($this->parseGetThingState($id, $request, $response));
+					} catch (Throwable $ex) {
+						$deferred->reject($ex);
 					}
-
-					$entity = $this->parseThingStatusResponse(
-						$id,
-						$itemType,
-						$responseBody,
-						self::DEVICES_THING_STATUS_MESSAGE_SCHEMA_FILENAME,
-					);
-
-					$deferred->resolve($entity);
 				})
 				->otherwise(static function (Throwable $ex) use ($deferred): void {
 					$deferred->reject($ex);
@@ -469,22 +422,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 			return $deferred->promise();
 		}
 
-		if ($result === false) {
-			throw new Exceptions\CloudApiCall('Could load data from cloud server');
-		}
-
-		try {
-			$responseBody = $result->getBody()->getContents();
-		} catch (RuntimeException $ex) {
-			throw new Exceptions\CloudApiCall('Could not get content from response body', $ex->getCode(), $ex);
-		}
-
-		return $this->parseThingStatusResponse(
-			$id,
-			$itemType,
-			$responseBody,
-			self::DEVICES_THING_STATUS_MESSAGE_SCHEMA_FILENAME,
-		);
+		return $this->parseGetThingState($id, $request, $result);
 	}
 
 	/**
@@ -492,12 +430,12 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	 *
 	 * @throws Exceptions\CloudApiCall
 	 */
-	public function setThingStatus(
+	public function setThingState(
 		string $id,
 		string $parameter,
 		string|int|float|bool $value,
 		string|null $group = null,
-		int|null $index = null,
+		int|null $outlet = null,
 		int $itemType = 1,
 		bool $async = true,
 	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|bool
@@ -510,11 +448,14 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 		$params = new stdClass();
 
-		if ($group !== null && $index !== null) {
-			$params->{$group} = new stdClass();
-			$params->{$group}->{$index} = new stdClass();
-			$params->{$group}->{$index}->{$parameter} = $value;
-			$params->{$group}->{$index}->outlet = $index;
+		if ($group !== null && $outlet !== null) {
+			$item = new stdClass();
+			$item->{$parameter} = $value;
+			$item->outlet = $outlet;
+
+			$params->{$group} = [
+				$item,
+			];
 
 		} else {
 			$params->{$parameter} = $value;
@@ -526,29 +467,56 @@ final class CloudApi implements Evenement\EventEmitterInterface
 		$payload->params = $params;
 
 		try {
-			$result = $this->callRequest(
-				'POST',
-				self::DEVICES_THING_STATUS_API_ENDPOINT,
+			$body = Utils\Json::encode($payload);
+		} catch (Utils\JsonException $ex) {
+			if ($async) {
+				return Promise\reject(new Exceptions\CloudApiCall(
+					'Message body could not be encoded',
+					null,
+					null,
+					$ex->getCode(),
+					$ex,
+				));
+			}
+
+			throw new Exceptions\CloudApiCall(
+				'Message body could not be encoded',
+				null,
+				null,
+				$ex->getCode(),
+				$ex,
+			);
+		}
+
+		try {
+			$request = $this->createRequest(
+				RequestMethodInterface::METHOD_POST,
+				self::THING_STATE_API_ENDPOINT,
 				[
 					'Authorization' => 'Bearer ' . $this->accessToken,
 					'Content-Type' => 'application/json',
 				],
 				[],
-				Utils\Json::encode($payload),
-				$async,
+				$body,
 			);
-		} catch (Utils\JsonException) {
+		} catch (Exceptions\CloudApiCall $ex) {
 			if ($async) {
-				return Promise\reject(new Exceptions\CloudApiCall('Could prepare data for request'));
+				return Promise\reject($ex);
 			}
 
-			throw new Exceptions\CloudApiCall('Could prepare data for request');
+			throw $ex;
 		}
+
+		$result = $this->callRequest($request, $async);
 
 		if ($result instanceof Promise\PromiseInterface) {
 			$result
-				->then(static function () use ($deferred): void {
-					$deferred->resolve(true);
+				->then(function (Message\ResponseInterface $response) use ($deferred, $request): void {
+					try {
+						$deferred->resolve($this->parseSetThingState($request, $response));
+					} catch (Throwable $ex) {
+						$deferred->reject($ex);
+					}
 				})
 				->otherwise(static function (Throwable $ex) use ($deferred): void {
 					$deferred->reject($ex);
@@ -557,17 +525,101 @@ final class CloudApi implements Evenement\EventEmitterInterface
 			return $deferred->promise();
 		}
 
-		if ($result === false) {
-			throw new Exceptions\CloudApiCall('Could send data to cloud server');
+		return $this->parseSetThingState($request, $result);
+	}
+
+	/**
+	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : Entities\API\Cloud\ThirdPartyDevice)
+	 *
+	 * @throws Exceptions\CloudApiCall
+	 */
+	public function addThirdPartyDevice(
+		string $id,
+		bool $async = true,
+	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Entities\API\Cloud\ThirdPartyDevice
+	{
+		if (!$this->isConnected()) {
+			$this->connect();
 		}
 
-		return true;
+		$deferred = new Promise\Deferred();
+
+		$device = new stdClass();
+		$device->uniqueID = $id;
+
+		$payload = new stdClass();
+		$payload->type = 23;
+		$payload->partnerDevice = [
+			$device,
+		];
+
+		try {
+			$body = Utils\Json::encode($payload);
+		} catch (Utils\JsonException $ex) {
+			if ($async) {
+				return Promise\reject(new Exceptions\CloudApiCall(
+					'Message body could not be encoded',
+					null,
+					null,
+					$ex->getCode(),
+					$ex,
+				));
+			}
+
+			throw new Exceptions\CloudApiCall(
+				'Message body could not be encoded',
+				null,
+				null,
+				$ex->getCode(),
+				$ex,
+			);
+		}
+
+		try {
+			$request = $this->createRequest(
+				RequestMethodInterface::METHOD_POST,
+				self::ADD_THIRD_PARTY_DEVICE_API_ENDPOINT,
+				[
+					'Authorization' => 'Bearer ' . $this->accessToken,
+					'Content-Type' => 'application/json',
+					'X-CK-Appid' => $this->appId,
+				],
+				[],
+				$body,
+			);
+		} catch (Exceptions\CloudApiCall $ex) {
+			if ($async) {
+				return Promise\reject($ex);
+			}
+
+			throw $ex;
+		}
+
+		$result = $this->callRequest($request, $async);
+
+		if ($result instanceof Promise\PromiseInterface) {
+			$result
+				->then(function (Message\ResponseInterface $response) use ($deferred, $request): void {
+					try {
+						$deferred->resolve($this->parseAddThirdPartyDevice($request, $response));
+					} catch (Throwable $ex) {
+						$deferred->reject($ex);
+					}
+				})
+				->otherwise(static function (Throwable $ex) use ($deferred): void {
+					$deferred->reject($ex);
+				});
+
+			return $deferred->promise();
+		}
+
+		return $this->parseAddThirdPartyDevice($request, $result);
 	}
 
 	/**
 	 * @throws Exceptions\CloudApiCall
 	 */
-	private function login(bool $redirect = false): Entities\API\UserLogin
+	private function login(bool $redirect = false): Entities\API\Cloud\UserLogin
 	{
 		$payload = new stdClass();
 		$payload->password = $this->password;
@@ -582,19 +634,21 @@ final class CloudApi implements Evenement\EventEmitterInterface
 		}
 
 		try {
-			$data = Utils\Json::encode($payload);
+			$body = Utils\Json::encode($payload);
 		} catch (Utils\JsonException $ex) {
 			throw new Exceptions\CloudApiCall(
 				'Could not create request data for user authentication',
+				null,
+				null,
 				$ex->getCode(),
 				$ex,
 			);
 		}
 
-		$hexDig = base64_encode(hash_hmac('sha256', $data, $this->appSecret, true));
+		$hexDig = base64_encode(hash_hmac('sha256', $body, $this->appSecret, true));
 
-		$response = $this->callRequest(
-			'POST',
+		$request = $this->createRequest(
+			RequestMethodInterface::METHOD_POST,
 			self::USER_LOGIN_API_ENDPOINT,
 			[
 				'Authorization' => 'Sign ' . $hexDig,
@@ -602,53 +656,21 @@ final class CloudApi implements Evenement\EventEmitterInterface
 				'X-CK-Appid' => $this->appId,
 			],
 			[],
-			$data,
-			false,
+			$body,
 		);
 
-		if ($response === false) {
-			throw new Exceptions\CloudApiCall('Could load data from cloud server');
-		}
+		$response = $this->callRequest($request, false);
 
-		try {
-			$responseBody = $response->getBody()->getContents();
-		} catch (RuntimeException $ex) {
-			throw new Exceptions\CloudApiCall('Could not get content from response body', $ex->getCode(), $ex);
-		}
+		$data = $this->validateResponseBody($request, $response, self::USER_LOGIN_MESSAGE_SCHEMA_FILENAME);
 
-		try {
-			$parsedMessage = $this->schemaValidator->validate(
-				$responseBody,
-				$this->getSchema(self::USER_LOGIN_MESSAGE_SCHEMA_FILENAME),
-			);
-		} catch (MetadataExceptions\Logic | MetadataExceptions\MalformedInput | MetadataExceptions\InvalidData $ex) {
-			$this->logger->error(
-				'Could not decode received response payload',
-				[
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'cloud-api',
-					'exception' => BootstrapHelpers\Logger::buildException($ex),
-					'response' => [
-						'body' => $responseBody,
-						'schema' => self::USER_LOGIN_MESSAGE_SCHEMA_FILENAME,
-					],
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				],
-			);
+		$error = $data->offsetGet('error');
 
-			throw new Exceptions\CloudApiCall('Could not decode received response payload');
-		}
-
-		$error = $parsedMessage->offsetGet('error');
-
-		$data = $parsedMessage->offsetGet('data');
+		$data = $data->offsetGet('data');
 		assert($data instanceof Utils\ArrayHash);
 
 		if ($error === 10_004) {
 			if ($redirect) {
-				throw new Exceptions\CloudApiCall('Could not login to user region');
+				throw new Exceptions\CloudApiCall('Could not login to user region', $request, $response);
 			}
 
 			$this->region = Types\Region::get($data->offsetGet('region'));
@@ -657,50 +679,38 @@ final class CloudApi implements Evenement\EventEmitterInterface
 		}
 
 		if ($error !== 0) {
-			$this->logger->error(
-				'User authentication failed',
-				[
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'cloud-api',
-					'error' => $parsedMessage->offsetGet('msg'),
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				],
-			);
-
 			throw new Exceptions\CloudApiCall(
-				sprintf('User authentication failed: %s', strval($parsedMessage->offsetGet('msg'))),
+				sprintf('User authentication failed: %s', strval($data->offsetGet('msg'))),
+				$request,
+				$response,
 			);
 		}
 
-		try {
-			return EntityFactory::build(Entities\API\UserLogin::class, $data);
-		} catch (Exceptions\InvalidState $ex) {
-			throw new Exceptions\CloudApiCall('Could not create entity from response', $ex->getCode(), $ex);
-		}
+		return $this->createEntity(Entities\API\Cloud\UserLogin::class, $data);
 	}
 
 	/**
 	 * @throws Exceptions\CloudApiCall
 	 */
-	private function refreshToken(): Entities\API\UserRefresh
+	private function refreshToken(): Entities\API\Cloud\UserRefresh
 	{
 		$payload = new stdClass();
 		$payload->rt = $this->refreshToken;
 
 		try {
-			$data = Utils\Json::encode($payload);
+			$body = Utils\Json::encode($payload);
 		} catch (Utils\JsonException $ex) {
 			throw new Exceptions\CloudApiCall(
 				'Could not create request data for user token refresh',
+				null,
+				null,
 				$ex->getCode(),
 				$ex,
 			);
 		}
 
-		$response = $this->callRequest(
-			'POST',
+		$request = $this->createRequest(
+			RequestMethodInterface::METHOD_POST,
 			self::USER_REFRESH_API_ENDPOINT,
 			[
 				'Authorization' => 'Bearer ' . $this->accessToken,
@@ -708,192 +718,79 @@ final class CloudApi implements Evenement\EventEmitterInterface
 				'X-CK-Appid' => $this->appId,
 			],
 			[],
-			$data,
-			false,
+			$body,
 		);
 
-		if ($response === false) {
-			throw new Exceptions\CloudApiCall('Could load data from cloud server');
-		}
+		$response = $this->callRequest($request, false);
 
-		try {
-			$responseBody = $response->getBody()->getContents();
-		} catch (RuntimeException $ex) {
-			throw new Exceptions\CloudApiCall('Could not get content from response body', $ex->getCode(), $ex);
-		}
+		$data = $this->validateResponseBody($request, $response, self::USER_REFRESH_MESSAGE_SCHEMA_FILENAME);
 
-		try {
-			$parsedMessage = $this->schemaValidator->validate(
-				$responseBody,
-				$this->getSchema(self::USER_REFRESH_MESSAGE_SCHEMA_FILENAME),
-			);
-		} catch (MetadataExceptions\Logic | MetadataExceptions\MalformedInput | MetadataExceptions\InvalidData $ex) {
-			$this->logger->error(
-				'Could not decode received response payload',
-				[
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'cloud-api',
-					'exception' => BootstrapHelpers\Logger::buildException($ex),
-					'response' => [
-						'body' => $responseBody,
-						'schema' => self::USER_REFRESH_MESSAGE_SCHEMA_FILENAME,
-					],
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				],
-			);
+		$error = $data->offsetGet('error');
 
-			throw new Exceptions\CloudApiCall('Could not decode received response payload');
-		}
-
-		$error = $parsedMessage->offsetGet('error');
-
-		$data = $parsedMessage->offsetGet('data');
+		$data = $data->offsetGet('data');
 		assert($data instanceof Utils\ArrayHash);
 
 		if ($error !== 0) {
-			$this->logger->error(
-				'User refresh failed',
-				[
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'cloud-api',
-					'error' => $parsedMessage->offsetGet('msg'),
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				],
-			);
-
 			throw new Exceptions\CloudApiCall(
-				sprintf('User authentication failed: %s', strval($parsedMessage->offsetGet('msg'))),
+				sprintf('Refreshing user access token failed: %s', strval($data->offsetGet('msg'))),
+				$request,
+				$response,
 			);
 		}
 
-		try {
-			return EntityFactory::build(Entities\API\UserRefresh::class, $data);
-		} catch (Exceptions\InvalidState $ex) {
-			throw new Exceptions\CloudApiCall('Could not create entity from response', $ex->getCode(), $ex);
-		}
+		return $this->createEntity(
+			Entities\API\Cloud\UserRefresh::class,
+			$data,
+		);
 	}
 
 	/**
 	 * @throws Exceptions\CloudApiCall
 	 */
-	private function parseHomesResponse(
-		string $payload,
-		string $schemaFilename,
-	): Entities\API\Homes
+	private function parseGetFamily(
+		Message\RequestInterface $request,
+		Message\ResponseInterface $response,
+	): Entities\API\Cloud\Family
 	{
-		try {
-			$parsedMessage = $this->schemaValidator->validate(
-				$payload,
-				$this->getSchema($schemaFilename),
-			);
-		} catch (MetadataExceptions\Logic | MetadataExceptions\MalformedInput | MetadataExceptions\InvalidData $ex) {
-			$this->logger->error(
-				'Could not decode received response payload',
-				[
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'cloud-api',
-					'exception' => BootstrapHelpers\Logger::buildException($ex),
-					'response' => [
-						'body' => $payload,
-						'schema' => $schemaFilename,
-					],
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				],
-			);
+		$body = $this->validateResponseBody($request, $response, self::GET_FAMILY_MESSAGE_SCHEMA_FILENAME);
 
-			throw new Exceptions\CloudApiCall('Could not decode received response payload', $ex->getCode(), $ex);
-		}
-
-		$error = $parsedMessage->offsetGet('error');
+		$error = $body->offsetGet('error');
 
 		if ($error !== 0) {
-			$this->logger->error(
-				'Load user homes failed',
-				[
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'cloud-api',
-					'error' => $parsedMessage->offsetGet('msg'),
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				],
-			);
-
 			throw new Exceptions\CloudApiCall(
-				sprintf('Load user homes failed: %s', strval($parsedMessage->offsetGet('msg'))),
+				sprintf('Load family detail failed: %s', strval($body->offsetGet('msg'))),
+				$request,
+				$response,
 			);
 		}
 
-		$data = $parsedMessage->offsetGet('data');
+		$data = $body->offsetGet('data');
 		assert($data instanceof Utils\ArrayHash);
 
-		try {
-			return EntityFactory::build(Entities\API\Homes::class, $data);
-		} catch (Exceptions\InvalidState $ex) {
-			throw new Exceptions\CloudApiCall('Could not create entity from response', $ex->getCode(), $ex);
-		}
+		return $this->createEntity(Entities\API\Cloud\Family::class, $data);
 	}
 
 	/**
 	 * @throws Exceptions\CloudApiCall
 	 */
-	private function parseThingsResponse(
-		string $payload,
-		string $schemaFilename,
-	): Entities\API\ThingList
+	private function parseGetFamilyThings(
+		Message\RequestInterface $request,
+		Message\ResponseInterface $response,
+	): Entities\API\Cloud\Things
 	{
-		try {
-			$parsedMessage = $this->schemaValidator->validate(
-				$payload,
-				$this->getSchema($schemaFilename),
-			);
-		} catch (MetadataExceptions\Logic | MetadataExceptions\MalformedInput | MetadataExceptions\InvalidData $ex) {
-			$this->logger->error(
-				'Could not decode received response payload',
-				[
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'cloud-api',
-					'exception' => BootstrapHelpers\Logger::buildException($ex),
-					'response' => [
-						'body' => $payload,
-						'schema' => $schemaFilename,
-					],
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				],
-			);
+		$body = $this->validateResponseBody($request, $response, self::GET_FAMILY_THINGS_MESSAGE_SCHEMA_FILENAME);
 
-			throw new Exceptions\CloudApiCall('Could not decode received response payload', $ex->getCode(), $ex);
-		}
-
-		$error = $parsedMessage->offsetGet('error');
+		$error = $body->offsetGet('error');
 
 		if ($error !== 0) {
-			$this->logger->error(
-				'Load home things failed',
-				[
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'cloud-api',
-					'error' => $parsedMessage->offsetGet('msg'),
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				],
-			);
-
 			throw new Exceptions\CloudApiCall(
-				sprintf('Load home things failed: %s', strval($parsedMessage->offsetGet('msg'))),
+				sprintf('Load family things failed: %s', strval($body->offsetGet('msg'))),
+				$request,
+				$response,
 			);
 		}
 
-		$data = $parsedMessage->offsetGet('data');
+		$data = $body->offsetGet('data');
 		assert($data instanceof Utils\ArrayHash);
 
 		$thingList = $data->offsetGet('thingList');
@@ -909,91 +806,46 @@ final class CloudApi implements Evenement\EventEmitterInterface
 			assert($data instanceof Utils\ArrayHash);
 
 			if (in_array($item->offsetGet('itemType'), [1, 2], true)) {
-				try {
-					$devices[] = EntityFactory::build(
-						Entities\API\Device::class,
-						$data,
-					);
-				} catch (Exceptions\InvalidState $ex) {
-					throw new Exceptions\CloudApiCall('Could not create entity from response', $ex->getCode(), $ex);
-				}
+				$devices[] = $data;
 			} elseif ($item->offsetGet('itemType') === 3) {
-				try {
-					$groups[] = EntityFactory::build(
-						Entities\API\Group::class,
-						$data,
-					);
-				} catch (Exceptions\InvalidState $ex) {
-					throw new Exceptions\CloudApiCall('Could not create entity from response', $ex->getCode(), $ex);
-				}
+				$groups[] = $data;
 			}
 		}
 
-		return new Entities\API\ThingList($devices, $groups);
+		return $this->createEntity(Entities\API\Cloud\Things::class, Utils\ArrayHash::from([
+			'devices' => $devices,
+			'groups' => $groups,
+		]));
 	}
 
 	/**
-	 * @return ($itemType is 3 ? Entities\API\Group|false : Entities\API\Device|false)
-	 *
 	 * @throws Exceptions\CloudApiCall
 	 */
-	private function parseThingResponse(
-		string $id,
-		int $itemType,
-		string $payload,
-		string $schemaFilename,
-	): Entities\API\Device|Entities\API\Group|false
+	private function parseGetThing(
+		Message\RequestInterface $request,
+		Message\ResponseInterface $response,
+	): Entities\API\Cloud\Device|Entities\API\Cloud\Group
 	{
-		try {
-			$parsedMessage = $this->schemaValidator->validate(
-				$payload,
-				$this->getSchema($schemaFilename),
-			);
-		} catch (MetadataExceptions\Logic | MetadataExceptions\MalformedInput | MetadataExceptions\InvalidData $ex) {
-			$this->logger->error(
-				'Could not decode received response payload',
-				[
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'cloud-api',
-					'exception' => BootstrapHelpers\Logger::buildException($ex),
-					'response' => [
-						'body' => $payload,
-						'schema' => $schemaFilename,
-					],
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				],
-			);
+		$body = $this->validateResponseBody($request, $response, self::GET_FAMILY_THINGS_MESSAGE_SCHEMA_FILENAME);
 
-			throw new Exceptions\CloudApiCall('Could not decode received response payload', $ex->getCode(), $ex);
-		}
-
-		$error = $parsedMessage->offsetGet('error');
+		$error = $body->offsetGet('error');
 
 		if ($error !== 0) {
-			$this->logger->error(
-				'Load specified things failed',
-				[
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'cloud-api',
-					'error' => $parsedMessage->offsetGet('msg'),
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				],
-			);
-
 			throw new Exceptions\CloudApiCall(
-				sprintf('Load specified things failed: %s', strval($parsedMessage->offsetGet('msg'))),
+				sprintf('Load family specified thing failed: %s', strval($body->offsetGet('msg'))),
+				$request,
+				$response,
 			);
 		}
 
-		$data = $parsedMessage->offsetGet('data');
+		$data = $body->offsetGet('data');
 		assert($data instanceof Utils\ArrayHash);
 
 		$thingList = $data->offsetGet('thingList');
 		assert($thingList instanceof Utils\ArrayHash);
+
+		$devices = [];
+		$groups = [];
 
 		foreach ($thingList as $item) {
 			assert($item instanceof Utils\ArrayHash);
@@ -1001,219 +853,360 @@ final class CloudApi implements Evenement\EventEmitterInterface
 			$data = $item->offsetGet('itemData');
 			assert($data instanceof Utils\ArrayHash);
 
-			if (
-				in_array($item->offsetGet('itemType'), [1, 2], true)
-				&& $item->offsetGet('itemType') === $itemType
-				&& $data->offsetExists('deviceid')
-				&& $data->offsetGet('deviceid') === $id
-			) {
-				try {
-					return EntityFactory::build(
-						Entities\API\Device::class,
-						$data,
-					);
-				} catch (Exceptions\InvalidState $ex) {
-					throw new Exceptions\CloudApiCall('Could not create entity from response', $ex->getCode(), $ex);
-				}
-			} elseif (
-				$item->offsetGet('itemType') === 3
-				&& $item->offsetGet('itemType') === $itemType
-				&& $data->offsetExists('id')
-				&& $data->offsetGet('id') === $id
-			) {
-				try {
-					return EntityFactory::build(
-						Entities\API\Group::class,
-						$data,
-					);
-				} catch (Exceptions\InvalidState $ex) {
-					throw new Exceptions\CloudApiCall('Could not create entity from response', $ex->getCode(), $ex);
-				}
+			if (in_array($item->offsetGet('itemType'), [1, 2], true)) {
+				$devices[] = $this->createEntity(
+					Entities\API\Cloud\Device::class,
+					$data,
+				);
+			} elseif ($item->offsetGet('itemType') === 3) {
+				$groups[] = $this->createEntity(
+					Entities\API\Cloud\Group::class,
+					$data,
+				);
 			}
 		}
 
-		return false;
+		if (
+			(
+				$devices !== [] && $groups !== []
+			)
+			|| (
+				$devices === [] && $groups === []
+			)
+			|| count($devices) > 1
+			|| count($groups) > 1
+		) {
+			throw new Exceptions\CloudApiCall(
+				'Load family specified thing failed. Specified thing could not be decoded from response',
+				$request,
+				$response,
+			);
+		}
+
+		if ($devices !== []) {
+			return $devices[0];
+		}
+
+		if ($groups !== []) {
+			return $groups[0];
+		}
+
+		throw new Exceptions\CloudApiCall(
+			'Load family specified thing failed. Specified thing could not be decoded from response',
+			$request,
+			$response,
+		);
 	}
 
 	/**
 	 * @throws Exceptions\CloudApiCall
 	 */
-	private function parseThingStatusResponse(
+	private function parseGetThingState(
 		string $id,
-		int $itemType,
-		string $payload,
-		string $schemaFilename,
-	): Entities\API\DeviceStatus
+		Message\RequestInterface $request,
+		Message\ResponseInterface $response,
+	): Entities\API\Cloud\DeviceState
 	{
-		try {
-			$parsedMessage = $this->schemaValidator->validate(
-				$payload,
-				$this->getSchema($schemaFilename),
-			);
-		} catch (MetadataExceptions\Logic | MetadataExceptions\MalformedInput | MetadataExceptions\InvalidData $ex) {
-			$this->logger->error(
-				'Could not decode received response payload',
-				[
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'cloud-api',
-					'exception' => BootstrapHelpers\Logger::buildException($ex),
-					'response' => [
-						'body' => $payload,
-						'schema' => $schemaFilename,
-					],
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				],
-			);
+		$body = $this->validateResponseBody($request, $response, self::GET_THING_STATE_MESSAGE_SCHEMA_FILENAME);
 
-			throw new Exceptions\CloudApiCall('Could not decode received response payload', $ex->getCode(), $ex);
-		}
-
-		$error = $parsedMessage->offsetGet('error');
+		$error = $body->offsetGet('error');
 
 		if ($error !== 0) {
-			$this->logger->error(
-				'Load thing status failed',
-				[
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'cloud-api',
-					'error' => $parsedMessage->offsetGet('msg'),
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				],
-			);
-
 			throw new Exceptions\CloudApiCall(
-				sprintf('Load thing status failed: %s', strval($parsedMessage->offsetGet('msg'))),
+				sprintf('Load family specified thing state failed: %s', strval($body->offsetGet('msg'))),
+				$request,
+				$response,
 			);
 		}
 
-		$data = $parsedMessage->offsetGet('data');
+		$data = $body->offsetGet('data');
 		assert($data instanceof Utils\ArrayHash);
 
 		$params = $data->offsetGet('params');
 		assert($params instanceof Utils\ArrayHash);
 
-		return new Entities\API\DeviceStatus(null, $id, $params);
+		return $this->createEntity(
+			Entities\API\Cloud\DeviceState::class,
+			Utils\ArrayHash::from([
+				'deviceId' => $id,
+				'params' => $params,
+			]),
+		);
 	}
 
 	/**
-	 * @param array<string, mixed> $headers
-	 * @param array<string, mixed> $params
+	 * @throws Exceptions\CloudApiCall
+	 */
+	private function parseSetThingState(
+		Message\RequestInterface $request,
+		Message\ResponseInterface $response,
+	): bool
+	{
+		$body = $this->validateResponseBody($request, $response, self::SET_THING_STATE_MESSAGE_SCHEMA_FILENAME);
+
+		$error = $body->offsetGet('error');
+
+		if ($error !== 0) {
+			throw new Exceptions\CloudApiCall(
+				sprintf('Load family specified thing state failed: %s', strval($body->offsetGet('msg'))),
+				$request,
+				$response,
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * @throws Exceptions\CloudApiCall
+	 */
+	private function parseAddThirdPartyDevice(
+		Message\RequestInterface $request,
+		Message\ResponseInterface $response,
+	): Entities\API\Cloud\ThirdPartyDevice
+	{
+		$body = $this->validateResponseBody($request, $response, self::ADD_THIRD_PARTY_DEVICE_MESSAGE_SCHEMA_FILENAME);
+
+		$error = $body->offsetGet('error');
+
+		if ($error !== 0) {
+			throw new Exceptions\CloudApiCall(
+				sprintf('Add third party device failed: %s', strval($body->offsetGet('msg'))),
+				$request,
+				$response,
+			);
+		}
+
+		$data = $body->offsetGet('data');
+		assert($data instanceof Utils\ArrayHash);
+
+		$thingList = $data->offsetGet('thingList');
+		assert($thingList instanceof Utils\ArrayHash);
+
+		$devices = [];
+
+		foreach ($thingList as $item) {
+			assert($item instanceof Utils\ArrayHash);
+
+			$data = $item->offsetGet('itemData');
+			assert($data instanceof Utils\ArrayHash);
+
+			if (in_array($item->offsetGet('itemType'), [1, 2], true)) {
+				$devices[] = $this->createEntity(
+					Entities\API\Cloud\ThirdPartyDevice::class,
+					$data,
+				);
+			}
+		}
+
+		if ($devices === [] || count($devices) > 1) {
+			throw new Exceptions\CloudApiCall(
+				'Add third party device failed. Specified device could not be decoded from response',
+				$request,
+				$response,
+			);
+		}
+
+		return $devices[0];
+	}
+
+	/**
+	 * @throws Exceptions\CloudApiCall
+	 */
+	private function getResponseBody(
+		Message\RequestInterface $request,
+		Message\ResponseInterface $response,
+	): string
+	{
+		try {
+			$response->getBody()->rewind();
+
+			return $response->getBody()->getContents();
+		} catch (RuntimeException $ex) {
+			throw new Exceptions\CloudApiCall(
+				'Could not get content from response body',
+				$request,
+				$response,
+				$ex->getCode(),
+				$ex,
+			);
+		}
+	}
+
+	/**
+	 * @template T of Entities\API\Entity
 	 *
-	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : Message\ResponseInterface|false)
+	 * @param class-string<T> $entity
+	 *
+	 * @return T
+	 *
+	 * @throws Exceptions\CloudApiCall
+	 */
+	private function createEntity(string $entity, Utils\ArrayHash $data): Entities\API\Entity
+	{
+		try {
+			return $this->entityHelper->create(
+				$entity,
+				(array) Utils\Json::decode(Utils\Json::encode($data), Utils\Json::FORCE_ARRAY),
+			);
+		} catch (Exceptions\Runtime $ex) {
+			throw new Exceptions\CloudApiCall('Could not map data to entity', null, null, $ex->getCode(), $ex);
+		} catch (Utils\JsonException $ex) {
+			throw new Exceptions\CloudApiCall(
+				'Could not create entity from response',
+				null,
+				null,
+				$ex->getCode(),
+				$ex,
+			);
+		}
+	}
+
+	/**
+	 * @return ($throw is true ? Utils\ArrayHash : Utils\ArrayHash|false)
+	 *
+	 * @throws Exceptions\CloudApiCall
+	 */
+	private function validateResponseBody(
+		Message\RequestInterface $request,
+		Message\ResponseInterface $response,
+		string $schemaFilename,
+		bool $throw = true,
+	): Utils\ArrayHash|bool
+	{
+		$body = $this->getResponseBody($request, $response);
+
+		try {
+			return $this->schemaValidator->validate(
+				$body,
+				$this->getSchema($schemaFilename),
+			);
+		} catch (MetadataExceptions\Logic | MetadataExceptions\MalformedInput | MetadataExceptions\InvalidData $ex) {
+			if ($throw) {
+				throw new Exceptions\CloudApiCall(
+					'Could not validate received response payload',
+					$request,
+					$response,
+					$ex->getCode(),
+					$ex,
+				);
+			}
+
+			return false;
+		}
+	}
+
+	/**
+	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : Message\ResponseInterface)
 	 *
 	 * @throws Exceptions\CloudApiCall
 	 */
 	private function callRequest(
-		string $method,
-		string $path,
-		array $headers = [],
-		array $params = [],
-		string|null $body = null,
+		Request $request,
 		bool $async = true,
-	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Message\ResponseInterface|false
+	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Message\ResponseInterface
 	{
 		$deferred = new Promise\Deferred();
 
 		if (
-			$path !== self::USER_REFRESH_API_ENDPOINT
+			Utils\Strings::contains(strval($request->getUri()), self::USER_REFRESH_API_ENDPOINT)
 			&& $this->tokensAcquired?->diff($this->dateTimeFactory->getNow())->s >= self::ACCESS_TOKEN_VALID_TIME
 			&& $this->refreshToken !== null
 		) {
-			$this->refreshToken();
-		}
+			try {
+				$this->refreshToken();
+			} catch (Exceptions\CloudApiCall $ex) {
+				if ($async) {
+					return Promise\reject($ex);
+				}
 
-		$requestPath = $this->getApiEndpoint()->getValue() . $path;
+				throw $ex;
+			}
+		}
 
 		$this->logger->debug(sprintf(
 			'Request: method = %s url = %s',
-			$method,
-			$requestPath,
+			$request->getMethod(),
+			$request->getUri(),
 		), [
 			'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
 			'type' => 'cloud-api',
 			'request' => [
-				'method' => $method,
-				'url' => $requestPath,
-				'headers' => $headers,
-				'params' => $params,
-				'body' => $body,
-			],
-			'connector' => [
-				'identifier' => $this->identifier,
+				'method' => $request->getMethod(),
+				'url' => strval($request->getUri()),
+				'headers' => $request->getHeaders(),
+				'body' => $request->getContent(),
 			],
 		]);
 
-		if (count($params) > 0) {
-			$requestPath .= '?';
-			$requestPath .= http_build_query($params);
-		}
-
 		if ($async) {
 			try {
-				$request = $this->httpClientFactory->createClient()->request(
-					$method,
-					$requestPath,
-					$headers,
-					$body ?? '',
-				);
-
-				$request
+				$this->httpClientFactory
+					->create()
+					->send($request)
 					->then(
-						function (Message\ResponseInterface $response) use ($deferred, $method, $requestPath, $headers, $params, $body): void {
+						function (Message\ResponseInterface $response) use ($deferred, $request): void {
 							try {
 								$responseBody = $response->getBody()->getContents();
 
 								$response->getBody()->rewind();
 							} catch (RuntimeException $ex) {
-								throw new Exceptions\CloudApiCall(
-									'Could not get content from response body',
-									$ex->getCode(),
-									$ex,
+								$deferred->reject(
+									new Exceptions\CloudApiCall(
+										'Could not get content from response body',
+										$request,
+										$response,
+										$ex->getCode(),
+										$ex,
+									),
 								);
+
+								return;
 							}
 
 							$this->logger->debug('Received response', [
 								'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
 								'type' => 'cloud-api',
 								'request' => [
-									'method' => $method,
-									'url' => $requestPath,
-									'headers' => $headers,
-									'params' => $params,
-									'body' => $body,
+									'method' => $request->getMethod(),
+									'url' => strval($request->getUri()),
+									'headers' => $request->getHeaders(),
+									'body' => $request->getContent(),
 								],
 								'response' => [
-									'status_code' => $response->getStatusCode(),
+									'code' => $response->getStatusCode(),
 									'body' => $responseBody,
 								],
-								'connector' => [
-									'identifier' => $this->identifier,
-								],
 							]);
+
+							$error = $this->validateResponseBody($request, $response, self::API_ERROR, false);
+
+							if ($error !== false) {
+								$errorCode = $error->offsetGet('error');
+
+								if ($errorCode !== 0) {
+									$deferred->reject(new Exceptions\CloudApiCall(
+										sprintf('Calling api endpoint failed: %s', strval($error->offsetGet('msg'))),
+										$request,
+										$response,
+									));
+
+									return;
+								}
+							}
 
 							$deferred->resolve($response);
 						},
-						function (Throwable $ex) use ($deferred, $method, $requestPath, $params, $body): void {
-							$this->logger->error('Calling api endpoint failed', [
-								'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-								'type' => 'cloud-api',
-								'exception' => BootstrapHelpers\Logger::buildException($ex),
-								'request' => [
-									'method' => $method,
-									'url' => $requestPath,
-									'params' => $params,
-									'body' => $body,
-								],
-								'connector' => [
-									'identifier' => $this->identifier,
-								],
-							]);
-
-							$deferred->reject($ex);
+						static function (Throwable $ex) use ($deferred, $request): void {
+							$deferred->reject(
+								new Exceptions\CloudApiCall(
+									'Calling api endpoint failed',
+									$request,
+									null,
+									$ex->getCode(),
+									$ex,
+								),
+							);
 						},
 					);
 			} catch (Throwable $ex) {
@@ -1221,98 +1214,83 @@ final class CloudApi implements Evenement\EventEmitterInterface
 			}
 
 			return $deferred->promise();
-		} else {
+		}
+
+		try {
+			$response = $this->httpClientFactory
+				->create(false)
+				->send($request);
+
 			try {
-				$response = $this->httpClientFactory->createClient(false)->request(
-					$method,
-					$requestPath,
-					[
-						'headers' => $headers,
-						'body' => $body ?? '',
-					],
-				);
+				$responseBody = $response->getBody()->getContents();
 
-				try {
-					$responseBody = $response->getBody()->getContents();
+				$error = $this->validateResponseBody($request, $response, self::API_ERROR, false);
 
-					$response->getBody()->rewind();
-				} catch (RuntimeException $ex) {
-					throw new Exceptions\CloudApiCall('Could not get content from response body', $ex->getCode(), $ex);
+				if ($error !== false) {
+					$errorCode = $error->offsetGet('error');
+
+					if ($errorCode !== 0) {
+						throw new Exceptions\CloudApiCall(
+							sprintf('Calling api endpoint failed: %s', strval($error->offsetGet('msg'))),
+							$request,
+							$response,
+						);
+					}
 				}
 
-				$this->logger->debug('Received response', [
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'cloud-api',
-					'request' => [
-						'method' => $method,
-						'url' => $requestPath,
-						'headers' => $headers,
-						'params' => $params,
-						'body' => $body,
-					],
-					'response' => [
-						'status_code' => $response->getStatusCode(),
-						'body' => $responseBody,
-					],
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				]);
-
-				return $response;
-			} catch (GuzzleHttp\Exception\GuzzleException | InvalidArgumentException $ex) {
-				$this->logger->error('Calling api endpoint failed', [
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'cloud-api',
-					'exception' => BootstrapHelpers\Logger::buildException($ex),
-					'request' => [
-						'method' => $method,
-						'url' => $requestPath,
-						'params' => $params,
-						'body' => $body,
-					],
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				]);
-
-				return false;
-			} catch (Exceptions\CloudApiCall $ex) {
-				$this->logger->error('Received payload is not valid', [
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'cloud-api',
-					'exception' => BootstrapHelpers\Logger::buildException($ex),
-					'request' => [
-						'method' => $method,
-						'url' => $requestPath,
-						'params' => $params,
-						'body' => $body,
-					],
-					'connector' => [
-						'identifier' => $this->identifier,
-					],
-				]);
-
-				return false;
+				$response->getBody()->rewind();
+			} catch (RuntimeException $ex) {
+				throw new Exceptions\CloudApiCall(
+					'Could not get content from response body',
+					$request,
+					$response,
+					$ex->getCode(),
+					$ex,
+				);
 			}
+
+			$this->logger->debug('Received response', [
+				'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+				'type' => 'cloud-api',
+				'request' => [
+					'method' => $request->getMethod(),
+					'url' => strval($request->getUri()),
+					'headers' => $request->getHeaders(),
+					'body' => $request->getContent(),
+				],
+				'response' => [
+					'code' => $response->getStatusCode(),
+					'body' => $responseBody,
+				],
+			]);
+
+			return $response;
+		} catch (GuzzleHttp\Exception\GuzzleException | InvalidArgumentException $ex) {
+			throw new Exceptions\CloudApiCall(
+				'Calling api endpoint failed',
+				$request,
+				null,
+				$ex->getCode(),
+				$ex,
+			);
 		}
 	}
 
 	private function getApiEndpoint(): Types\CloudApiEndpoint
 	{
-		if ($this->region->equalsValue(Types\Region::REGION_EUROPE)) {
-			return Types\CloudApiEndpoint::get(Types\CloudApiEndpoint::ENDPOINT_EUROPE);
+		if ($this->region->equalsValue(Types\Region::EUROPE)) {
+			return Types\CloudApiEndpoint::get(Types\CloudApiEndpoint::EUROPE);
 		}
 
-		if ($this->region->equalsValue(Types\Region::REGION_AMERICA)) {
-			return Types\CloudApiEndpoint::get(Types\CloudApiEndpoint::ENDPOINT_AMERICA);
+		if ($this->region->equalsValue(Types\Region::AMERICA)) {
+			return Types\CloudApiEndpoint::get(Types\CloudApiEndpoint::AMERICA);
 		}
 
-		if ($this->region->equalsValue(Types\Region::REGION_ASIA)) {
-			return Types\CloudApiEndpoint::get(Types\CloudApiEndpoint::ENDPOINT_ASIA);
+		if ($this->region->equalsValue(Types\Region::ASIA)) {
+			return Types\CloudApiEndpoint::get(Types\CloudApiEndpoint::ASIA);
 		}
 
-		return Types\CloudApiEndpoint::get(Types\CloudApiEndpoint::ENDPOINT_CHINA);
+		return Types\CloudApiEndpoint::get(Types\CloudApiEndpoint::CHINA);
 	}
 
 	/**
@@ -1324,12 +1302,39 @@ final class CloudApi implements Evenement\EventEmitterInterface
 			$schema = Utils\FileSystem::read(
 				Sonoff\Constants::RESOURCES_FOLDER . DIRECTORY_SEPARATOR . $schemaFilename,
 			);
-
 		} catch (Nette\IOException) {
 			throw new Exceptions\CloudApiCall('Validation schema for response could not be loaded');
 		}
 
 		return $schema;
+	}
+
+	/**
+	 * @param array<string, string|array<string>>|null $headers
+	 * @param array<string, mixed> $params
+	 *
+	 * @throws Exceptions\CloudApiCall
+	 */
+	private function createRequest(
+		string $method,
+		string $path,
+		array|null $headers = null,
+		array $params = [],
+		string|null $body = null,
+	): Request
+	{
+		$url = $this->getApiEndpoint()->getValue() . $path;
+
+		if (count($params) > 0) {
+			$url .= '?';
+			$url .= http_build_query($params);
+		}
+
+		try {
+			return new Request($method, $url, $headers, $body);
+		} catch (Exceptions\InvalidArgument $ex) {
+			throw new Exceptions\CloudApiCall('Could not create request instance', null, null, $ex->getCode(), $ex);
+		}
 	}
 
 }

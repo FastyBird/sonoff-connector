@@ -36,6 +36,7 @@
     "queryable": false
   },
   "switch": {
+    "group": "switch",
     "name": "Switch",
     "type": "channel",
     "data_type": "switch",
@@ -47,6 +48,7 @@
     "queryable": false
   },
   "startup": {
+    "group": "switch",
     "name": "Switch startup state",
     "type": "channel",
     "data_type": "enum",
@@ -55,6 +57,7 @@
     "queryable": false
   },
   "pulse": {
+    "group": "switch",
     "name": "Switch pulse",
     "type": "channel",
     "data_type": "enum",
@@ -63,6 +66,7 @@
     "queryable": false
   },
   "pulseWidth": {
+    "group": "switch",
     "name": "Switch pulse time",
     "type": "channel",
     "data_type": "uint",

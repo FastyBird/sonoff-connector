@@ -1,0 +1,30 @@
+{
+  "temperature": {
+    "group": "sensor",
+    "name": "Temperature",
+    "type": "channel",
+    "data_type": "uchar",
+    "settable": false,
+    "queryable": false,
+    "scale": 2
+  },
+  "humidity": {
+    "group": "sensor",
+    "name": "Humidity",
+    "type": "channel",
+    "data_type": "ushort",
+    "format": [0, 10000],
+    "settable": false,
+    "queryable": false,
+    "scale": 2
+  },
+  "battery": {
+    "group": "sensor",
+    "name": "Battery",
+    "type": "channel",
+    "data_type": "uchar",
+    "format": [0, 100],
+    "settable": false,
+    "queryable": false
+  }
+}

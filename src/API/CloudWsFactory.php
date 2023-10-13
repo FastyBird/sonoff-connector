@@ -29,7 +29,6 @@ interface CloudWsFactory
 {
 
 	public function create(
-		string $identifier,
 		string $accessToken,
 		string $appId,
 		string $apiKey,

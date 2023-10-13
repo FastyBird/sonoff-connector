@@ -36,6 +36,7 @@
     "queryable": false
   },
   "switch": {
+    "group": "sensor",
     "name": "Switch",
     "type": "channel",
     "data_type": "switch",
@@ -54,6 +55,7 @@
     "queryable": false
   },
   "type": {
+    "group": "sensor",
     "name": "Type",
     "type": "channel",
     "data_type": "uchar",
@@ -62,6 +64,7 @@
     "queryable": false
   },
   "lastUpdateTime": {
+    "group": "sensor",
     "name": "Last update time",
     "type": "channel",
     "data_type": "string",
@@ -69,6 +72,7 @@
     "queryable": false
   },
   "actionTime": {
+    "group": "sensor",
     "name": "Action time",
     "type": "channel",
     "data_type": "string",

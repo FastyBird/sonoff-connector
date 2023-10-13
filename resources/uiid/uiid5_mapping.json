@@ -36,6 +36,7 @@
     "queryable": false
   },
   "switch": {
+    "group": "switch",
     "name": "Switch",
     "type": "channel",
     "data_type": "switch",
@@ -47,6 +48,7 @@
     "queryable": false
   },
   "power": {
+    "group": "switch",
     "name": "Power",
     "type": "channel",
     "data_type": "float",
@@ -55,6 +57,7 @@
     "unit": "W"
   },
   "voltage": {
+    "group": "switch",
     "name": "Voltage",
     "type": "channel",
     "data_type": "float",
@@ -63,6 +66,7 @@
     "unit": "V"
   },
   "current": {
+    "group": "switch",
     "name": "Current",
     "type": "channel",
     "data_type": "float",
@@ -71,6 +75,7 @@
     "unit": "A"
   },
   "oneKwh": {
+    "group": "switch",
     "name": "Electricity consumption",
     "type": "channel",
     "data_type": "enum",
@@ -86,6 +91,7 @@
     "queryable": false
   },
   "endTime": {
+    "group": "switch",
     "name": "Consumption ended",
     "type": "channel",
     "data_type": "datetime",
@@ -93,6 +99,7 @@
     "queryable": false
   },
   "oneKwhData": {
+    "group": "switch",
     "name": "Current consumption",
     "type": "channel",
     "data_type": "float",

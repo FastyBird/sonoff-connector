@@ -17,18 +17,21 @@ namespace FastyBird\Connector\Sonoff\Commands;
 
 use Doctrine\DBAL;
 use Doctrine\Persistence;
+use FastyBird\Connector\Sonoff;
 use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Helpers;
+use FastyBird\Connector\Sonoff\Queries;
 use FastyBird\Connector\Sonoff\Types;
 use FastyBird\Library\Bootstrap\Helpers as BootstrapHelpers;
+use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Entities as DevicesEntities;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
 use FastyBird\Module\Devices\Models as DevicesModels;
 use FastyBird\Module\Devices\Queries as DevicesQueries;
+use Nette\Localization;
 use Nette\Utils;
-use Psr\Log;
 use Symfony\Component\Console;
 use Symfony\Component\Console\Input;
 use Symfony\Component\Console\Output;
@@ -56,33 +59,15 @@ class Initialize extends Console\Command\Command
 
 	public const NAME = 'fb:sonoff-connector:initialize';
 
-	private const CHOICE_QUESTION_CREATE_CONNECTOR = 'Create new connector configuration';
-
-	private const CHOICE_QUESTION_EDIT_CONNECTOR = 'Edit existing connector configuration';
-
-	private const CHOICE_QUESTION_DELETE_CONNECTOR = 'Delete existing connector configuration';
-
-	private const CHOICE_QUESTION_AUTO_MODE = 'Automatic mode';
-
-	private const CHOICE_QUESTION_LAN_MODE = 'Lan network mode';
-
-	private const CHOICE_QUESTION_CLOUD_MODE = 'Cloud server mode';
-
-	private const CHOICE_QUESTION_EUROPE_DC = 'Europe';
-
-	private const CHOICE_QUESTION_AMERICA_DC = 'America';
-
-	private const CHOICE_QUESTION_ASIA_DC = 'Asia';
-
-	private const CHOICE_QUESTION_CHINA_DC = 'China';
-
 	public function __construct(
+		private readonly Sonoff\Logger $logger,
 		private readonly DevicesModels\Connectors\ConnectorsRepository $connectorsRepository,
 		private readonly DevicesModels\Connectors\ConnectorsManager $connectorsManager,
 		private readonly DevicesModels\Connectors\Properties\PropertiesRepository $propertiesRepository,
 		private readonly DevicesModels\Connectors\Properties\PropertiesManager $propertiesManager,
+		private readonly DevicesModels\Devices\DevicesRepository $devicesRepository,
 		private readonly Persistence\ManagerRegistry $managerRegistry,
-		private readonly Log\LoggerInterface $logger = new Log\NullLogger(),
+		private readonly Localization\Translator $translator,
 		string|null $name = null,
 	)
 	{
@@ -104,18 +89,21 @@ class Initialize extends Console\Command\Command
 	 * @throws DBAL\Exception
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\Runtime
+	 * @throws Exceptions\InvalidState
+	 * @throws MetadataExceptions\InvalidArgument
+	 * @throws MetadataExceptions\InvalidState
 	 */
 	protected function execute(Input\InputInterface $input, Output\OutputInterface $output): int
 	{
 		$io = new Style\SymfonyStyle($input, $output);
 
-		$io->title('Sonoff connector - initialization');
+		$io->title($this->translator->translate('//sonoff-connector.cmd.initialize.title'));
 
-		$io->note('This action will create|update|delete connector configuration.');
+		$io->note($this->translator->translate('//sonoff-connector.cmd.initialize.subtitle'));
 
 		if ($input->getOption('no-interaction') === false) {
 			$question = new Console\Question\ConfirmationQuestion(
-				'Would you like to continue?',
+				$this->translator->translate('//sonoff-connector.cmd.base.questions.continue'),
 				false,
 			);
 
@@ -126,28 +114,7 @@ class Initialize extends Console\Command\Command
 			}
 		}
 
-		$question = new Console\Question\ChoiceQuestion(
-			'What would you like to do?',
-			[
-				0 => self::CHOICE_QUESTION_CREATE_CONNECTOR,
-				1 => self::CHOICE_QUESTION_EDIT_CONNECTOR,
-				2 => self::CHOICE_QUESTION_DELETE_CONNECTOR,
-			],
-		);
-
-		$question->setErrorMessage('Selected answer: "%s" is not valid.');
-
-		$whatToDo = $io->askQuestion($question);
-
-		if ($whatToDo === self::CHOICE_QUESTION_CREATE_CONNECTOR) {
-			$this->createNewConfiguration($io);
-
-		} elseif ($whatToDo === self::CHOICE_QUESTION_EDIT_CONNECTOR) {
-			$this->editExistingConfiguration($io);
-
-		} elseif ($whatToDo === self::CHOICE_QUESTION_DELETE_CONNECTOR) {
-			$this->deleteExistingConfiguration($io);
-		}
+		$this->askInitializeAction($io);
 
 		return Console\Command\Command::SUCCESS;
 	}
@@ -156,23 +123,29 @@ class Initialize extends Console\Command\Command
 	 * @throws DBAL\Exception
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\Runtime
+	 * @throws MetadataExceptions\InvalidArgument
+	 * @throws MetadataExceptions\InvalidState
 	 */
-	private function createNewConfiguration(Style\SymfonyStyle $io): void
+	private function createConfiguration(Style\SymfonyStyle $io): void
 	{
 		$mode = $this->askMode($io);
 
-		$question = new Console\Question\Question('Provide connector identifier');
+		$question = new Console\Question\Question(
+			$this->translator->translate('//sonoff-connector.cmd.initialize.questions.provide.identifier'),
+		);
 
-		$question->setValidator(function (string|null $answer) {
-			if ($answer !== '' && $answer !== null) {
-				$findConnectorQuery = new DevicesQueries\FindConnectors();
+		$question->setValidator(function ($answer) {
+			if ($answer !== null) {
+				$findConnectorQuery = new Queries\FindConnectors();
 				$findConnectorQuery->byIdentifier($answer);
 
 				if ($this->connectorsRepository->findOneBy(
 					$findConnectorQuery,
 					Entities\SonoffConnector::class,
 				) !== null) {
-					throw new Exceptions\Runtime('This identifier is already used');
+					throw new Exceptions\Runtime(
+						$this->translator->translate('//sonoff-connector.cmd.initialize.messages.identifier.used'),
+					);
 				}
 			}
 
@@ -187,7 +160,7 @@ class Initialize extends Console\Command\Command
 			for ($i = 1; $i <= 100; $i++) {
 				$identifier = sprintf($identifierPattern, $i);
 
-				$findConnectorQuery = new DevicesQueries\FindConnectors();
+				$findConnectorQuery = new Queries\FindConnectors();
 				$findConnectorQuery->byIdentifier($identifier);
 
 				if ($this->connectorsRepository->findOneBy(
@@ -200,7 +173,7 @@ class Initialize extends Console\Command\Command
 		}
 
 		if ($identifier === '') {
-			$io->error('Connector identifier have to provided');
+			$io->error($this->translator->translate('//sonoff-connector.cmd.initialize.messages.identifier.missing'));
 
 			return;
 		}
@@ -222,21 +195,22 @@ class Initialize extends Console\Command\Command
 				'identifier' => $identifier,
 				'name' => $name === '' ? null : $name,
 			]));
+			assert($connector instanceof Entities\SonoffConnector);
 
 			$this->propertiesManager->create(Utils\ArrayHash::from([
 				'entity' => DevicesEntities\Connectors\Properties\Variable::class,
-				'identifier' => Types\ConnectorPropertyIdentifier::IDENTIFIER_CLIENT_MODE,
-				'name' => Helpers\Name::createName(Types\ConnectorPropertyIdentifier::IDENTIFIER_CLIENT_MODE),
+				'identifier' => Types\ConnectorPropertyIdentifier::CLIENT_MODE,
+				'name' => Helpers\Name::createName(Types\ConnectorPropertyIdentifier::CLIENT_MODE),
 				'dataType' => MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_ENUM),
 				'value' => $mode->getValue(),
-				'format' => [Types\ClientMode::MODE_LAN, Types\ClientMode::MODE_CLOUD, Types\ClientMode::MODE_AUTO],
+				'format' => [Types\ClientMode::LAN, Types\ClientMode::CLOUD, Types\ClientMode::AUTO],
 				'connector' => $connector,
 			]));
 
 			$this->propertiesManager->create(Utils\ArrayHash::from([
 				'entity' => DevicesEntities\Connectors\Properties\Variable::class,
-				'identifier' => Types\ConnectorPropertyIdentifier::IDENTIFIER_USERNAME,
-				'name' => Helpers\Name::createName(Types\ConnectorPropertyIdentifier::IDENTIFIER_USERNAME),
+				'identifier' => Types\ConnectorPropertyIdentifier::USERNAME,
+				'name' => Helpers\Name::createName(Types\ConnectorPropertyIdentifier::USERNAME),
 				'dataType' => MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
 				'value' => $username,
 				'connector' => $connector,
@@ -244,8 +218,8 @@ class Initialize extends Console\Command\Command
 
 			$this->propertiesManager->create(Utils\ArrayHash::from([
 				'entity' => DevicesEntities\Connectors\Properties\Variable::class,
-				'identifier' => Types\ConnectorPropertyIdentifier::IDENTIFIER_PASSWORD,
-				'name' => Helpers\Name::createName(Types\ConnectorPropertyIdentifier::IDENTIFIER_PASSWORD),
+				'identifier' => Types\ConnectorPropertyIdentifier::PASSWORD,
+				'name' => Helpers\Name::createName(Types\ConnectorPropertyIdentifier::PASSWORD),
 				'dataType' => MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
 				'value' => $password,
 				'connector' => $connector,
@@ -253,15 +227,15 @@ class Initialize extends Console\Command\Command
 
 			$this->propertiesManager->create(Utils\ArrayHash::from([
 				'entity' => DevicesEntities\Connectors\Properties\Variable::class,
-				'identifier' => Types\ConnectorPropertyIdentifier::IDENTIFIER_REGION,
-				'name' => Helpers\Name::createName(Types\ConnectorPropertyIdentifier::IDENTIFIER_REGION),
+				'identifier' => Types\ConnectorPropertyIdentifier::REGION,
+				'name' => Helpers\Name::createName(Types\ConnectorPropertyIdentifier::REGION),
 				'dataType' => MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_ENUM),
 				'value' => $dataCentre->getValue(),
 				'format' => [
-					Types\CloudApiEndpoint::ENDPOINT_CHINA,
-					Types\CloudApiEndpoint::ENDPOINT_AMERICA,
-					Types\CloudApiEndpoint::ENDPOINT_EUROPE,
-					Types\CloudApiEndpoint::ENDPOINT_ASIA,
+					Types\CloudApiEndpoint::CHINA,
+					Types\CloudApiEndpoint::AMERICA,
+					Types\CloudApiEndpoint::EUROPE,
+					Types\CloudApiEndpoint::ASIA,
 				],
 				'connector' => $connector,
 			]));
@@ -269,10 +243,12 @@ class Initialize extends Console\Command\Command
 			// Commit all changes into database
 			$this->getOrmConnection()->commit();
 
-			$io->success(sprintf(
-				'New connector "%s" was successfully created',
-				$connector->getName() ?? $connector->getIdentifier(),
-			));
+			$io->success(
+				$this->translator->translate(
+					'//sonoff-connector.cmd.initialize.messages.create.success',
+					['name' => $connector->getName() ?? $connector->getIdentifier()],
+				),
+			);
 		} catch (Throwable $ex) {
 			// Log caught exception
 			$this->logger->error(
@@ -284,7 +260,7 @@ class Initialize extends Console\Command\Command
 				],
 			);
 
-			$io->error('Something went wrong, connector could not be created. Error was logged.');
+			$io->error($this->translator->translate('//sonoff-connector.cmd.initialize.messages.create.error'));
 		} finally {
 			// Revert all changes when error occur
 			if ($this->getOrmConnection()->isTransactionActive()) {
@@ -297,23 +273,25 @@ class Initialize extends Console\Command\Command
 	 * @throws DBAL\Exception
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\Runtime
+	 * @throws MetadataExceptions\InvalidArgument
+	 * @throws MetadataExceptions\InvalidState
 	 */
-	private function editExistingConfiguration(Style\SymfonyStyle $io): void
+	private function editConfiguration(Style\SymfonyStyle $io): void
 	{
 		$connector = $this->askWhichConnector($io);
 
 		if ($connector === null) {
-			$io->warning('No Sonoff connectors registered in system');
+			$io->warning($this->translator->translate('//sonoff-connector.cmd.base.messages.noConnectors'));
 
 			$question = new Console\Question\ConfirmationQuestion(
-				'Would you like to create new Sonoff connector configuration?',
+				$this->translator->translate('//sonoff-connector.cmd.initialize.questions.create'),
 				false,
 			);
 
 			$continue = (bool) $io->askQuestion($question);
 
 			if ($continue) {
-				$this->createNewConfiguration($io);
+				$this->createConfiguration($io);
 			}
 
 			return;
@@ -321,7 +299,7 @@ class Initialize extends Console\Command\Command
 
 		$findConnectorPropertyQuery = new DevicesQueries\FindConnectorProperties();
 		$findConnectorPropertyQuery->forConnector($connector);
-		$findConnectorPropertyQuery->byIdentifier(Types\ConnectorPropertyIdentifier::IDENTIFIER_CLIENT_MODE);
+		$findConnectorPropertyQuery->byIdentifier(Types\ConnectorPropertyIdentifier::CLIENT_MODE);
 
 		$modeProperty = $this->propertiesRepository->findOneBy($findConnectorPropertyQuery);
 
@@ -330,7 +308,7 @@ class Initialize extends Console\Command\Command
 
 		} else {
 			$question = new Console\Question\ConfirmationQuestion(
-				'Do you want to change connector devices support?',
+				$this->translator->translate('//sonoff-connector.cmd.initialize.questions.changeMode'),
 				false,
 			);
 
@@ -349,7 +327,7 @@ class Initialize extends Console\Command\Command
 
 		if ($connector->isEnabled()) {
 			$question = new Console\Question\ConfirmationQuestion(
-				'Do you want to disable connector?',
+				$this->translator->translate('//sonoff-connector.cmd.initialize.questions.disable'),
 				false,
 			);
 
@@ -358,7 +336,7 @@ class Initialize extends Console\Command\Command
 			}
 		} else {
 			$question = new Console\Question\ConfirmationQuestion(
-				'Do you want to enable connector?',
+				$this->translator->translate('//sonoff-connector.cmd.initialize.questions.enable'),
 				false,
 			);
 
@@ -371,7 +349,7 @@ class Initialize extends Console\Command\Command
 
 		$findConnectorPropertyQuery = new DevicesQueries\FindConnectorProperties();
 		$findConnectorPropertyQuery->forConnector($connector);
-		$findConnectorPropertyQuery->byIdentifier(Types\ConnectorPropertyIdentifier::IDENTIFIER_USERNAME);
+		$findConnectorPropertyQuery->byIdentifier(Types\ConnectorPropertyIdentifier::USERNAME);
 
 		$usernameProperty = $this->propertiesRepository->findOneBy($findConnectorPropertyQuery);
 
@@ -380,7 +358,7 @@ class Initialize extends Console\Command\Command
 
 		} else {
 			$question = new Console\Question\ConfirmationQuestion(
-				'Do you want to change connector cloud Access ID?',
+				$this->translator->translate('//sonoff-connector.cmd.initialize.questions.changeUsername'),
 				false,
 			);
 
@@ -393,7 +371,7 @@ class Initialize extends Console\Command\Command
 
 		$findConnectorPropertyQuery = new DevicesQueries\FindConnectorProperties();
 		$findConnectorPropertyQuery->forConnector($connector);
-		$findConnectorPropertyQuery->byIdentifier(Types\ConnectorPropertyIdentifier::IDENTIFIER_PASSWORD);
+		$findConnectorPropertyQuery->byIdentifier(Types\ConnectorPropertyIdentifier::PASSWORD);
 
 		$passwordProperty = $this->propertiesRepository->findOneBy($findConnectorPropertyQuery);
 
@@ -402,7 +380,7 @@ class Initialize extends Console\Command\Command
 
 		} else {
 			$question = new Console\Question\ConfirmationQuestion(
-				'Do you want to change connector cloud Access Secret?',
+				$this->translator->translate('//sonoff-connector.cmd.initialize.questions.changePassword'),
 				false,
 			);
 
@@ -421,6 +399,7 @@ class Initialize extends Console\Command\Command
 				'name' => $name === '' ? null : $name,
 				'enabled' => $enabled,
 			]));
+			assert($connector instanceof Entities\SonoffConnector);
 
 			if ($modeProperty === null) {
 				if ($mode === null) {
@@ -429,11 +408,11 @@ class Initialize extends Console\Command\Command
 
 				$this->propertiesManager->create(Utils\ArrayHash::from([
 					'entity' => DevicesEntities\Connectors\Properties\Variable::class,
-					'identifier' => Types\ConnectorPropertyIdentifier::IDENTIFIER_CLIENT_MODE,
-					'name' => Helpers\Name::createName(Types\ConnectorPropertyIdentifier::IDENTIFIER_CLIENT_MODE),
+					'identifier' => Types\ConnectorPropertyIdentifier::CLIENT_MODE,
+					'name' => Helpers\Name::createName(Types\ConnectorPropertyIdentifier::CLIENT_MODE),
 					'dataType' => MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_ENUM),
 					'value' => $mode->getValue(),
-					'format' => [Types\ClientMode::MODE_LAN, Types\ClientMode::MODE_CLOUD, Types\ClientMode::MODE_AUTO],
+					'format' => [Types\ClientMode::LAN, Types\ClientMode::CLOUD, Types\ClientMode::AUTO],
 					'connector' => $connector,
 				]));
 			} elseif ($mode !== null) {
@@ -449,8 +428,8 @@ class Initialize extends Console\Command\Command
 
 				$this->propertiesManager->create(Utils\ArrayHash::from([
 					'entity' => DevicesEntities\Connectors\Properties\Variable::class,
-					'identifier' => Types\ConnectorPropertyIdentifier::IDENTIFIER_USERNAME,
-					'name' => Helpers\Name::createName(Types\ConnectorPropertyIdentifier::IDENTIFIER_USERNAME),
+					'identifier' => Types\ConnectorPropertyIdentifier::USERNAME,
+					'name' => Helpers\Name::createName(Types\ConnectorPropertyIdentifier::USERNAME),
 					'dataType' => MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
 					'value' => $username,
 					'connector' => $connector,
@@ -468,8 +447,8 @@ class Initialize extends Console\Command\Command
 
 				$this->propertiesManager->create(Utils\ArrayHash::from([
 					'entity' => DevicesEntities\Connectors\Properties\Variable::class,
-					'identifier' => Types\ConnectorPropertyIdentifier::IDENTIFIER_PASSWORD,
-					'name' => Helpers\Name::createName(Types\ConnectorPropertyIdentifier::IDENTIFIER_PASSWORD),
+					'identifier' => Types\ConnectorPropertyIdentifier::PASSWORD,
+					'name' => Helpers\Name::createName(Types\ConnectorPropertyIdentifier::PASSWORD),
 					'dataType' => MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
 					'value' => $password,
 					'connector' => $connector,
@@ -483,10 +462,12 @@ class Initialize extends Console\Command\Command
 			// Commit all changes into database
 			$this->getOrmConnection()->commit();
 
-			$io->success(sprintf(
-				'Connector "%s" was successfully updated',
-				$connector->getName() ?? $connector->getIdentifier(),
-			));
+			$io->success(
+				$this->translator->translate(
+					'//sonoff-connector.cmd.initialize.messages.update.success',
+					['name' => $connector->getName() ?? $connector->getIdentifier()],
+				),
+			);
 		} catch (Throwable $ex) {
 			// Log caught exception
 			$this->logger->error(
@@ -498,7 +479,7 @@ class Initialize extends Console\Command\Command
 				],
 			);
 
-			$io->error('Something went wrong, connector could not be updated. Error was logged.');
+			$io->error($this->translator->translate('//sonoff-connector.cmd.initialize.messages.update.error'));
 		} finally {
 			// Revert all changes when error occur
 			if ($this->getOrmConnection()->isTransactionActive()) {
@@ -512,18 +493,18 @@ class Initialize extends Console\Command\Command
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\Runtime
 	 */
-	private function deleteExistingConfiguration(Style\SymfonyStyle $io): void
+	private function deleteConfiguration(Style\SymfonyStyle $io): void
 	{
 		$connector = $this->askWhichConnector($io);
 
 		if ($connector === null) {
-			$io->info('No Sonoff connectors registered in system');
+			$io->info($this->translator->translate('//sonoff-connector.cmd.base.messages.noConnectors'));
 
 			return;
 		}
 
 		$question = new Console\Question\ConfirmationQuestion(
-			'Would you like to continue?',
+			$this->translator->translate('//sonoff-connector.cmd.base.questions.continue'),
 			false,
 		);
 
@@ -542,10 +523,12 @@ class Initialize extends Console\Command\Command
 			// Commit all changes into database
 			$this->getOrmConnection()->commit();
 
-			$io->success(sprintf(
-				'Connector "%s" was successfully removed',
-				$connector->getName() ?? $connector->getIdentifier(),
-			));
+			$io->success(
+				$this->translator->translate(
+					'//sonoff-connector.cmd.initialize.messages.remove.success',
+					['name' => $connector->getName() ?? $connector->getIdentifier()],
+				),
+			);
 		} catch (Throwable $ex) {
 			// Log caught exception
 			$this->logger->error(
@@ -557,7 +540,7 @@ class Initialize extends Console\Command\Command
 				],
 			);
 
-			$io->error('Something went wrong, connector could not be removed. Error was logged.');
+			$io->error($this->translator->translate('//sonoff-connector.cmd.initialize.messages.remove.error'));
 		} finally {
 			// Revert all changes when error occur
 			if ($this->getOrmConnection()->isTransactionActive()) {
@@ -566,37 +549,105 @@ class Initialize extends Console\Command\Command
 		}
 	}
 
+	/**
+	 * @throws DevicesExceptions\InvalidState
+	 */
+	private function listConfigurations(Style\SymfonyStyle $io): void
+	{
+		$findConnectorsQuery = new Queries\FindConnectors();
+
+		$connectors = $this->connectorsRepository->findAllBy($findConnectorsQuery, Entities\SonoffConnector::class);
+		usort(
+			$connectors,
+			static function (Entities\SonoffConnector $a, Entities\SonoffConnector $b): int {
+				if ($a->getIdentifier() === $b->getIdentifier()) {
+					return $a->getName() <=> $b->getName();
+				}
+
+				return $a->getIdentifier() <=> $b->getIdentifier();
+			},
+		);
+
+		$table = new Console\Helper\Table($io);
+		$table->setHeaders([
+			'#',
+			$this->translator->translate('//sonoff-connector.cmd.initialize.data.name'),
+			$this->translator->translate('//sonoff-connector.cmd.initialize.data.devicesCnt'),
+		]);
+
+		foreach ($connectors as $index => $connector) {
+			$findDevicesQuery = new Queries\FindDevices();
+			$findDevicesQuery->forConnector($connector);
+
+			$devices = $this->devicesRepository->findAllBy($findDevicesQuery, Entities\SonoffDevice::class);
+
+			$table->addRow([
+				$index + 1,
+				$connector->getName() ?? $connector->getIdentifier(),
+				count($devices),
+			]);
+		}
+
+		$table->render();
+
+		$io->newLine();
+	}
+
 	private function askMode(Style\SymfonyStyle $io): Types\ClientMode
 	{
 		$question = new Console\Question\ChoiceQuestion(
-			'In what mode should this connector communicate with devices?',
+			$this->translator->translate('//sonoff-connector.cmd.initialize.questions.select.mode'),
 			[
-				self::CHOICE_QUESTION_AUTO_MODE,
-				self::CHOICE_QUESTION_LAN_MODE,
-				self::CHOICE_QUESTION_CLOUD_MODE,
+				0 => $this->translator->translate('//sonoff-connector.cmd.initialize.answers.mode.auto'),
+				1 => $this->translator->translate('//sonoff-connector.cmd.initialize.answers.mode.local'),
+				2 => $this->translator->translate('//sonoff-connector.cmd.initialize.answers.mode.cloud'),
 			],
 			0,
 		);
 
-		$question->setErrorMessage('Selected answer: "%s" is not valid.');
-		$question->setValidator(static function (string|null $answer): Types\ClientMode {
+		$question->setErrorMessage(
+			$this->translator->translate('//sonoff-connector.cmd.base.messages.answerNotValid'),
+		);
+		$question->setValidator(function (string|null $answer): Types\ClientMode {
 			if ($answer === null) {
-				throw new Exceptions\InvalidState('Selected answer is not valid');
+				throw new Exceptions\Runtime(
+					sprintf(
+						$this->translator->translate('//sonoff-connector.cmd.base.messages.answerNotValid'),
+						$answer,
+					),
+				);
 			}
 
-			if ($answer === self::CHOICE_QUESTION_AUTO_MODE || $answer === '0') {
-				return Types\ClientMode::get(Types\ClientMode::MODE_AUTO);
+			if (
+				$answer === $this->translator->translate(
+					'//sonoff-connector.cmd.initialize.answers.mode.auto',
+				)
+				|| $answer === '0'
+			) {
+				return Types\ClientMode::get(Types\ClientMode::AUTO);
 			}
 
-			if ($answer === self::CHOICE_QUESTION_LAN_MODE || $answer === '1') {
-				return Types\ClientMode::get(Types\ClientMode::MODE_LAN);
+			if (
+				$answer === $this->translator->translate(
+					'//sonoff-connector.cmd.initialize.answers.mode.local',
+				)
+				|| $answer === '1'
+			) {
+				return Types\ClientMode::get(Types\ClientMode::LAN);
 			}
 
-			if ($answer === self::CHOICE_QUESTION_CLOUD_MODE || $answer === '2') {
-				return Types\ClientMode::get(Types\ClientMode::MODE_CLOUD);
+			if (
+				$answer === $this->translator->translate(
+					'//sonoff-connector.cmd.initialize.answers.mode.cloud',
+				)
+				|| $answer === '2'
+			) {
+				return Types\ClientMode::get(Types\ClientMode::CLOUD);
 			}
 
-			throw new Exceptions\InvalidState('Selected answer is not valid');
+			throw new Exceptions\Runtime(
+				sprintf($this->translator->translate('//sonoff-connector.cmd.base.messages.answerNotValid'), $answer),
+			);
 		});
 
 		$answer = $io->askQuestion($question);
@@ -607,19 +658,35 @@ class Initialize extends Console\Command\Command
 
 	private function askName(Style\SymfonyStyle $io, Entities\SonoffConnector|null $connector = null): string|null
 	{
-		$question = new Console\Question\Question('Provide connector name', $connector?->getName());
+		$question = new Console\Question\Question(
+			$this->translator->translate('//sonoff-connector.cmd.initialize.questions.provide.name'),
+			$connector?->getName(),
+		);
 
 		$name = $io->askQuestion($question);
 
 		return strval($name) === '' ? null : strval($name);
 	}
 
-	private function askUsername(Style\SymfonyStyle $io): string
+	/**
+	 * @throws DevicesExceptions\InvalidState
+	 * @throws MetadataExceptions\InvalidArgument
+	 * @throws MetadataExceptions\InvalidState
+	 */
+	private function askUsername(Style\SymfonyStyle $io, Entities\SonoffConnector|null $connector = null): string
 	{
-		$question = new Console\Question\Question('Provide eWelink username');
-		$question->setValidator(static function (string|null $answer): string {
+		$question = new Console\Question\Question(
+			$this->translator->translate('//sonoff-connector.cmd.initialize.questions.provide.username'),
+			$connector?->getUsername(),
+		);
+		$question->setValidator(function (string|null $answer): string {
 			if ($answer === '' || $answer === null) {
-				throw new Exceptions\Runtime('You have to provide valid eWelink username');
+				throw new Exceptions\Runtime(
+					sprintf(
+						$this->translator->translate('//sonoff-connector.cmd.base.messages.answerNotValid'),
+						$answer,
+					),
+				);
 			}
 
 			return $answer;
@@ -630,10 +697,17 @@ class Initialize extends Console\Command\Command
 
 	private function askPassword(Style\SymfonyStyle $io): string
 	{
-		$question = new Console\Question\Question('Provide eWelink password');
-		$question->setValidator(static function (string|null $answer): string {
+		$question = new Console\Question\Question(
+			$this->translator->translate('//sonoff-connector.cmd.initialize.questions.provide.password'),
+		);
+		$question->setValidator(function (string|null $answer): string {
 			if ($answer === '' || $answer === null) {
-				throw new Exceptions\Runtime('You have to provide valid eWelink password');
+				throw new Exceptions\Runtime(
+					sprintf(
+						$this->translator->translate('//sonoff-connector.cmd.base.messages.answerNotValid'),
+						$answer,
+					),
+				);
 			}
 
 			return $answer;
@@ -645,38 +719,66 @@ class Initialize extends Console\Command\Command
 	private function askCloudApiEndpoint(Style\SymfonyStyle $io): Types\CloudApiEndpoint
 	{
 		$question = new Console\Question\ChoiceQuestion(
-			'Provide which cloud data center you are using?',
+			$this->translator->translate('//sonoff-connector.cmd.initialize.questions.select.dataCentre'),
 			[
-				0 => self::CHOICE_QUESTION_EUROPE_DC,
-				1 => self::CHOICE_QUESTION_AMERICA_DC,
-				2 => self::CHOICE_QUESTION_ASIA_DC,
-				3 => self::CHOICE_QUESTION_CHINA_DC,
+				0 => $this->translator->translate('//sonoff-connector.cmd.initialize.answers.dataCentre.europe'),
+				1 => $this->translator->translate('//sonoff-connector.cmd.initialize.answers.dataCentre.america'),
+				2 => $this->translator->translate('//sonoff-connector.cmd.initialize.answers.dataCentre.china'),
+				3 => $this->translator->translate('//sonoff-connector.cmd.initialize.answers.dataCentre.asia'),
 			],
 			0,
 		);
-		$question->setErrorMessage('Selected answer: "%s" is not valid.');
-		$question->setValidator(static function (string|null $answer): Types\CloudApiEndpoint {
+		$question->setErrorMessage(
+			$this->translator->translate('//sonoff-connector.cmd.base.messages.answerNotValid'),
+		);
+		$question->setValidator(function (string|null $answer): Types\CloudApiEndpoint {
 			if ($answer === null) {
-				throw new Exceptions\InvalidState('Selected answer is not valid');
+				throw new Exceptions\Runtime(
+					sprintf(
+						$this->translator->translate('//sonoff-connector.cmd.base.messages.answerNotValid'),
+						$answer,
+					),
+				);
 			}
 
-			if ($answer === self::CHOICE_QUESTION_EUROPE_DC || $answer === '0') {
-				return Types\CloudApiEndpoint::get(Types\CloudApiEndpoint::ENDPOINT_EUROPE);
+			if (
+				$answer === $this->translator->translate(
+					'//sonoff-connector.cmd.initialize.answers.dataCentre.europe',
+				)
+				|| $answer === '0'
+			) {
+				return Types\CloudApiEndpoint::get(Types\CloudApiEndpoint::EUROPE);
 			}
 
-			if ($answer === self::CHOICE_QUESTION_AMERICA_DC || $answer === '1') {
-				return Types\CloudApiEndpoint::get(Types\CloudApiEndpoint::ENDPOINT_AMERICA);
+			if (
+				$answer === $this->translator->translate(
+					'//sonoff-connector.cmd.initialize.answers.dataCentre.america',
+				)
+				|| $answer === '1'
+			) {
+				return Types\CloudApiEndpoint::get(Types\CloudApiEndpoint::AMERICA);
 			}
 
-			if ($answer === self::CHOICE_QUESTION_ASIA_DC || $answer === '2') {
-				return Types\CloudApiEndpoint::get(Types\CloudApiEndpoint::ENDPOINT_ASIA);
+			if (
+				$answer === $this->translator->translate('//sonoff-connector.cmd.initialize.answers.dataCentre.china')
+				|| $answer === '2'
+			) {
+				return Types\CloudApiEndpoint::get(Types\CloudApiEndpoint::CHINA);
 			}
 
-			if ($answer === self::CHOICE_QUESTION_CHINA_DC || $answer === '3') {
-				return Types\CloudApiEndpoint::get(Types\CloudApiEndpoint::ENDPOINT_CHINA);
+			if (
+				$answer === $this->translator->translate('//sonoff-connector.cmd.initialize.answers.dataCentre.asia')
+				|| $answer === '3'
+			) {
+				return Types\CloudApiEndpoint::get(Types\CloudApiEndpoint::ASIA);
 			}
 
-			throw new Exceptions\InvalidState('Selected answer is not valid');
+			throw new Exceptions\Runtime(
+				sprintf(
+					$this->translator->translate('//sonoff-connector.cmd.base.messages.answerNotValid'),
+					$answer,
+				),
+			);
 		});
 
 		$answer = $io->askQuestion($question);
@@ -692,7 +794,7 @@ class Initialize extends Console\Command\Command
 	{
 		$connectors = [];
 
-		$findConnectorsQuery = new DevicesQueries\FindConnectors();
+		$findConnectorsQuery = new Queries\FindConnectors();
 
 		$systemConnectors = $this->connectorsRepository->findAllBy(
 			$findConnectorsQuery,
@@ -701,12 +803,10 @@ class Initialize extends Console\Command\Command
 		usort(
 			$systemConnectors,
 			// phpcs:ignore SlevomatCodingStandard.Files.LineLength.LineTooLong
-			static fn (DevicesEntities\Connectors\Connector $a, DevicesEntities\Connectors\Connector $b): int => $a->getIdentifier() <=> $b->getIdentifier()
+			static fn (Entities\SonoffConnector $a, Entities\SonoffConnector $b): int => $a->getIdentifier() <=> $b->getIdentifier()
 		);
 
 		foreach ($systemConnectors as $connector) {
-			assert($connector instanceof Entities\SonoffConnector);
-
 			$connectors[$connector->getIdentifier()] = $connector->getIdentifier()
 				. ($connector->getName() !== null ? ' [' . $connector->getName() . ']' : '');
 		}
@@ -716,14 +816,21 @@ class Initialize extends Console\Command\Command
 		}
 
 		$question = new Console\Question\ChoiceQuestion(
-			'Please select connector under which you want to manage devices',
+			$this->translator->translate('//sonoff-connector.cmd.initialize.questions.select.connector'),
 			array_values($connectors),
 			count($connectors) === 1 ? 0 : null,
 		);
-		$question->setErrorMessage('Selected connector: "%s" is not valid.');
-		$question->setValidator(function (string|null $answer) use ($connectors): Entities\SonoffConnector {
+		$question->setErrorMessage(
+			$this->translator->translate('//sonoff-connector.cmd.base.messages.answerNotValid'),
+		);
+		$question->setValidator(function (string|int|null $answer) use ($connectors): Entities\SonoffConnector {
 			if ($answer === null) {
-				throw new Exceptions\InvalidState('Selected answer is not valid');
+				throw new Exceptions\Runtime(
+					sprintf(
+						$this->translator->translate('//sonoff-connector.cmd.base.messages.answerNotValid'),
+						$answer,
+					),
+				);
 			}
 
 			if (array_key_exists($answer, array_values($connectors))) {
@@ -733,27 +840,101 @@ class Initialize extends Console\Command\Command
 			$identifier = array_search($answer, $connectors, true);
 
 			if ($identifier !== false) {
-				$findConnectorQuery = new DevicesQueries\FindConnectors();
+				$findConnectorQuery = new Queries\FindConnectors();
 				$findConnectorQuery->byIdentifier($identifier);
 
 				$connector = $this->connectorsRepository->findOneBy(
 					$findConnectorQuery,
 					Entities\SonoffConnector::class,
 				);
-				assert($connector instanceof Entities\SonoffConnector || $connector === null);
 
 				if ($connector !== null) {
 					return $connector;
 				}
 			}
 
-			throw new Exceptions\InvalidState('Selected answer is not valid');
+			throw new Exceptions\Runtime(
+				sprintf(
+					$this->translator->translate('//sonoff-connector.cmd.base.messages.answerNotValid'),
+					$answer,
+				),
+			);
 		});
 
 		$connector = $io->askQuestion($question);
 		assert($connector instanceof Entities\SonoffConnector);
 
 		return $connector;
+	}
+
+	/**
+	 * @throws DBAL\Exception
+	 * @throws DevicesExceptions\InvalidState
+	 * @throws Exceptions\InvalidState
+	 * @throws Exceptions\Runtime
+	 * @throws MetadataExceptions\InvalidArgument
+	 * @throws MetadataExceptions\InvalidState
+	 */
+	private function askInitializeAction(Style\SymfonyStyle $io): void
+	{
+		$question = new Console\Question\ChoiceQuestion(
+			$this->translator->translate('//sonoff-connector.cmd.base.questions.whatToDo'),
+			[
+				0 => $this->translator->translate('//sonoff-connector.cmd.initialize.actions.create'),
+				1 => $this->translator->translate('//sonoff-connector.cmd.initialize.actions.update'),
+				2 => $this->translator->translate('//sonoff-connector.cmd.initialize.actions.remove'),
+				3 => $this->translator->translate('//sonoff-connector.cmd.initialize.actions.list'),
+				4 => $this->translator->translate('//sonoff-connector.cmd.initialize.actions.nothing'),
+			],
+			4,
+		);
+
+		$question->setErrorMessage(
+			$this->translator->translate('//sonoff-connector.cmd.base.messages.answerNotValid'),
+		);
+
+		$whatToDo = $io->askQuestion($question);
+
+		if (
+			$whatToDo === $this->translator->translate(
+				'//sonoff-connector.cmd.initialize.actions.create',
+			)
+			|| $whatToDo === '0'
+		) {
+			$this->createConfiguration($io);
+
+			$this->askInitializeAction($io);
+
+		} elseif (
+			$whatToDo === $this->translator->translate(
+				'//sonoff-connector.cmd.initialize.actions.update',
+			)
+			|| $whatToDo === '1'
+		) {
+			$this->editConfiguration($io);
+
+			$this->askInitializeAction($io);
+
+		} elseif (
+			$whatToDo === $this->translator->translate(
+				'//sonoff-connector.cmd.initialize.actions.remove',
+			)
+			|| $whatToDo === '2'
+		) {
+			$this->deleteConfiguration($io);
+
+			$this->askInitializeAction($io);
+
+		} elseif (
+			$whatToDo === $this->translator->translate(
+				'//sonoff-connector.cmd.initialize.actions.list',
+			)
+			|| $whatToDo === '3'
+		) {
+			$this->listConfigurations($io);
+
+			$this->askInitializeAction($io);
+		}
 	}
 
 	/**
@@ -767,7 +948,7 @@ class Initialize extends Console\Command\Command
 			return $connection;
 		}
 
-		throw new Exceptions\Runtime('Transformer manager could not be loaded');
+		throw new Exceptions\Runtime('Database connection could not be established');
 	}
 
 }

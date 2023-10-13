@@ -36,6 +36,7 @@
     "queryable": false
   },
   "switch": {
+    "group": "other",
     "name": "Switch",
     "type": "channel",
     "data_type": "switch",
@@ -47,6 +48,7 @@
     "queryable": false
   },
   "state": {
+    "group": "other",
     "name": "Mist level",
     "type": "channel",
     "data_type": "uchar",
@@ -54,15 +56,8 @@
     "settable": true,
     "queryable": false
   },
-  "mode": {
-    "name": "Mode",
-    "type": "channel",
-    "data_type": "enum",
-    "format": ["normal"],
-    "settable": true,
-    "queryable": false
-  },
   "water": {
+    "group": "other",
     "name": "Water capacity",
     "type": "channel",
     "data_type": "uchar",
@@ -71,6 +66,7 @@
     "queryable": false
   },
   "lightswitch": {
+    "group": "light",
     "name": "Light switch",
     "type": "channel",
     "data_type": "uchar",
@@ -79,6 +75,7 @@
     "queryable": false
   },
   "lightmode": {
+    "group": "light",
     "name": "Light mode",
     "type": "channel",
     "data_type": "uchar",
@@ -87,6 +84,7 @@
     "queryable": false
   },
   "lightRcolor": {
+    "group": "light",
     "name": "Red color",
     "type": "channel",
     "data_type": "uchar",
@@ -95,6 +93,7 @@
     "queryable": false
   },
   "lightGcolor": {
+    "group": "light",
     "name": "Green color",
     "type": "channel",
     "data_type": "uchar",
@@ -103,6 +102,7 @@
     "queryable": false
   },
   "lightBcolor": {
+    "group": "light",
     "name": "Blue color",
     "type": "channel",
     "data_type": "uchar",
@@ -111,6 +111,7 @@
     "queryable": false
   },
   "lightbright": {
+    "group": "light",
     "name": "Light brightness",
     "type": "channel",
     "data_type": "uchar",

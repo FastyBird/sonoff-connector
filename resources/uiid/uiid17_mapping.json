@@ -36,6 +36,7 @@
     "queryable": false
   },
   "fan": {
+    "group": "fan",
     "name": "Switch",
     "type": "channel",
     "data_type": "switch",
@@ -47,6 +48,7 @@
     "queryable": false
   },
   "speed": {
+    "group": "fan",
     "name": "Fan speed",
     "type": "channel",
     "data_type": "enum",
@@ -55,6 +57,7 @@
     "queryable": false
   },
   "mode": {
+    "group": "fan",
     "name": "Fan mode",
     "type": "channel",
     "data_type": "enum",
@@ -63,6 +66,7 @@
     "queryable": false
   },
   "shake": {
+    "group": "fan",
     "name": "Shake",
     "type": "channel",
     "data_type": "enum",

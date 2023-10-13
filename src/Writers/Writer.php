@@ -15,9 +15,6 @@
 
 namespace FastyBird\Connector\Sonoff\Writers;
 
-use FastyBird\Connector\Sonoff\Clients;
-use FastyBird\Connector\Sonoff\Entities;
-
 /**
  * Properties writer interface
  *
@@ -29,14 +26,8 @@ use FastyBird\Connector\Sonoff\Entities;
 interface Writer
 {
 
-	public function connect(
-		Entities\SonoffConnector $connector,
-		Clients\Client $client,
-	): void;
+	public function connect(): void;
 
-	public function disconnect(
-		Entities\SonoffConnector $connector,
-		Clients\Client $client,
-	): void;
+	public function disconnect(): void;
 
 }

@@ -1,0 +1,1186 @@
+{
+  "error": 0,
+  "msg": "",
+  "data": {
+    "thingList": [
+      {
+        "itemType": 1,
+        "itemData": {
+          "name": "Device00245c",
+          "deviceid": "abf800245c",
+          "apikey": "8afc44f6-49b1-4cc9-8fd2-b5b587682dda",
+          "extra": {
+            "model": "NON-OTA-GL",
+            "ui": "HA网关",
+            "uiid": 20000,
+            "manufacturer": "深圳酷宅科技有限公司",
+            "mac": "00:00:00:00:00:00",
+            "apmac": "00:00:00:00:00:00",
+            "modelInfo": "620c57de8d85576e68376d33",
+            "brandId": "59e0dbc25c1af3a660cc1ac0"
+          },
+          "brandName": "coolkit",
+          "brandLogo": "",
+          "showBrand": false,
+          "productModel": "NON-OTA-GL(20000)",
+          "tags": {},
+          "devConfig": {},
+          "settings": {},
+          "devGroups": [],
+          "family": {
+            "familyid": "62483473418e0a00093dbf66",
+            "index": -11,
+            "members": []
+          },
+          "shareTo": [],
+          "devicekey": "4e99175a-29d8-4e77-a0cc-6610fffc0342",
+          "online": false,
+          "params": {
+            "bindInfos": {},
+            "partnerDevice": {
+              "ezVedioSerial": "96fb4244-256a-4133-a883-d346ffa75425"
+            }
+          },
+          "isSupportGroup": false,
+          "isSupportedOnMP": false,
+          "isSupportChannelSplit": false,
+          "deviceFeature": {}
+        },
+        "index": -11
+      },
+      {
+        "itemType": 1,
+        "itemData": {
+          "name": "Device002444",
+          "deviceid": "abf8002444",
+          "apikey": "8afc44f6-49b1-4cc9-8fd2-b5b587682dda",
+          "extra": {
+            "model": "NON-OTA-GL",
+            "ui": "HA网关",
+            "uiid": 20000,
+            "manufacturer": "深圳酷宅科技有限公司",
+            "mac": "00:00:00:00:00:00",
+            "apmac": "00:00:00:00:00:00",
+            "modelInfo": "620c57de8d85576e68376d33",
+            "brandId": "59e0dbc25c1af3a660cc1ac0"
+          },
+          "brandName": "coolkit",
+          "brandLogo": "",
+          "showBrand": false,
+          "productModel": "NON-OTA-GL(20000)",
+          "tags": {},
+          "devConfig": {},
+          "settings": {},
+          "devGroups": [],
+          "family": {
+            "familyid": "62483473418e0a00093dbf66",
+            "index": -10,
+            "members": []
+          },
+          "shareTo": [],
+          "devicekey": "176b76f5-7e83-4f28-ad95-8e90baeb108c",
+          "online": false,
+          "params": {
+            "bindInfos": {},
+            "partnerDevice": {
+              "ezVedioSerial": "2789235c-d8a5-4f81-9691-07efd259e5f7"
+            },
+            "subDevices": []
+          },
+          "isSupportGroup": false,
+          "isSupportedOnMP": false,
+          "isSupportChannelSplit": false,
+          "deviceFeature": {}
+        },
+        "index": -10
+      },
+      {
+        "itemType": 1,
+        "itemData": {
+          "name": "Temperature/Humidity Sensor",
+          "deviceid": "a480062414",
+          "apikey": "8afc44f6-49b1-4cc9-8fd2-b5b587682dda",
+          "extra": {
+            "mac": "00124b002a5d3c6b",
+            "apmac": "00:00:00:00:00:00",
+            "model": "NON-OTA-GL",
+            "description": "ZCL_HA_DEVICEID_TEMPERATURE_SENSOR",
+            "modelInfo": "5be28aaf1a9a77c347a6047b",
+            "manufacturer": "深圳酷宅科技有限公司",
+            "brandId": "59e0dbc25c1af3a660cc1ac0",
+            "uiid": 1770,
+            "ui": "Zigbee温湿度传感器"
+          },
+          "brandName": "coolkit",
+          "brandLogo": "",
+          "showBrand": false,
+          "productModel": "ZCL_HA_DEVICEID_TEMPERATURE_SENSOR",
+          "tags": {},
+          "devConfig": {},
+          "family": {
+            "familyid": "62483473418e0a00093dbf66",
+            "index": -9,
+            "members": [],
+            "roomid": "62483473418e0a00093dbf63"
+          },
+          "shareTo": [],
+          "devicekey": "af9dd3a0-b10e-49f9-a16c-5aedefbe445a",
+          "online": false,
+          "params": {
+            "bindInfos": {},
+            "subDevId": "00124b002a5d3c6b",
+            "parentid": "1001e0b507",
+            "temperature": "2761",
+            "trigTime": "1692092102035",
+            "ASYNC": 2,
+            "humidity": "5300",
+            "battery": 100,
+            "online": true,
+            "fwVersion": "0.5",
+            "model": "TH01"
+          },
+          "isSupportGroup": false,
+          "isSupportedOnMP": true,
+          "isSupportChannelSplit": false,
+          "deviceFeature": {}
+        },
+        "index": -9
+      },
+      {
+        "itemType": 1,
+        "itemData": {
+          "name": "NSPanel86PW",
+          "deviceid": "1001e0b507",
+          "apikey": "8afc44f6-49b1-4cc9-8fd2-b5b587682dda",
+          "extra": {
+            "uiid": 195,
+            "description": "",
+            "itCredential": "1exfTrdDl2xZHbxr",
+            "brandId": "5c4c1aee3a7d24c7100be054",
+            "apmac": "d0:27:03:38:29:e1",
+            "mac": "d0:27:03:38:29:e0",
+            "ui": "NSPanel Pro",
+            "modelInfo": "6228417de9996d416dcc77bb",
+            "model": "SN-RKPX30-NSP-01",
+            "manufacturer": "深圳松诺技术有限公司",
+            "chipid": "e69143f8d8716a50"
+          },
+          "brandName": "SONOFF",
+          "brandLogo": "https://eu-ota.coolkit.cc/logo/q62PevoglDNmwUJ9oPE7kRrpt1nL1CoA.png",
+          "showBrand": true,
+          "productModel": "NSPanel86PW",
+          "tags": {
+            "m_2dda_adam": "on"
+          },
+          "devConfig": {},
+          "settings": {
+            "opsNotify": 1,
+            "opsHistory": 1,
+            "alarmNotify": 1
+          },
+          "devGroups": [],
+          "family": {
+            "familyid": "62483473418e0a00093dbf66",
+            "index": -8,
+            "members": [],
+            "roomid": "62483473418e0a00093dbf63"
+          },
+          "shareTo": [],
+          "devicekey": "a5a00c94-48e4-494d-9b0b-4650a6f637e7",
+          "online": false,
+          "params": {
+            "bindInfos": {},
+            "rooted": false,
+            "cityId": "WA@49.13,16.81",
+            "dst": 1,
+            "dstChange": "2023-10-29T01:00:00.000Z",
+            "geo": "49.13134,16.80569",
+            "tempRange": "16,18.7",
+            "temperature": 20,
+            "timeZone": 1,
+            "weather": 18,
+            "version": 7,
+            "appVersion": "1.11.0",
+            "sysVersion": "1.11.0",
+            "fwVersion": "1.11.0",
+            "zigbeeVersion": "1.0.0",
+            "securityType": 0,
+            "screenList1": [
+              "a480062414"
+            ],
+            "screenList2": [],
+            "screenList3": [],
+            "subDevices": [
+              {
+                "subDevId": "00124b002a5d3c6b",
+                "deviceid": "a480062414",
+                "uiid": "1770",
+                "index": 0
+              }
+            ],
+            "screenName1": "Device screen 1"
+          },
+          "denyFeatures": [
+            "sceneSupportBright"
+          ],
+          "isSupportGroup": false,
+          "isSupportedOnMP": false,
+          "isSupportChannelSplit": false,
+          "deviceFeature": {}
+        },
+        "index": -8
+      },
+      {
+        "itemType": 1,
+        "itemData": {
+          "name": "Teplota áéíóěšč",
+          "deviceid": "a480062416",
+          "apikey": "8afc44f6-49b1-4cc9-8fd2-b5b587682dda",
+          "extra": {
+            "mac": "00124b002a5d75b1",
+            "apmac": "00:00:00:00:00:00",
+            "model": "NON-OTA-GL",
+            "description": "ZCL_HA_DEVICEID_TEMPERATURE_SENSOR",
+            "modelInfo": "5be28aaf1a9a77c347a6047b",
+            "manufacturer": "深圳酷宅科技有限公司",
+            "brandId": "59e0dbc25c1af3a660cc1ac0",
+            "uiid": 1770,
+            "ui": "Zigbee温湿度传感器"
+          },
+          "brandName": "coolkit",
+          "brandLogo": "",
+          "showBrand": false,
+          "productModel": "ZCL_HA_DEVICEID_TEMPERATURE_SENSOR",
+          "tags": {},
+          "devConfig": {},
+          "family": {
+            "familyid": "62483473418e0a00093dbf66",
+            "index": -7,
+            "members": [],
+            "roomid": "6478f7e38768ce00085229ef"
+          },
+          "shareTo": [],
+          "devicekey": "b559f517-9ba8-4ea3-99dc-009453472652",
+          "online": false,
+          "params": {
+            "bindInfos": {
+              "scene": 2
+            },
+            "subDevId": "00124b002a5d75b1",
+            "parentid": "1001e0ae47",
+            "temperature": "2402",
+            "trigTime": "1696077903233",
+            "humidity": "5900",
+            "battery": 100,
+            "online": true,
+            "fwVersion": "0.5",
+            "model": "TH01",
+            "timeZone": 2
+          },
+          "isSupportGroup": false,
+          "isSupportedOnMP": true,
+          "isSupportChannelSplit": false,
+          "deviceFeature": {}
+        },
+        "index": -7
+      },
+      {
+        "itemType": 1,
+        "itemData": {
+          "name": "Panel pracovna",
+          "deviceid": "1001e0ae47",
+          "apikey": "8afc44f6-49b1-4cc9-8fd2-b5b587682dda",
+          "extra": {
+            "uiid": 195,
+            "description": "",
+            "itCredential": "1exfTrdDl2xZHbxr",
+            "brandId": "5c4c1aee3a7d24c7100be054",
+            "apmac": "d0:27:03:38:1c:61",
+            "mac": "d0:27:03:38:1c:60",
+            "ui": "NSPanel Pro",
+            "modelInfo": "6228417de9996d416dcc77bb",
+            "model": "SN-RKPX30-NSP-01",
+            "manufacturer": "深圳松诺技术有限公司",
+            "chipid": "4f7ba6176b737bd6"
+          },
+          "brandName": "SONOFF",
+          "brandLogo": "https://eu-ota.coolkit.cc/logo/q62PevoglDNmwUJ9oPE7kRrpt1nL1CoA.png",
+          "showBrand": true,
+          "productModel": "NSPanel86PW",
+          "tags": {
+            "m_2dda_adam": "on"
+          },
+          "devConfig": {},
+          "settings": {
+            "opsNotify": 1,
+            "opsHistory": 1,
+            "alarmNotify": 1
+          },
+          "devGroups": [],
+          "family": {
+            "familyid": "62483473418e0a00093dbf66",
+            "index": -4,
+            "members": [],
+            "roomid": "6478f7e38768ce00085229ef"
+          },
+          "shareTo": [],
+          "devicekey": "a47d9f9d-9bab-49d2-a8c7-b83175b29bd7",
+          "online": false,
+          "params": {
+            "bindInfos": {},
+            "rooted": false,
+            "cityId": "WA@49.13,16.81",
+            "dst": 1,
+            "tempRange": "10.9,23.5",
+            "temperature": 22,
+            "timeZone": 1,
+            "weather": 1,
+            "version": 7,
+            "screenList1": [
+              "a480062416",
+              "1000958fdc",
+              "100004690b",
+              "100012b4b7",
+              "1000243c4c"
+            ],
+            "screenList2": [],
+            "screenList3": [],
+            "buzzerAlarm": {
+              "test": false,
+              "mode": "stop"
+            },
+            "appVersion": "1.11.0",
+            "sysVersion": "1.11.0",
+            "fwVersion": "1.11.0",
+            "zigbeeVersion": "1.0.0",
+            "securityType": 0,
+            "subDevices": [
+              {
+                "subDevId": "00124b002a5d75b1",
+                "deviceid": "a480062416",
+                "uiid": "1770",
+                "index": 0
+              }
+            ],
+            "showablePannels": [
+              "thingList",
+              "main",
+              "tcList"
+            ],
+            "geo": "49.13134,16.80569",
+            "dstChange": "2023-10-29T01:00:00.000Z",
+            "guestMode": false,
+            "addSubDevState": "off",
+            "addTimeOut": 10,
+            "addType": "ble",
+            "screenName1": "Ovládání",
+            "addDevTime": 180,
+            "temp_control": [
+              {
+                "id": "36eed72e-97c7-4776-9584-f73f04a7c4fb",
+                "name": "Topení",
+                "enable": false,
+                "trigger": "a480062416",
+                "operations": [
+                  "100004690b"
+                ],
+                "triggerType": "manual",
+                "type": "heat",
+                "manualTemplate": 20,
+                "precision": 1,
+                "showChart": true
+              }
+            ]
+          },
+          "denyFeatures": [
+            "sceneSupportBright"
+          ],
+          "isSupportGroup": false,
+          "isSupportedOnMP": false,
+          "isSupportChannelSplit": false,
+          "deviceFeature": {}
+        },
+        "index": -4
+      },
+      {
+        "itemType": 1,
+        "itemData": {
+          "name": "MINI",
+          "deviceid": "1000958fdc",
+          "apikey": "8afc44f6-49b1-4cc9-8fd2-b5b587682dda",
+          "extra": {
+            "uiid": 1,
+            "description": "20190611006",
+            "brandId": "5c4c1aee3a7d24c7100be054",
+            "apmac": "d0:27:01:2b:1d:09",
+            "mac": "d0:27:01:2b:1d:08",
+            "ui": "单通道插座",
+            "modelInfo": "5c700fdfcc248c47441fd24d",
+            "model": "PSF-BD1-GL",
+            "manufacturer": "深圳松诺技术有限公司",
+            "chipid": "00A8200C",
+            "staMac": "2C:F4:32:A8:20:0C"
+          },
+          "brandName": "SONOFF",
+          "brandLogo": "https://eu-ota.coolkit.cc/logo/q62PevoglDNmwUJ9oPE7kRrpt1nL1CoA.png",
+          "showBrand": true,
+          "productModel": "MINI",
+          "tags": {
+            "m_2dda_adam": "on"
+          },
+          "devConfig": {},
+          "settings": {
+            "opsNotify": 0,
+            "opsHistory": 1,
+            "alarmNotify": 1,
+            "wxAlarmNotify": 0,
+            "wxOpsNotify": 0,
+            "wxDoorbellNotify": 0,
+            "appDoorbellNotify": 1
+          },
+          "devGroups": [],
+          "family": {
+            "familyid": "62483473418e0a00093dbf66",
+            "index": -2,
+            "members": []
+          },
+          "shareTo": [],
+          "devicekey": "04d09429-b8a2-4d7e-88d2-995d05b1e037",
+          "online": false,
+          "params": {
+            "bindInfos": {
+              "scene": 2
+            },
+            "version": 8,
+            "sledOnline": "on",
+            "switch": "off",
+            "fwVersion": "3.7.6",
+            "rssi": -68,
+            "staMac": "2C:F4:32:A8:20:0C",
+            "startup": "stay",
+            "init": 1,
+            "pulse": "off",
+            "pulseWidth": 500,
+            "only_device": {
+              "ota": "success"
+            },
+            "ssid": "WifiName",
+            "bssid": "00:00:00:00:00:00",
+            "swMode": 2,
+            "swCtrlReverse": "off",
+            "rstReason": 0,
+            "exccause": 0,
+            "epc1": 0,
+            "epc2": 0,
+            "epc3": 0,
+            "excvaddr": 0,
+            "depc": 0
+          },
+          "isSupportGroup": true,
+          "isSupportedOnMP": true,
+          "isSupportChannelSplit": false,
+          "wxModelId": "05Gkq9_vqnmgylS_2UvXCQ",
+          "deviceFeature": {}
+        },
+        "index": -2
+      },
+      {
+        "itemType": 3,
+        "itemData": {
+          "id": "6458cba33290d40008de4ef5",
+          "name": "Osvětlení ",
+          "mainDeviceId": "1000243c4c",
+          "family": {
+            "familyid": "62483473418e0a00093dbf66",
+            "index": -1
+          },
+          "params": {
+            "state": "off"
+          },
+          "uiid": 22
+        },
+        "index": -1
+      },
+      {
+        "itemType": 1,
+        "itemData": {
+          "name": "MyDevice09889e",
+          "deviceid": "100009889e",
+          "apikey": "8afc44f6-49b1-4cc9-8fd2-b5b587682dda",
+          "extra": {
+            "description": "WWJG000865",
+            "brandId": "5611402280a0e2630f7b102d",
+            "apmac": "d0:27:00:13:0e:8d",
+            "mac": "d0:27:00:13:0e:8c",
+            "ui": "单通道插座",
+            "modelInfo": "56567f2493991b740423d34e",
+            "model": "PSA-B01-GL",
+            "manufacturer": "深圳创易智能系统有限公司",
+            "uiid": 1
+          },
+          "brandName": "Maker",
+          "brandLogo": "",
+          "showBrand": true,
+          "productModel": "S20",
+          "tags": {
+            "disable_timers": [
+              {
+                "mId": "6f380daa-4cdd-43a5-b596-87e70534438c",
+                "type": "once",
+                "at": "2017-07-15T20:50:00.000Z",
+                "coolkit_timer_type": "delay",
+                "enabled": 0,
+                "do": {
+                  "switch": "on"
+                },
+                "period": "1"
+              }
+            ]
+          },
+          "devConfig": {},
+          "settings": {
+            "opsNotify": 0
+          },
+          "family": {
+            "familyid": "62483473418e0a00093dbf66",
+            "index": 0
+          },
+          "shareTo": [],
+          "devicekey": "419bd37f-ddf5-4611-8253-687aac542f9e",
+          "online": false,
+          "params": {
+            "rssi": -48,
+            "password": "edgetipdo",
+            "staMac": "5C:CF:7F:F9:4F:78",
+            "timers": [
+              {
+                "coolkit_timer_type": "delay",
+                "at": "2017-07-15T20:50:00.000Z",
+                "mId": "6f380daa-4cdd-43a5-b596-87e70534438c",
+                "enabled": 1,
+                "do": {
+                  "switch": "on"
+                },
+                "period": "1",
+                "type": "once"
+              }
+            ],
+            "startup": "off",
+            "fwVersion": "1.5.5",
+            "ssid": "WifiName",
+            "switch": "off"
+          },
+          "denyFeatures": [
+            "localCtl",
+            "pulse",
+            "sled",
+            "extSwitchMode"
+          ],
+          "isSupportGroup": true,
+          "isSupportedOnMP": true,
+          "isSupportChannelSplit": false,
+          "wxModelId": "05Gkq9_vqnmgylS_2UvXCQ",
+          "deviceFeature": {}
+        },
+        "index": 0
+      },
+      {
+        "itemType": 1,
+        "itemData": {
+          "name": "MyDevice07d8c0",
+          "deviceid": "100007d8c0",
+          "apikey": "8afc44f6-49b1-4cc9-8fd2-b5b587682dda",
+          "extra": {
+            "description": "WWJG000836",
+            "brandId": "5611402280a0e2630f7b102d",
+            "apmac": "d0:27:00:0f:ae:d1",
+            "mac": "d0:27:00:0f:ae:d0",
+            "ui": "功率检测单通道插座",
+            "modelInfo": "578df9d0cc81455a5831eaea",
+            "model": "PSC-B01-GL",
+            "manufacturer": "深圳创易智能系统有限公司",
+            "uiid": 5
+          },
+          "brandName": "Maker",
+          "brandLogo": "",
+          "showBrand": true,
+          "productModel": "Sonoff Pow",
+          "tags": {},
+          "devConfig": {},
+          "settings": {
+            "opsNotify": 0,
+            "opsHistory": 1,
+            "alarmNotify": 1
+          },
+          "family": {
+            "familyid": "62483473418e0a00093dbf66",
+            "index": 1
+          },
+          "shareTo": [],
+          "devicekey": "e7d0dc7e-72cd-4497-8ce7-8dbea603fa67",
+          "online": false,
+          "params": {
+            "rssi": -44,
+            "staMac": "5C:CF:7F:92:39:56",
+            "timeZone": 1,
+            "hundredDaysKwh": "get",
+            "ssid": "WifiName",
+            "switch": "off",
+            "oneKwh": "get",
+            "password": "edgetipdo",
+            "startup": "off",
+            "fwVersion": "2.0.4",
+            "startTime": "2017-07-28T06:16:49.000Z",
+            "power": "0",
+            "endTime": "2017-07-28T11:32:22.000Z",
+            "bindInfos": {
+              "scene": 0
+            }
+          },
+          "denyFeatures": [
+            "sled"
+          ],
+          "isSupportGroup": false,
+          "isSupportedOnMP": true,
+          "isSupportChannelSplit": false,
+          "deviceFeature": {}
+        },
+        "index": 1
+      },
+      {
+        "itemType": 1,
+        "itemData": {
+          "name": "MyDevice04690b",
+          "deviceid": "100004690b",
+          "apikey": "8afc44f6-49b1-4cc9-8fd2-b5b587682dda",
+          "extra": {
+            "description": "",
+            "brandId": "5611402280a0e2630f7b102d",
+            "apmac": "d0:27:00:08:cf:67",
+            "mac": "d0:27:00:08:cf:66",
+            "ui": "开关改装模块",
+            "modelInfo": "5655cb0c93991b740423d1ba",
+            "model": "ITA-GZ1-GL",
+            "manufacturer": "深圳创易智能系统有限公司",
+            "uiid": 14
+          },
+          "brandName": "Maker",
+          "brandLogo": "",
+          "showBrand": true,
+          "productModel": "Sonoff",
+          "tags": {
+            "disable_timers": [
+              {
+                "endDo": {
+                  "switch": "off"
+                },
+                "startDo": {
+                  "switch": "on"
+                },
+                "coolkit_timer_type": "duration",
+                "at": "2017-07-27T07:31:00.000Z 2 1",
+                "mId": "96e879a9-4e23-4e9a-8a5f-f76750a1d2b4",
+                "enabled": 1,
+                "type": "duration"
+              }
+            ]
+          },
+          "devConfig": {},
+          "settings": {
+            "opsNotify": 0,
+            "opsHistory": 1,
+            "alarmNotify": 1
+          },
+          "family": {
+            "familyid": "62483473418e0a00093dbf66",
+            "index": 2
+          },
+          "shareTo": [],
+          "devicekey": "f12f8cce-f9c0-4556-8583-d1fe01422b16",
+          "online": false,
+          "params": {
+            "rssi": -44,
+            "password": "edgetipdo",
+            "timers": [],
+            "startup": "off",
+            "fwVersion": "1.5.2",
+            "ssid": "WifiName",
+            "switch": "off",
+            "bindInfos": {
+              "scene": 2
+            }
+          },
+          "denyFeatures": [
+            "localCtl",
+            "pulse",
+            "sled"
+          ],
+          "isSupportGroup": true,
+          "isSupportedOnMP": true,
+          "isSupportChannelSplit": false,
+          "wxModelId": "05Gkq9_vqnmgylS_2UvXCQ",
+          "deviceFeature": {}
+        },
+        "index": 2
+      },
+      {
+        "itemType": 1,
+        "itemData": {
+          "name": "MyDevice03bada",
+          "deviceid": "100003bada",
+          "apikey": "8afc44f6-49b1-4cc9-8fd2-b5b587682dda",
+          "extra": {
+            "description": null,
+            "brandId": "5611402280a0e2630f7b102d",
+            "apmac": "d0:27:00:07:73:05",
+            "mac": "d0:27:00:07:73:04",
+            "ui": "开关改装模块",
+            "modelInfo": "5655cba593991b740423d1bd",
+            "model": "ITA-GZ1-GL",
+            "manufacturer": "深圳创易智能系统有限公司",
+            "uiid": 14
+          },
+          "brandName": "Maker",
+          "brandLogo": "",
+          "showBrand": true,
+          "productModel": "Slampher RF",
+          "tags": {},
+          "devConfig": {},
+          "family": {
+            "familyid": "62483473418e0a00093dbf66",
+            "index": 3
+          },
+          "shareTo": [],
+          "devicekey": "eb32a938-965e-4b5a-97a3-d0dd5eda19c8",
+          "online": false,
+          "params": {
+            "password": "edgetipdo",
+            "rssi": -47,
+            "staMac": "5C:CF:7F:1B:C9:21",
+            "startup": "off",
+            "fwVersion": "1.5.5",
+            "ssid": "WifiName",
+            "switch": "on",
+            "bindInfos": {
+              "scene": 0
+            }
+          },
+          "denyFeatures": [
+            "localCtl",
+            "pulse",
+            "sled"
+          ],
+          "isSupportGroup": true,
+          "isSupportedOnMP": true,
+          "isSupportChannelSplit": false,
+          "wxModelId": "05Gkq9_vqnmgylS_2UvXCQ",
+          "deviceFeature": {}
+        },
+        "index": 3
+      },
+      {
+        "itemType": 1,
+        "itemData": {
+          "name": "Moje zařízení191aa7",
+          "deviceid": "1000191aa7",
+          "apikey": "8afc44f6-49b1-4cc9-8fd2-b5b587682dda",
+          "extra": {
+            "description": "WWJG001083",
+            "brandId": "55e00a982ed643527f31425d",
+            "apmac": "d0:27:00:32:32:9f",
+            "mac": "d0:27:00:32:32:9e",
+            "ui": "四通道开关",
+            "modelInfo": "58e5f2d8baeb368720e25452",
+            "model": "PSF-A04-GL",
+            "manufacturer": "深圳创易智能系统有限公司",
+            "uiid": 9
+          },
+          "brandName": "ITEAD",
+          "brandLogo": "https://eu-ota.coolkit.cc/logo/cGgPZaVvWc9EjvwAjrx6avpM3MZYXtuE.png",
+          "showBrand": false,
+          "productModel": "Sonoff 4CH Pro",
+          "tags": {
+            "disable_timers": [
+              {
+                "mId": "6b3107b4-b2f2-4b0b-a037-d904956ef9a4",
+                "type": "once",
+                "at": "2017-12-14T07:32:00.000Z",
+                "coolkit_timer_type": "delay",
+                "enabled": 0,
+                "do": {
+                  "switch": "off",
+                  "outlet": 3
+                },
+                "period": "1"
+              },
+              {
+                "mId": "9feb21ee-5454-4b25-b143-c4ccd7dda7e2",
+                "type": "once",
+                "at": "2017-12-14T07:33:00.000Z",
+                "coolkit_timer_type": "delay",
+                "enabled": 0,
+                "do": {
+                  "switch": "on",
+                  "outlet": 3
+                },
+                "period": "1"
+              }
+            ]
+          },
+          "devConfig": {},
+          "settings": {
+            "opsNotify": 0,
+            "opsHistory": 1,
+            "alarmNotify": 1
+          },
+          "family": {
+            "familyid": "62483473418e0a00093dbf66",
+            "index": 4
+          },
+          "shareTo": [],
+          "devicekey": "55f2f10b-1b82-4c31-8aeb-428385bc20bb",
+          "online": false,
+          "params": {
+            "rssi": -42,
+            "staMac": "60:01:94:98:2F:05",
+            "password": "edgetipdo",
+            "timers": [
+              {
+                "coolkit_timer_type": "delay",
+                "at": "2017-12-14T07:33:00.000Z",
+                "mId": "9feb21ee-5454-4b25-b143-c4ccd7dda7e2",
+                "enabled": 1,
+                "do": {
+                  "switch": "on",
+                  "outlet": 3
+                },
+                "period": "1",
+                "type": "once"
+              }
+            ],
+            "switches": [
+              {
+                "switch": "off",
+                "outlet": 0
+              },
+              {
+                "switch": "off",
+                "outlet": 1
+              },
+              {
+                "switch": "off",
+                "outlet": 2
+              },
+              {
+                "switch": "on",
+                "outlet": 3
+              }
+            ],
+            "fwVersion": "2.0.1",
+            "configure": [
+              {
+                "startup": "on",
+                "outlet": 0
+              },
+              {
+                "startup": "on",
+                "outlet": 1
+              },
+              {
+                "startup": "on",
+                "outlet": 2
+              },
+              {
+                "startup": "on",
+                "outlet": 3
+              }
+            ],
+            "ssid": "WifiName"
+          },
+          "denyFeatures": [
+            "localCtl",
+            "mutexLock",
+            "pulse",
+            "sled",
+            "allOnOff"
+          ],
+          "isSupportGroup": true,
+          "isSupportedOnMP": true,
+          "isSupportChannelSplit": true,
+          "deviceFeature": {}
+        },
+        "index": 4
+      },
+      {
+        "itemType": 1,
+        "itemData": {
+          "name": "Moje zařízení06d59b",
+          "deviceid": "100006d59b",
+          "apikey": "8afc44f6-49b1-4cc9-8fd2-b5b587682dda",
+          "extra": {
+            "description": "WWJG000843",
+            "brandId": "5611402280a0e2630f7b102d",
+            "apmac": "d0:27:00:0d:a8:87",
+            "mac": "d0:27:00:0d:a8:86",
+            "ui": "传感器中心",
+            "modelInfo": "57bff30f0890798568aba9b0",
+            "model": "PSA-BTA-GL",
+            "manufacturer": "深圳创易智能系统有限公司",
+            "uiid": 18
+          },
+          "brandName": "Maker",
+          "brandLogo": "",
+          "showBrand": true,
+          "productModel": "Sonoff SC",
+          "tags": {},
+          "devConfig": {},
+          "settings": {
+            "opsNotify": 0,
+            "opsHistory": 1,
+            "alarmNotify": 1
+          },
+          "family": {
+            "familyid": "62483473418e0a00093dbf66",
+            "index": 5
+          },
+          "shareTo": [],
+          "devicekey": "2b793384-ae02-4a64-9302-bd97f8f6abc6",
+          "online": false,
+          "params": {
+            "rssi": -32,
+            "staMac": "5C:CF:7F:F8:AE:70",
+            "illuminance": 0,
+            "light": 10,
+            "clap": 4,
+            "temperature": 24,
+            "noise": 3,
+            "humidity": 48,
+            "fwVersion": "2.0.2",
+            "dust": 0,
+            "movement": 0,
+            "dusty": 1,
+            "bindInfos": {
+              "scene": 0
+            }
+          },
+          "denyFeatures": [
+            "sled"
+          ],
+          "isSupportGroup": false,
+          "isSupportedOnMP": false,
+          "isSupportChannelSplit": false,
+          "deviceFeature": {}
+        },
+        "index": 5
+      },
+      {
+        "itemType": 1,
+        "itemData": {
+          "name": "Moje zařízení2c8206",
+          "deviceid": "10002c8206",
+          "apikey": "8afc44f6-49b1-4cc9-8fd2-b5b587682dda",
+          "extra": {
+            "description": "WWJG001199",
+            "brandId": "58e5f344baeb368720e25469",
+            "apmac": "d0:27:00:59:01:5d",
+            "mac": "d0:27:00:59:01:5c",
+            "ui": "RFBridge",
+            "modelInfo": "591aa9f26ea4362d4399eae4",
+            "model": "PSF-BRA-GL",
+            "manufacturer": "深圳创易智能系统有限公司",
+            "uiid": 28
+          },
+          "brandName": "Sonoff",
+          "brandLogo": "https://eu-ota.coolkit.cc/logo/m6N8zJB0O3EVvhCei6zCPStFeKYKAzSa.png",
+          "showBrand": true,
+          "productModel": "RFBridge",
+          "tags": {
+            "zyx_info": [
+              {
+                "remote_type": "6",
+                "buttonName": [
+                  {
+                    "0": "Tlačítko1"
+                  }
+                ],
+                "name": "Moje RF vzdálené"
+              }
+            ]
+          },
+          "devConfig": {
+            "remoteInfos": [
+              {
+                "numberOfRemote": 16,
+                "fwVersion": "2.7.0"
+              }
+            ]
+          },
+          "settings": {
+            "opsNotify": 0,
+            "opsHistory": 1,
+            "alarmNotify": 1
+          },
+          "family": {
+            "familyid": "62483473418e0a00093dbf66",
+            "index": 7
+          },
+          "shareTo": [],
+          "devicekey": "8905e600-c2d4-4e1c-a217-33ec766a1db1",
+          "online": false,
+          "params": {
+            "rssi": -36,
+            "rfChl": 0,
+            "rfTrig0": "2018-02-09T12:37:14.000Z",
+            "fwVersion": "1.1.0",
+            "cmd": "trigger",
+            "rfList": [
+              {
+                "rfChl": 0,
+                "rfVal": "30DE01A404C4D31C7E"
+              }
+            ]
+          },
+          "denyFeatures": [
+            "localCtl",
+            "switchWifi",
+            "sled",
+            "switchWifi-userSecret"
+          ],
+          "isSupportGroup": false,
+          "isSupportedOnMP": true,
+          "isSupportChannelSplit": false,
+          "wxModelId": "ykDCr7EWtGxpZDk2dLWXRg",
+          "deviceFeature": {}
+        },
+        "index": 7
+      },
+      {
+        "itemType": 1,
+        "itemData": {
+          "name": "Světlo ložnice",
+          "deviceid": "100012b4b7",
+          "apikey": "8afc44f6-49b1-4cc9-8fd2-b5b587682dda",
+          "extra": {
+            "description": "WWJG001005",
+            "brandId": "58e5f344baeb368720e25469",
+            "apmac": "d0:27:00:25:66:bf",
+            "mac": "d0:27:00:25:66:be",
+            "ui": "RGB五色球泡灯",
+            "modelInfo": "5927cd536ea4362d439a1d7a",
+            "model": "PSF-BLB-GL",
+            "manufacturer": "深圳创易智能系统有限公司",
+            "uiid": 22,
+            "staMac": "60:01:94:86:84:D2"
+          },
+          "brandName": "Sonoff",
+          "brandLogo": "https://eu-ota.coolkit.cc/logo/m6N8zJB0O3EVvhCei6zCPStFeKYKAzSa.png",
+          "showBrand": true,
+          "productModel": "B1",
+          "tags": {},
+          "devConfig": {},
+          "settings": {
+            "opsNotify": 0,
+            "opsHistory": 1,
+            "alarmNotify": 1
+          },
+          "devGroups": [
+            {
+              "groupId": "6458cba33290d40008de4ef5",
+              "type": 1
+            }
+          ],
+          "family": {
+            "familyid": "62483473418e0a00093dbf66",
+            "index": 8,
+            "roomid": "62483473418e0a00093dbf64"
+          },
+          "shareTo": [],
+          "devicekey": "b60adec4-4aed-4b06-b0e1-eb50c436089c",
+          "online": false,
+          "params": {
+            "state": "off",
+            "channel2": "0",
+            "channel1": "0",
+            "fwVersion": "2.6.0",
+            "channel0": "0",
+            "channel4": "78",
+            "channel3": "255",
+            "staMac": "60:01:94:86:84:D2",
+            "rssi": -56,
+            "zyx_mode": 2,
+            "type": "middle"
+          },
+          "isSupportGroup": true,
+          "isSupportedOnMP": false,
+          "isSupportChannelSplit": false,
+          "deviceFeature": {}
+        },
+        "index": 8
+      },
+      {
+        "itemType": 1,
+        "itemData": {
+          "name": "Světlo pokoj",
+          "deviceid": "1000243c4c",
+          "apikey": "8afc44f6-49b1-4cc9-8fd2-b5b587682dda",
+          "extra": {
+            "apmac": "d0:27:00:48:75:e9",
+            "modelInfo": "5927cd536ea4362d439a1d7a",
+            "brandId": "58e5f344baeb368720e25469",
+            "model": "PSF-BLB-GL",
+            "ui": "RGB五色球泡灯",
+            "description": "WWJG001141",
+            "manufacturer": "深圳创易智能系统有限公司",
+            "mac": "d0:27:00:48:75:e8",
+            "uiid": 22,
+            "staMac": "60:01:94:9D:3B:14"
+          },
+          "brandName": "Sonoff",
+          "brandLogo": "https://eu-ota.coolkit.cc/logo/m6N8zJB0O3EVvhCei6zCPStFeKYKAzSa.png",
+          "showBrand": true,
+          "productModel": "B1",
+          "tags": {},
+          "devConfig": {},
+          "settings": {
+            "opsNotify": 0,
+            "opsHistory": 1,
+            "alarmNotify": 1
+          },
+          "devGroups": [
+            {
+              "groupId": "6458cba33290d40008de4ef5",
+              "type": 1
+            }
+          ],
+          "family": {
+            "familyid": "62483473418e0a00093dbf66",
+            "index": 9,
+            "roomid": "6478f8dd9ff8320009450de9"
+          },
+          "shareTo": [],
+          "devicekey": "aa4fafc6-93cc-484c-80d1-0639b9ea8ef4",
+          "online": false,
+          "params": {
+            "state": "off",
+            "channel2": "0",
+            "channel1": "255",
+            "fwVersion": "2.6.0",
+            "channel0": "0",
+            "channel4": "0",
+            "channel3": "0",
+            "staMac": "60:01:94:9D:3B:14",
+            "rssi": -59,
+            "zyx_mode": 1,
+            "type": "warm"
+          },
+          "isSupportGroup": true,
+          "isSupportedOnMP": false,
+          "isSupportChannelSplit": false,
+          "deviceFeature": {}
+        },
+        "index": 9
+      }
+    ],
+    "total": 18
+  }
+}

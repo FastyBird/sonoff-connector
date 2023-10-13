@@ -36,6 +36,7 @@
     "queryable": false
   },
   "switch": {
+    "group": "light",
     "name": "Switch",
     "type": "channel",
     "data_type": "switch",
@@ -47,6 +48,7 @@
     "queryable": false
   },
   "state": {
+    "group": "light",
     "name": "Mist level",
     "type": "channel",
     "data_type": "uchar",
@@ -55,6 +57,7 @@
     "queryable": false
   },
   "light_type": {
+    "group": "light",
     "name": "Light type",
     "type": "channel",
     "data_type": "uchar",
@@ -63,6 +66,7 @@
     "queryable": false
   },
   "bright": {
+    "group": "light",
     "name": "Brightness",
     "type": "channel",
     "data_type": "uchar",
@@ -71,6 +75,7 @@
     "queryable": false
   },
   "colorR": {
+    "group": "light",
     "name": "Red color",
     "type": "channel",
     "data_type": "uchar",
@@ -79,6 +84,7 @@
     "queryable": false
   },
   "colorG": {
+    "group": "light",
     "name": "Green color",
     "type": "channel",
     "data_type": "uchar",
@@ -87,6 +93,7 @@
     "queryable": false
   },
   "colorB": {
+    "group": "light",
     "name": "Blue color",
     "type": "channel",
     "data_type": "uchar",
@@ -95,6 +102,7 @@
     "queryable": false
   },
   "mode": {
+    "group": "light",
     "name": "Mode",
     "type": "channel",
     "data_type": "uchar",
@@ -103,6 +111,7 @@
     "queryable": false
   },
   "speed": {
+    "group": "light",
     "name": "Speed",
     "type": "channel",
     "data_type": "uchar",

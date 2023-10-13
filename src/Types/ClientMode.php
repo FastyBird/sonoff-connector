@@ -32,15 +32,22 @@ class ClientMode extends Consistence\Enum\Enum
 	/**
 	 * Define versions
 	 */
-	public const MODE_LAN = 'lan';
+	public const LAN = 'lan';
 
-	public const MODE_CLOUD = 'cloud';
+	public const CLOUD = 'cloud';
 
-	public const MODE_AUTO = 'auto';
+	public const AUTO = 'auto';
+
+	public const GATEWAY = 'gateway';
+
+	public function getValue(): string
+	{
+		return strval(parent::getValue());
+	}
 
 	public function __toString(): string
 	{
-		return strval(self::getValue());
+		return self::getValue();
 	}
 
 }

@@ -29,7 +29,7 @@ use FastyBird\Connector\Sonoff\Types;
 interface AutoFactory extends ClientFactory
 {
 
-	public const MODE = Types\ClientMode::MODE_AUTO;
+	public const MODE = Types\ClientMode::AUTO;
 
 	public function create(Entities\SonoffConnector $connector): Auto;
 
