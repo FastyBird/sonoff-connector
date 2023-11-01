@@ -573,7 +573,7 @@ final class WritePropertyState implements Queue\Consumer
 					'Could write state to device',
 					array_merge(
 						[
-							'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_NS_PANEL,
+							'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
 							'type' => 'write-sub-device-state-message-consumer',
 							'exception' => BootstrapHelpers\Logger::buildException($ex),
 							'connector' => [
