@@ -574,7 +574,7 @@ final class WritePropertyState implements Queue\Consumer
 					array_merge(
 						[
 							'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-							'type' => 'write-sub-device-state-message-consumer',
+							'type' => 'write-property-state-message-consumer',
 							'exception' => BootstrapHelpers\Logger::buildException($ex),
 							'connector' => [
 								'id' => $connector->getId()->toString(),

@@ -165,7 +165,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 								'Connected to Sonoff sockets server',
 								[
 									'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-									'type' => 'cloud-ws',
+									'type' => 'ws-api',
 								],
 							);
 
@@ -225,7 +225,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 						'Connection to Sonoff sockets server was closed',
 						[
 							'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-							'type' => 'cloud-ws',
+							'type' => 'ws-api',
 							'connection' => [
 								'code' => $code,
 								'reason' => $reason,
@@ -441,7 +441,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 				'Received message from Sonoff sockets server not be parsed',
 				[
 					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'cloud-ws',
+					'type' => 'ws-api',
 					'exception' => BootstrapHelpers\Logger::buildException($ex),
 				],
 			);
