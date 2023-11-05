@@ -102,7 +102,6 @@ final class Auto extends ClientProcess implements Client
 	}
 
 	/**
-	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
@@ -120,7 +119,6 @@ final class Auto extends ClientProcess implements Client
 	}
 
 	/**
-	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\CloudApiCall
 	 * @throws Exceptions\InvalidState
 	 * @throws Exceptions\LanApiCall
@@ -160,7 +158,6 @@ final class Auto extends ClientProcess implements Client
 	}
 
 	/**
-	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\InvalidState
 	 * @throws Exceptions\CloudApiCall
 	 * @throws MetadataExceptions\InvalidArgument

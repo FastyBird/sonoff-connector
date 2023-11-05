@@ -127,7 +127,6 @@ final class Discovery implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
@@ -144,7 +143,6 @@ final class Discovery implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\CloudApiCall
 	 * @throws Exceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument

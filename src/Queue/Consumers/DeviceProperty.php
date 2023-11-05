@@ -62,8 +62,6 @@ trait DeviceProperty
 		string $identifier,
 		string|null $name = null,
 		array|string|null $format = null,
-		bool $settable = false,
-		bool $queryable = false,
 	): void
 	{
 		$findDevicePropertyQuery = new DevicesQueries\FindDeviceProperties();
@@ -147,8 +145,6 @@ trait DeviceProperty
 						'identifier' => $identifier,
 						'name' => $name,
 						'dataType' => $dataType,
-						'settable' => $settable,
-						'queryable' => $queryable,
 						'value' => $value,
 						'format' => $format,
 					]),
@@ -176,8 +172,6 @@ trait DeviceProperty
 					$property,
 					Utils\ArrayHash::from([
 						'dataType' => $dataType,
-						'settable' => $settable,
-						'queryable' => $queryable,
 						'value' => $value,
 						'format' => $format,
 					]),
