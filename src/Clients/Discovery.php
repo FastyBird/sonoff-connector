@@ -99,7 +99,7 @@ final class Discovery implements Evenement\EventEmitterInterface
 		$this->discoveredDevices = new SplObjectStorage();
 
 		$this->discoverCloudDevices()
-			->then(function (): void {
+			->then(async(function (): void {
 				$mode = $this->connector->getClientMode();
 
 				if (
@@ -120,7 +120,7 @@ final class Discovery implements Evenement\EventEmitterInterface
 				}
 
 				$this->emit('finished', [$devices]);
-			})
+			}))
 			->otherwise(function (): void {
 				$this->emit('failed');
 			});
