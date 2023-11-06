@@ -67,7 +67,7 @@ abstract class ClientProcess
 
 	public function __construct(
 		protected readonly Entities\SonoffConnector $connector,
-		protected readonly DevicesModels\Devices\DevicesRepository $devicesRepository,
+		protected readonly DevicesModels\Entities\Devices\DevicesRepository $devicesRepository,
 		protected readonly DevicesUtilities\DeviceConnection $deviceConnectionManager,
 		protected readonly DevicesUtilities\DevicePropertiesStates $devicePropertiesStates,
 		protected readonly DevicesUtilities\ChannelPropertiesStates $channelPropertiesStates,

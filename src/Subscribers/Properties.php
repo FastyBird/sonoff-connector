@@ -19,13 +19,13 @@ use Doctrine\Common;
 use Doctrine\ORM;
 use Doctrine\Persistence;
 use FastyBird\Connector\Sonoff\Entities;
-use FastyBird\Connector\Sonoff\Helpers;
 use FastyBird\Connector\Sonoff\Types;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Entities as DevicesEntities;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
 use FastyBird\Module\Devices\Models as DevicesModels;
 use FastyBird\Module\Devices\Queries as DevicesQueries;
+use FastyBird\Module\Devices\Utilities as DevicesUtilities;
 use IPub\DoctrineCrud;
 use Nette;
 use Nette\Utils;
@@ -44,8 +44,8 @@ final class Properties implements Common\EventSubscriber
 	use Nette\SmartObject;
 
 	public function __construct(
-		private readonly DevicesModels\Devices\Properties\PropertiesRepository $propertiesRepository,
-		private readonly DevicesModels\Devices\Properties\PropertiesManager $propertiesManager,
+		private readonly DevicesModels\Entities\Devices\Properties\PropertiesRepository $propertiesRepository,
+		private readonly DevicesModels\Entities\Devices\Properties\PropertiesManager $propertiesManager,
 	)
 	{
 	}
@@ -104,7 +104,7 @@ final class Properties implements Common\EventSubscriber
 				'device' => $entity,
 				'entity' => DevicesEntities\Devices\Properties\Dynamic::class,
 				'identifier' => Types\DevicePropertyIdentifier::STATE,
-				'name' => Helpers\Name::createName(Types\DevicePropertyIdentifier::STATE),
+				'name' => DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::STATE),
 				'dataType' => MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_ENUM),
 				'unit' => null,
 				'format' => [

@@ -49,15 +49,15 @@ final class StoreDevice implements Consumer
 
 	public function __construct(
 		private readonly Sonoff\Logger $logger,
-		private readonly DevicesModels\Connectors\ConnectorsRepository $connectorsRepository,
-		private readonly DevicesModels\Devices\DevicesRepository $devicesRepository,
-		private readonly DevicesModels\Devices\DevicesManager $devicesManager,
-		private readonly DevicesModels\Devices\Properties\PropertiesRepository $devicesPropertiesRepository,
-		private readonly DevicesModels\Devices\Properties\PropertiesManager $devicesPropertiesManager,
-		private readonly DevicesModels\Channels\ChannelsRepository $channelsRepository,
-		private readonly DevicesModels\Channels\ChannelsManager $channelsManager,
-		private readonly DevicesModels\Channels\Properties\PropertiesRepository $channelPropertiesRepository,
-		private readonly DevicesModels\Channels\Properties\PropertiesManager $channelsPropertiesManager,
+		private readonly DevicesModels\Entities\Connectors\ConnectorsRepository $connectorsRepository,
+		private readonly DevicesModels\Entities\Devices\DevicesRepository $devicesRepository,
+		private readonly DevicesModels\Entities\Devices\DevicesManager $devicesManager,
+		private readonly DevicesModels\Entities\Devices\Properties\PropertiesRepository $devicesPropertiesRepository,
+		private readonly DevicesModels\Entities\Devices\Properties\PropertiesManager $devicesPropertiesManager,
+		private readonly DevicesModels\Entities\Channels\ChannelsRepository $channelsRepository,
+		private readonly DevicesModels\Entities\Channels\ChannelsManager $channelsManager,
+		private readonly DevicesModels\Entities\Channels\Properties\PropertiesRepository $channelPropertiesRepository,
+		private readonly DevicesModels\Entities\Channels\Properties\PropertiesManager $channelsPropertiesManager,
 		private readonly DevicesUtilities\Database $databaseHelper,
 	)
 	{
@@ -153,77 +153,77 @@ final class StoreDevice implements Consumer
 			$entity->getApiKey(),
 			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
 			Types\DevicePropertyIdentifier::API_KEY,
-			Helpers\Name::createName(Types\DevicePropertyIdentifier::API_KEY),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::API_KEY),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
 			$entity->getDeviceKey(),
 			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
 			Types\DevicePropertyIdentifier::DEVICE_KEY,
-			Helpers\Name::createName(Types\DevicePropertyIdentifier::DEVICE_KEY),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::DEVICE_KEY),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
 			$entity->getUiid(),
 			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_UCHAR),
 			Types\DevicePropertyIdentifier::UIID,
-			Helpers\Name::createName(Types\DevicePropertyIdentifier::UIID),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::UIID),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
 			$entity->getBrandName(),
 			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
 			Types\DevicePropertyIdentifier::BRAND_NAME,
-			Helpers\Name::createName(Types\DevicePropertyIdentifier::BRAND_NAME),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::BRAND_NAME),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
 			$entity->getBrandLogo(),
 			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
 			Types\DevicePropertyIdentifier::BRAND_LOGO,
-			Helpers\Name::createName(Types\DevicePropertyIdentifier::BRAND_LOGO),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::BRAND_LOGO),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
 			$entity->getProductModel(),
 			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
 			Types\DevicePropertyIdentifier::PRODUCT_MODEL,
-			Helpers\Name::createName(Types\DevicePropertyIdentifier::PRODUCT_MODEL),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::PRODUCT_MODEL),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
 			$entity->getModel(),
 			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
 			Types\DevicePropertyIdentifier::HARDWARE_MODEL,
-			Helpers\Name::createName(Types\DevicePropertyIdentifier::HARDWARE_MODEL),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::HARDWARE_MODEL),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
 			$entity->getMac(),
 			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
 			Types\DevicePropertyIdentifier::HARDWARE_MAC_ADDRESS,
-			Helpers\Name::createName(Types\DevicePropertyIdentifier::HARDWARE_MAC_ADDRESS),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::HARDWARE_MAC_ADDRESS),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
 			$entity->getIpAddress(),
 			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
 			Types\DevicePropertyIdentifier::IP_ADDRESS,
-			Helpers\Name::createName(Types\DevicePropertyIdentifier::IP_ADDRESS),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::IP_ADDRESS),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
 			$entity->getDomain(),
 			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
 			Types\DevicePropertyIdentifier::ADDRESS,
-			Helpers\Name::createName(Types\DevicePropertyIdentifier::ADDRESS),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::ADDRESS),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
 			$entity->getPort(),
 			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_UINT),
 			Types\DevicePropertyIdentifier::PORT,
-			Helpers\Name::createName(Types\DevicePropertyIdentifier::PORT),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::PORT),
 		);
 
 		foreach ($entity->getParameters() as $parameter) {

@@ -40,8 +40,8 @@ final class Controls implements Common\EventSubscriber
 	use Nette\SmartObject;
 
 	public function __construct(
-		private readonly DevicesModels\Connectors\Controls\ControlsRepository $connectorsControlsRepository,
-		private readonly DevicesModels\Connectors\Controls\ControlsManager $connectorsControlsManager,
+		private readonly DevicesModels\Entities\Connectors\Controls\ControlsRepository $connectorsControlsRepository,
+		private readonly DevicesModels\Entities\Connectors\Controls\ControlsManager $connectorsControlsManager,
 	)
 	{
 	}

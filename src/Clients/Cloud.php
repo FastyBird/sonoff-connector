@@ -50,7 +50,7 @@ final class Cloud extends ClientProcess implements Client
 
 	public function __construct(
 		Entities\SonoffConnector $connector,
-		DevicesModels\Devices\DevicesRepository $devicesRepository,
+		DevicesModels\Entities\Devices\DevicesRepository $devicesRepository,
 		DevicesUtilities\DeviceConnection $deviceConnectionManager,
 		DevicesUtilities\DevicePropertiesStates $devicePropertiesStates,
 		DevicesUtilities\ChannelPropertiesStates $channelPropertiesStates,
