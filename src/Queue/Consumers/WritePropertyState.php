@@ -92,7 +92,7 @@ final class WritePropertyState implements Queue\Consumer
 			return false;
 		}
 
-		$findConnectorQuery = new Queries\FindConnectors();
+		$findConnectorQuery = new Queries\Entities\FindConnectors();
 		$findConnectorQuery->byId($entity->getConnector());
 
 		$connector = $this->connectorsRepository->findOneBy($findConnectorQuery, Entities\SonoffConnector::class);
@@ -119,7 +119,7 @@ final class WritePropertyState implements Queue\Consumer
 			return true;
 		}
 
-		$findDeviceQuery = new Queries\FindDevices();
+		$findDeviceQuery = new Queries\Entities\FindDevices();
 		$findDeviceQuery->forConnector($connector);
 		$findDeviceQuery->byId($entity->getDevice());
 
@@ -150,7 +150,7 @@ final class WritePropertyState implements Queue\Consumer
 		$channel = null;
 
 		if ($entity instanceof Entities\Messages\WriteChannelPropertyState) {
-			$findChannelQuery = new DevicesQueries\FindChannels();
+			$findChannelQuery = new DevicesQueries\Entities\FindChannels();
 			$findChannelQuery->forDevice($device);
 			$findChannelQuery->byId($entity->getChannel());
 
@@ -178,7 +178,7 @@ final class WritePropertyState implements Queue\Consumer
 				return true;
 			}
 
-			$findChannelPropertyQuery = new DevicesQueries\FindChannelDynamicProperties();
+			$findChannelPropertyQuery = new DevicesQueries\Entities\FindChannelDynamicProperties();
 			$findChannelPropertyQuery->forChannel($channel);
 			$findChannelPropertyQuery->byId($entity->getProperty());
 
@@ -209,7 +209,7 @@ final class WritePropertyState implements Queue\Consumer
 				return true;
 			}
 		} else {
-			$findDevicePropertyQuery = new DevicesQueries\FindDeviceDynamicProperties();
+			$findDevicePropertyQuery = new DevicesQueries\Entities\FindDeviceDynamicProperties();
 			$findDevicePropertyQuery->forDevice($device);
 			$findDevicePropertyQuery->byId($entity->getProperty());
 

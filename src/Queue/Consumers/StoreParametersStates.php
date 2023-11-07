@@ -71,7 +71,7 @@ final class StoreParametersStates implements Consumer
 			return false;
 		}
 
-		$findDeviceQuery = new DevicesQueries\FindDevices();
+		$findDeviceQuery = new DevicesQueries\Entities\FindDevices();
 		$findDeviceQuery->byConnectorId($entity->getConnector());
 		$findDeviceQuery->startWithIdentifier($entity->getIdentifier());
 
@@ -83,7 +83,7 @@ final class StoreParametersStates implements Consumer
 
 		foreach ($entity->getParameters() as $parameter) {
 			if ($parameter instanceof Entities\Messages\States\DeviceParameterState) {
-				$findDevicePropertyQuery = new DevicesQueries\FindDeviceProperties();
+				$findDevicePropertyQuery = new DevicesQueries\Entities\FindDeviceProperties();
 				$findDevicePropertyQuery->forDevice($device);
 				$findDevicePropertyQuery->byIdentifier($parameter->getName());
 
@@ -115,14 +115,14 @@ final class StoreParametersStates implements Consumer
 					);
 				}
 			} elseif ($parameter instanceof Entities\Messages\States\ChannelParameterState) {
-				$findChannelQuery = new DevicesQueries\FindChannels();
+				$findChannelQuery = new DevicesQueries\Entities\FindChannels();
 				$findChannelQuery->forDevice($device);
 				$findChannelQuery->byIdentifier($parameter->getGroup());
 
 				$channel = $this->channelsRepository->findOneBy($findChannelQuery);
 
 				if ($channel !== null) {
-					$findChannelPropertyQuery = new DevicesQueries\FindChannelProperties();
+					$findChannelPropertyQuery = new DevicesQueries\Entities\FindChannelProperties();
 					$findChannelPropertyQuery->forChannel($channel);
 					$findChannelPropertyQuery->byIdentifier($parameter->getName());
 

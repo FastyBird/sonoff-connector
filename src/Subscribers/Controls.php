@@ -64,7 +64,7 @@ final class Controls implements Common\EventSubscriber
 
 		// Check for valid entity
 		if ($entity instanceof Entities\SonoffConnector) {
-			$findConnectorControlQuery = new DevicesQueries\FindConnectorControls();
+			$findConnectorControlQuery = new DevicesQueries\Entities\FindConnectorControls();
 			$findConnectorControlQuery->forConnector($entity);
 			$findConnectorControlQuery->byName(Types\ConnectorControlName::DISCOVER);
 
@@ -77,7 +77,7 @@ final class Controls implements Common\EventSubscriber
 				]));
 			}
 
-			$findConnectorControlQuery = new DevicesQueries\FindConnectorControls();
+			$findConnectorControlQuery = new DevicesQueries\Entities\FindConnectorControls();
 			$findConnectorControlQuery->forConnector($entity);
 			$findConnectorControlQuery->byName(Types\ConnectorControlName::REBOOT);
 

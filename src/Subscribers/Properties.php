@@ -73,7 +73,7 @@ final class Properties implements Common\EventSubscriber
 			return;
 		}
 
-		$findDevicePropertyQuery = new DevicesQueries\FindDeviceProperties();
+		$findDevicePropertyQuery = new DevicesQueries\Entities\FindDeviceProperties();
 		$findDevicePropertyQuery->forDevice($entity);
 		$findDevicePropertyQuery->byIdentifier(Types\DevicePropertyIdentifier::STATE);
 

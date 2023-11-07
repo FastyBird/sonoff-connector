@@ -85,7 +85,7 @@ abstract class ClientProcess
 	 */
 	protected function handleCommunication(): void
 	{
-		$findDevicesQuery = new Queries\FindDevices();
+		$findDevicesQuery = new Queries\Entities\FindDevices();
 		$findDevicesQuery->forConnector($this->connector);
 
 		foreach ($this->devicesRepository->findAllBy($findDevicesQuery, Entities\SonoffDevice::class) as $device) {

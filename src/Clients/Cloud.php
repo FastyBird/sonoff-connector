@@ -420,7 +420,7 @@ final class Cloud extends ClientProcess implements Client
 			return;
 		}
 
-		$findDeviceQuery = new Queries\FindDevices();
+		$findDeviceQuery = new Queries\Entities\FindDevices();
 		$findDeviceQuery->byIdentifier($message->getDeviceId());
 
 		$device = $this->devicesRepository->findOneBy($findDeviceQuery, Entities\SonoffDevice::class);

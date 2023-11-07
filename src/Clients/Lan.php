@@ -106,7 +106,7 @@ final class Lan extends ClientProcess implements Client
 		$this->connectionManager
 			->getLanConnection()
 			->on('message', function (Entities\API\Lan\DeviceEvent $message): void {
-				$findDeviceQuery = new Queries\FindDevices();
+				$findDeviceQuery = new Queries\Entities\FindDevices();
 				$findDeviceQuery->byIdentifier($message->getId());
 
 				$device = $this->devicesRepository->findOneBy($findDeviceQuery, Entities\SonoffDevice::class);
@@ -129,7 +129,7 @@ final class Lan extends ClientProcess implements Client
 				}
 			});
 
-		$findDevicesQuery = new Queries\FindDevices();
+		$findDevicesQuery = new Queries\Entities\FindDevices();
 		$findDevicesQuery->forConnector($this->connector);
 
 		foreach ($this->devicesRepository->findAllBy($findDevicesQuery, Entities\SonoffDevice::class) as $device) {
@@ -293,7 +293,7 @@ final class Lan extends ClientProcess implements Client
 
 		// Special handling for Sonoff SPM devices acting as sub-devices
 		if ($event->getData()->getSubDeviceId() !== null) {
-			$findDeviceQuery = new Queries\FindDevices();
+			$findDeviceQuery = new Queries\Entities\FindDevices();
 			$findDeviceQuery->forParent($device);
 			$findDeviceQuery->byIdentifier($event->getData()->getSubDeviceId());
 

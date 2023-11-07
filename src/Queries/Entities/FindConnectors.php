@@ -13,7 +13,7 @@
  * @date           06.10.23
  */
 
-namespace FastyBird\Connector\Sonoff\Queries;
+namespace FastyBird\Connector\Sonoff\Queries\Entities;
 
 use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Module\Devices\Queries as DevicesQueries;
@@ -22,14 +22,14 @@ use FastyBird\Module\Devices\Queries as DevicesQueries;
  * Find connectors entities query
  *
  * @template T of Entities\SonoffConnector
- * @extends  DevicesQueries\FindConnectors<T>
+ * @extends  DevicesQueries\Entities\FindConnectors<T>
  *
  * @package        FastyBird:SonoffConnector!
  * @subpackage     Queries
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-class FindConnectors extends DevicesQueries\FindConnectors
+class FindConnectors extends DevicesQueries\Entities\FindConnectors
 {
 
 }

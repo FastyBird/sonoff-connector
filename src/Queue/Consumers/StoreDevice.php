@@ -76,14 +76,14 @@ final class StoreDevice implements Consumer
 			return false;
 		}
 
-		$findDeviceQuery = new Queries\FindDevices();
+		$findDeviceQuery = new Queries\Entities\FindDevices();
 		$findDeviceQuery->byConnectorId($entity->getConnector());
 		$findDeviceQuery->byIdentifier($entity->getId());
 
 		$device = $this->devicesRepository->findOneBy($findDeviceQuery, Entities\SonoffDevice::class);
 
 		if ($device === null) {
-			$findConnectorQuery = new Queries\FindConnectors();
+			$findConnectorQuery = new Queries\Entities\FindConnectors();
 			$findConnectorQuery->byId($entity->getConnector());
 
 			$connector = $this->connectorsRepository->findOneBy(
@@ -228,7 +228,7 @@ final class StoreDevice implements Consumer
 
 		foreach ($entity->getParameters() as $parameter) {
 			if ($parameter->getType()->equalsValue(Types\ParameterType::DEVICE)) {
-				$findDevicePropertyQuery = new DevicesQueries\FindDeviceProperties();
+				$findDevicePropertyQuery = new DevicesQueries\Entities\FindDeviceProperties();
 				$findDevicePropertyQuery->forDevice($device);
 				$findDevicePropertyQuery->byIdentifier($parameter->getIdentifier());
 
@@ -315,7 +315,7 @@ final class StoreDevice implements Consumer
 		$this->databaseHelper->transaction(function () use ($entity, $device): bool {
 			foreach ($entity->getParameters() as $parameter) {
 				if ($parameter->getType()->equalsValue(Types\ParameterType::CHANNEL)) {
-					$findChannelQuery = new DevicesQueries\FindChannels();
+					$findChannelQuery = new DevicesQueries\Entities\FindChannels();
 					$findChannelQuery->byIdentifier($parameter->getGroup());
 					$findChannelQuery->forDevice($device);
 
@@ -342,7 +342,7 @@ final class StoreDevice implements Consumer
 						);
 					}
 
-					$findChannelPropertyQuery = new DevicesQueries\FindChannelProperties();
+					$findChannelPropertyQuery = new DevicesQueries\Entities\FindChannelProperties();
 					$findChannelPropertyQuery->forChannel($channel);
 					$findChannelPropertyQuery->byIdentifier($parameter->getIdentifier());
 
