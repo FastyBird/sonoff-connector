@@ -493,7 +493,7 @@ final class WritePropertyState implements Queue\Consumer
 						$this->channelPropertiesStatesManager->setValue(
 							$property,
 							Utils\ArrayHash::from([
-								DevicesStates\Property::PENDING_KEY => $now->format(DateTimeInterface::ATOM),
+								DevicesStates\Property::PENDING_FIELD => $now->format(DateTimeInterface::ATOM),
 							]),
 						);
 					}
@@ -504,7 +504,7 @@ final class WritePropertyState implements Queue\Consumer
 						$this->devicePropertiesStatesManager->setValue(
 							$property,
 							Utils\ArrayHash::from([
-								DevicesStates\Property::PENDING_KEY => $now->format(DateTimeInterface::ATOM),
+								DevicesStates\Property::PENDING_FIELD => $now->format(DateTimeInterface::ATOM),
 							]),
 						);
 					}
@@ -515,16 +515,16 @@ final class WritePropertyState implements Queue\Consumer
 					$this->channelPropertiesStatesManager->setValue(
 						$property,
 						Utils\ArrayHash::from([
-							DevicesStates\Property::EXPECTED_VALUE_KEY => null,
-							DevicesStates\Property::PENDING_KEY => false,
+							DevicesStates\Property::EXPECTED_VALUE_FIELD => null,
+							DevicesStates\Property::PENDING_FIELD => false,
 						]),
 					);
 				} else {
 					$this->devicePropertiesStatesManager->setValue(
 						$property,
 						Utils\ArrayHash::from([
-							DevicesStates\Property::EXPECTED_VALUE_KEY => null,
-							DevicesStates\Property::PENDING_KEY => false,
+							DevicesStates\Property::EXPECTED_VALUE_FIELD => null,
+							DevicesStates\Property::PENDING_FIELD => false,
 						]),
 					);
 				}

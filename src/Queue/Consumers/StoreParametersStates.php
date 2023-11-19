@@ -60,6 +60,7 @@ final class StoreParametersStates implements Consumer
 
 	/**
 	 * @throws DBAL\Exception
+	 * @throws DevicesExceptions\InvalidArgument
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws DevicesExceptions\Runtime
 	 * @throws MetadataExceptions\InvalidArgument
@@ -92,12 +93,12 @@ final class StoreParametersStates implements Consumer
 
 				if ($property instanceof DevicesEntities\Devices\Properties\Dynamic) {
 					$this->devicePropertiesStateManager->setValue($property, Utils\ArrayHash::from([
-						DevicesStates\Property::ACTUAL_VALUE_KEY => DevicesUtilities\ValueHelper::transformValueFromDevice(
+						DevicesStates\Property::ACTUAL_VALUE_FIELD => DevicesUtilities\ValueHelper::transformValueFromDevice(
 							$property->getDataType(),
 							$property->getFormat(),
 							$parameter->getValue(),
 						),
-						DevicesStates\Property::VALID_KEY => true,
+						DevicesStates\Property::VALID_FIELD => true,
 					]));
 				} elseif ($property instanceof DevicesEntities\Devices\Properties\Variable) {
 					$this->databaseHelper->transaction(
@@ -131,12 +132,12 @@ final class StoreParametersStates implements Consumer
 
 					if ($property instanceof DevicesEntities\Channels\Properties\Dynamic) {
 						$this->channelPropertiesStateManager->setValue($property, Utils\ArrayHash::from([
-							DevicesStates\Property::ACTUAL_VALUE_KEY => DevicesUtilities\ValueHelper::transformValueFromDevice(
+							DevicesStates\Property::ACTUAL_VALUE_FIELD => DevicesUtilities\ValueHelper::transformValueFromDevice(
 								$property->getDataType(),
 								$property->getFormat(),
 								$parameter->getValue(),
 							),
-							DevicesStates\Property::VALID_KEY => true,
+							DevicesStates\Property::VALID_FIELD => true,
 						]));
 					} elseif ($property instanceof DevicesEntities\Channels\Properties\Variable) {
 						$this->databaseHelper->transaction(
