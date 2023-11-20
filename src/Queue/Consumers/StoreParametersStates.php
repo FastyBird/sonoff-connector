@@ -21,6 +21,7 @@ use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Queue\Consumer;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
+use FastyBird\Library\Metadata\Utilities as MetadataUtilities;
 use FastyBird\Module\Devices\Entities as DevicesEntities;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
 use FastyBird\Module\Devices\Models as DevicesModels;
@@ -93,7 +94,7 @@ final class StoreParametersStates implements Consumer
 
 				if ($property instanceof DevicesEntities\Devices\Properties\Dynamic) {
 					$this->devicePropertiesStateManager->setValue($property, Utils\ArrayHash::from([
-						DevicesStates\Property::ACTUAL_VALUE_FIELD => DevicesUtilities\ValueHelper::transformValueFromDevice(
+						DevicesStates\Property::ACTUAL_VALUE_FIELD => MetadataUtilities\ValueHelper::transformValueFromDevice(
 							$property->getDataType(),
 							$property->getFormat(),
 							$parameter->getValue(),
@@ -106,7 +107,7 @@ final class StoreParametersStates implements Consumer
 							$this->devicesPropertiesManager->update(
 								$property,
 								Utils\ArrayHash::from([
-									'value' => DevicesUtilities\ValueHelper::transformValueFromDevice(
+									'value' => MetadataUtilities\ValueHelper::transformValueFromDevice(
 										$property->getDataType(),
 										$property->getFormat(),
 										$parameter->getValue(),
@@ -132,7 +133,7 @@ final class StoreParametersStates implements Consumer
 
 					if ($property instanceof DevicesEntities\Channels\Properties\Dynamic) {
 						$this->channelPropertiesStateManager->setValue($property, Utils\ArrayHash::from([
-							DevicesStates\Property::ACTUAL_VALUE_FIELD => DevicesUtilities\ValueHelper::transformValueFromDevice(
+							DevicesStates\Property::ACTUAL_VALUE_FIELD => MetadataUtilities\ValueHelper::transformValueFromDevice(
 								$property->getDataType(),
 								$property->getFormat(),
 								$parameter->getValue(),
@@ -145,7 +146,7 @@ final class StoreParametersStates implements Consumer
 								$this->channelsPropertiesManager->update(
 									$property,
 									Utils\ArrayHash::from([
-										'value' => DevicesUtilities\ValueHelper::transformValueFromDevice(
+										'value' => MetadataUtilities\ValueHelper::transformValueFromDevice(
 											$property->getDataType(),
 											$property->getFormat(),
 											$parameter->getValue(),

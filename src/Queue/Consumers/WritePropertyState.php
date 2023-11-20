@@ -28,6 +28,7 @@ use FastyBird\DateTimeFactory;
 use FastyBird\Library\Bootstrap\Helpers as BootstrapHelpers;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
+use FastyBird\Library\Metadata\Utilities as MetadataUtilities;
 use FastyBird\Module\Devices\Entities as DevicesEntities;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
 use FastyBird\Module\Devices\Models as DevicesModels;
@@ -272,8 +273,8 @@ final class WritePropertyState implements Queue\Consumer
 			return true;
 		}
 
-		$expectedValue = DevicesUtilities\ValueHelper::flattenValue(
-			DevicesUtilities\ValueHelper::transformValueToDevice(
+		$expectedValue = MetadataUtilities\ValueHelper::flattenValue(
+			MetadataUtilities\ValueHelper::transformValueToDevice(
 				$property->getDataType(),
 				$property->getFormat(),
 				$state->getExpectedValue(),
