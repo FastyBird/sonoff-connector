@@ -15,7 +15,7 @@
 
 namespace FastyBird\Connector\Sonoff\Writers;
 
-use FastyBird\Connector\Sonoff\Entities;
+use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 
 /**
  * Device state writer interface factory
@@ -28,6 +28,6 @@ use FastyBird\Connector\Sonoff\Entities;
 interface WriterFactory
 {
 
-	public function create(Entities\SonoffConnector $connector): Writer;
+	public function create(MetadataDocuments\DevicesModule\Connector $connector): Writer;
 
 }

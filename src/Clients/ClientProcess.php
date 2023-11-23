@@ -16,14 +16,12 @@
 namespace FastyBird\Connector\Sonoff\Clients;
 
 use DateTimeInterface;
-use Exception;
-use FastyBird\Connector\Sonoff\Entities;
-use FastyBird\Connector\Sonoff\Queries;
+use FastyBird\Connector\Sonoff\Helpers;
 use FastyBird\DateTimeFactory;
+use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
-use FastyBird\Module\Devices\Models as DevicesModels;
 use FastyBird\Module\Devices\Utilities as DevicesUtilities;
 use Nette;
 use React\EventLoop;
@@ -48,11 +46,12 @@ abstract class ClientProcess
 
 	protected const HANDLER_PROCESSING_INTERVAL = 0.01;
 
-	protected const HEARTBEAT_DELAY = 600;
-
 	protected const CMD_STATE = 'state';
 
-	protected const CMD_HEARTBEAT = 'hearbeat';
+	protected const CMD_HEARTBEAT = 'heartbeat';
+
+	/** @var array<string, MetadataDocuments\DevicesModule\Device>  */
+	protected array $devices = [];
 
 	/** @var array<string> */
 	protected array $processedDevices = [];
@@ -66,11 +65,8 @@ abstract class ClientProcess
 	protected EventLoop\TimerInterface|null $handlerTimer = null;
 
 	public function __construct(
-		protected readonly Entities\SonoffConnector $connector,
-		protected readonly DevicesModels\Entities\Devices\DevicesRepository $devicesRepository,
+		protected readonly Helpers\Device $deviceHelper,
 		protected readonly DevicesUtilities\DeviceConnection $deviceConnectionManager,
-		protected readonly DevicesUtilities\DevicePropertiesStates $devicePropertiesStates,
-		protected readonly DevicesUtilities\ChannelPropertiesStates $channelPropertiesStates,
 		protected readonly DateTimeFactory\Factory $dateTimeFactory,
 		protected readonly EventLoop\LoopInterface $eventLoop,
 	)
@@ -78,24 +74,16 @@ abstract class ClientProcess
 	}
 
 	/**
+	 * @throws DevicesExceptions\InvalidArgument
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws Exception
+	 * @throws MetadataExceptions\MalformedInput
 	 */
 	protected function handleCommunication(): void
 	{
-		$findDevicesQuery = new Queries\Entities\FindDevices();
-		$findDevicesQuery->forConnector($this->connector);
-
-		foreach ($this->devicesRepository->findAllBy($findDevicesQuery, Entities\SonoffDevice::class) as $device) {
-			if (
-				!in_array($device->getId()->toString(), $this->processedDevices, true)
-				&& !in_array($device->getId()->toString(), $this->ignoredDevices, true)
-				&& !$this->deviceConnectionManager->getState($device)->equalsValue(
-					MetadataTypes\ConnectionState::STATE_ALERT,
-				)
-			) {
+		foreach ($this->devices as $device) {
+			if (!in_array($device->getId()->toString(), $this->processedDevices, true)) {
 				$this->processedDevices[] = $device->getId()->toString();
 
 				if ($this->processDevice($device)) {
@@ -112,12 +100,13 @@ abstract class ClientProcess
 	}
 
 	/**
+	 * @throws DevicesExceptions\InvalidArgument
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws Exception
+	 * @throws MetadataExceptions\MalformedInput
 	 */
-	protected function processDevice(Entities\SonoffDevice $device): bool
+	protected function processDevice(MetadataDocuments\DevicesModule\Device $device): bool
 	{
 		if ($this->readDeviceInformation($device)) {
 			return true;
@@ -126,7 +115,14 @@ abstract class ClientProcess
 		return $this->readDeviceState($device);
 	}
 
-	protected function readDeviceInformation(Entities\SonoffDevice $device): bool
+	/**
+	 * @throws DevicesExceptions\InvalidArgument
+	 * @throws DevicesExceptions\InvalidState
+	 * @throws MetadataExceptions\InvalidArgument
+	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\MalformedInput
+	 */
+	protected function readDeviceInformation(MetadataDocuments\DevicesModule\Device $device): bool
 	{
 		if (!array_key_exists($device->getId()->toString(), $this->processedDevicesCommands)) {
 			$this->processedDevicesCommands[$device->getId()->toString()] = [];
@@ -138,7 +134,8 @@ abstract class ClientProcess
 			if (
 				$cmdResult instanceof DateTimeInterface
 				&& (
-					$this->dateTimeFactory->getNow()->getTimestamp() - $cmdResult->getTimestamp() < self::HEARTBEAT_DELAY
+					$this->dateTimeFactory->getNow()->getTimestamp() - $cmdResult->getTimestamp()
+					< $this->deviceHelper->getHeartbeatDelay($device)
 				)
 			) {
 				return false;
@@ -146,6 +143,14 @@ abstract class ClientProcess
 		}
 
 		$this->processedDevicesCommands[$device->getId()->toString()][self::CMD_HEARTBEAT] = $this->dateTimeFactory->getNow();
+
+		$deviceState = $this->deviceConnectionManager->getState($device);
+
+		if ($deviceState->equalsValue(MetadataTypes\ConnectionState::STATE_ALERT)) {
+			unset($this->devices[$device->getId()->toString()]);
+
+			return false;
+		}
 
 		$this->readInformation($device)
 			->then(function () use ($device): void {
@@ -156,10 +161,13 @@ abstract class ClientProcess
 	}
 
 	/**
+	 * @throws DevicesExceptions\InvalidArgument
+	 * @throws DevicesExceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\MalformedInput
 	 */
-	protected function readDeviceState(Entities\SonoffDevice $device): bool
+	protected function readDeviceState(MetadataDocuments\DevicesModule\Device $device): bool
 	{
 		if (!array_key_exists($device->getId()->toString(), $this->processedDevicesCommands)) {
 			$this->processedDevicesCommands[$device->getId()->toString()] = [];
@@ -171,7 +179,8 @@ abstract class ClientProcess
 			if (
 				$cmdResult instanceof DateTimeInterface
 				&& (
-					$this->dateTimeFactory->getNow()->getTimestamp() - $cmdResult->getTimestamp() < $device->getStateReadingDelay()
+					$this->dateTimeFactory->getNow()->getTimestamp() - $cmdResult->getTimestamp()
+					< $this->deviceHelper->getStateReadingDelay($device)
 				)
 			) {
 				return false;
@@ -179,6 +188,14 @@ abstract class ClientProcess
 		}
 
 		$this->processedDevicesCommands[$device->getId()->toString()][self::CMD_STATE] = $this->dateTimeFactory->getNow();
+
+		$deviceState = $this->deviceConnectionManager->getState($device);
+
+		if ($deviceState->equalsValue(MetadataTypes\ConnectionState::STATE_ALERT)) {
+			unset($this->devices[$device->getId()->toString()]);
+
+			return false;
+		}
 
 		$this->readState($device)
 			->then(function () use ($device): void {
@@ -198,8 +215,16 @@ abstract class ClientProcess
 		);
 	}
 
-	abstract protected function readInformation(Entities\SonoffDevice $device): Promise\PromiseInterface;
+	/**
+	 * @return Promise\PromiseInterface<bool>
+	 */
+	abstract protected function readInformation(
+		MetadataDocuments\DevicesModule\Device $device,
+	): Promise\PromiseInterface;
 
-	abstract protected function readState(Entities\SonoffDevice $device): Promise\PromiseInterface;
+	/**
+	 * @return Promise\PromiseInterface<bool>
+	 */
+	abstract protected function readState(MetadataDocuments\DevicesModule\Device $device): Promise\PromiseInterface;
 
 }

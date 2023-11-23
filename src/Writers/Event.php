@@ -19,13 +19,16 @@ use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Helpers;
 use FastyBird\Connector\Sonoff\Queue;
+use FastyBird\DateTimeFactory;
+use FastyBird\Library\Metadata\Documents as MetadataDocuments;
+use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Module\Devices\Events as DevicesEvents;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
 use FastyBird\Module\Devices\Models as DevicesModels;
 use FastyBird\Module\Devices\Queries as DevicesQueries;
-use Nette;
+use FastyBird\Module\Devices\Utilities as DevicesUtilities;
+use React\EventLoop;
 use Symfony\Component\EventDispatcher;
-use function assert;
 
 /**
  * Event based properties writer
@@ -35,83 +38,137 @@ use function assert;
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-class Event implements Writer, EventDispatcher\EventSubscriberInterface
+class Event extends Periodic implements Writer, EventDispatcher\EventSubscriberInterface
 {
-
-	use Nette\SmartObject;
 
 	public const NAME = 'event';
 
+	/**
+	 * @param DevicesModels\Configuration\Devices\Repository<MetadataDocuments\DevicesModule\Device> $devicesConfigurationRepository
+	 * @param DevicesModels\Configuration\Channels\Repository<MetadataDocuments\DevicesModule\Channel> $channelsConfigurationRepository
+	 * @param DevicesModels\Configuration\Channels\Properties\Repository<MetadataDocuments\DevicesModule\ChannelDynamicProperty> $channelsPropertiesConfigurationRepository
+	 */
 	public function __construct(
-		private readonly Entities\SonoffConnector $connector,
-		private readonly Helpers\Entity $entityHelper,
-		private readonly Queue\Queue $queue,
-		private readonly DevicesModels\Entities\Channels\ChannelsRepository $channelsRepository,
+		MetadataDocuments\DevicesModule\Connector $connector,
+		Helpers\Entity $entityHelper,
+		Queue\Queue $queue,
+		DevicesModels\Configuration\Devices\Repository $devicesConfigurationRepository,
+		DevicesModels\Configuration\Channels\Repository $channelsConfigurationRepository,
+		DevicesModels\Configuration\Devices\Properties\Repository $devicesPropertiesConfigurationRepository,
+		DevicesModels\Configuration\Channels\Properties\Repository $channelsPropertiesConfigurationRepository,
+		DevicesUtilities\DevicePropertiesStates $devicePropertiesStatesManager,
+		DevicesUtilities\ChannelPropertiesStates $channelPropertiesStatesManager,
+		DateTimeFactory\Factory $dateTimeFactory,
+		EventLoop\LoopInterface $eventLoop,
 	)
 	{
+		parent::__construct(
+			$connector,
+			$entityHelper,
+			$queue,
+			$devicesConfigurationRepository,
+			$channelsConfigurationRepository,
+			$devicesPropertiesConfigurationRepository,
+			$channelsPropertiesConfigurationRepository,
+			$devicePropertiesStatesManager,
+			$channelPropertiesStatesManager,
+			$dateTimeFactory,
+			$eventLoop,
+		);
 	}
 
 	public static function getSubscribedEvents(): array
 	{
 		return [
+			DevicesEvents\DevicePropertyStateEntityCreated::class => 'stateChanged',
+			DevicesEvents\DevicePropertyStateEntityUpdated::class => 'stateChanged',
 			DevicesEvents\ChannelPropertyStateEntityCreated::class => 'stateChanged',
 			DevicesEvents\ChannelPropertyStateEntityUpdated::class => 'stateChanged',
 		];
 	}
 
-	public function connect(): void
-	{
-		// Nothing to do here
-	}
-
-	public function disconnect(): void
-	{
-		// Nothing to do here
-	}
-
 	/**
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\Runtime
+	 * @throws MetadataExceptions\InvalidArgument
+	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\MalformedInput
 	 */
 	public function stateChanged(
-		DevicesEvents\ChannelPropertyStateEntityCreated|DevicesEvents\ChannelPropertyStateEntityUpdated $event,
+		// phpcs:ignore SlevomatCodingStandard.Files.LineLength.LineTooLong
+		DevicesEvents\DevicePropertyStateEntityCreated|DevicesEvents\DevicePropertyStateEntityUpdated|DevicesEvents\ChannelPropertyStateEntityCreated|DevicesEvents\ChannelPropertyStateEntityUpdated $event,
 	): void
 	{
-		$property = $event->getProperty();
-
 		$state = $event->getState();
 
 		if ($state->getExpectedValue() === null || $state->getPending() !== true) {
 			return;
 		}
 
-		$findChannelQuery = new DevicesQueries\Entities\FindChannels();
-		$findChannelQuery->byId($property->getChannel());
+		if (
+			$event instanceof DevicesEvents\DevicePropertyStateEntityCreated
+			|| $event instanceof DevicesEvents\DevicePropertyStateEntityUpdated
+		) {
+			$findDeviceQuery = new DevicesQueries\Configuration\FindDevices();
+			$findDeviceQuery->byId($event->getProperty()->getDevice());
 
-		$channel = $this->channelsRepository->findOneBy($findChannelQuery);
+			$device = $this->devicesConfigurationRepository->findOneBy($findDeviceQuery);
 
-		if ($channel === null) {
+			if ($device === null) {
+				return;
+			}
+		} else {
+			$findChannelQuery = new DevicesQueries\Configuration\FindChannels();
+			$findChannelQuery->byId($event->getProperty()->getChannel());
+
+			$channel = $this->channelsConfigurationRepository->findOneBy($findChannelQuery);
+
+			if ($channel === null) {
+				return;
+			}
+
+			$findDeviceQuery = new DevicesQueries\Configuration\FindDevices();
+			$findDeviceQuery->byId($channel->getDevice());
+
+			$device = $this->devicesConfigurationRepository->findOneBy($findDeviceQuery);
+
+			if ($device === null) {
+				return;
+			}
+		}
+
+		if (!$device->getConnector()->equals($this->connector->getId())) {
 			return;
 		}
 
-		$device = $channel->getDevice();
-		assert($device instanceof Entities\SonoffDevice);
+		if (
+			$event instanceof DevicesEvents\DevicePropertyStateEntityCreated
+			|| $event instanceof DevicesEvents\DevicePropertyStateEntityUpdated
+		) {
+			$this->queue->append(
+				$this->entityHelper->create(
+					Entities\Messages\WriteDevicePropertyState::class,
+					[
+						'connector' => $this->connector->getId(),
+						'device' => $device->getId(),
+						'property' => $event->getProperty()->getId(),
+					],
+				),
+			);
 
-		if (!$device->getConnector()->getId()->equals($this->connector->getId())) {
-			return;
+		} else {
+			$this->queue->append(
+				$this->entityHelper->create(
+					Entities\Messages\WriteChannelPropertyState::class,
+					[
+						'connector' => $this->connector->getId(),
+						'device' => $device->getId(),
+						'channel' => $event->getProperty()->getChannel(),
+						'property' => $event->getProperty()->getId(),
+					],
+				),
+			);
 		}
-
-		$this->queue->append(
-			$this->entityHelper->create(
-				Entities\Messages\WriteChannelPropertyState::class,
-				[
-					'connector' => $this->connector->getId()->toString(),
-					'device' => $device->getId()->toString(),
-					'channel' => $channel->getId()->toString(),
-					'property' => $property->getId()->toString(),
-				],
-			),
-		);
 	}
 
 }

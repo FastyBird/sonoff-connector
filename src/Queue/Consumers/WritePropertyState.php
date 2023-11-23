@@ -21,15 +21,14 @@ use FastyBird\Connector\Sonoff\API;
 use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Helpers;
-use FastyBird\Connector\Sonoff\Queries;
 use FastyBird\Connector\Sonoff\Queue;
 use FastyBird\Connector\Sonoff\Types;
 use FastyBird\DateTimeFactory;
 use FastyBird\Library\Bootstrap\Helpers as BootstrapHelpers;
+use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Library\Metadata\Utilities as MetadataUtilities;
-use FastyBird\Module\Devices\Entities as DevicesEntities;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
 use FastyBird\Module\Devices\Models as DevicesModels;
 use FastyBird\Module\Devices\Queries as DevicesQueries;
@@ -59,16 +58,25 @@ final class WritePropertyState implements Queue\Consumer
 
 	use Nette\SmartObject;
 
+	/**
+	 * @param DevicesModels\Configuration\Connectors\Repository<MetadataDocuments\DevicesModule\Connector> $connectorsConfigurationRepository
+	 * @param DevicesModels\Configuration\Devices\Repository<MetadataDocuments\DevicesModule\Device> $devicesConfigurationRepository
+	 * @param DevicesModels\Configuration\Devices\Properties\Repository<MetadataDocuments\DevicesModule\DeviceDynamicProperty> $devicesPropertiesConfigurationRepository
+	 * @param DevicesModels\Configuration\Channels\Repository<MetadataDocuments\DevicesModule\Channel> $channelsConfigurationRepository
+	 * @param DevicesModels\Configuration\Channels\Properties\Repository<MetadataDocuments\DevicesModule\ChannelDynamicProperty> $channelsPropertiesConfigurationRepository
+	 */
 	public function __construct(
 		private readonly Queue\Queue $queue,
 		private readonly API\ConnectionManager $connectionManager,
 		private readonly Helpers\Entity $entityHelper,
+		private readonly Helpers\Connector $connectorHelper,
+		private readonly Helpers\Device $deviceHelper,
 		private readonly Sonoff\Logger $logger,
-		private readonly DevicesModels\Entities\Connectors\ConnectorsRepository $connectorsRepository,
-		private readonly DevicesModels\Entities\Devices\DevicesRepository $devicesRepository,
-		private readonly DevicesModels\Entities\Devices\Properties\PropertiesRepository $devicesPropertiesRepository,
-		private readonly DevicesModels\Entities\Channels\ChannelsRepository $channelsRepository,
-		private readonly DevicesModels\Entities\Channels\Properties\PropertiesRepository $channelsPropertiesRepository,
+		private readonly DevicesModels\Configuration\Connectors\Repository $connectorsConfigurationRepository,
+		private readonly DevicesModels\Configuration\Devices\Repository $devicesConfigurationRepository,
+		private readonly DevicesModels\Configuration\Devices\Properties\Repository $devicesPropertiesConfigurationRepository,
+		private readonly DevicesModels\Configuration\Channels\Repository $channelsConfigurationRepository,
+		private readonly DevicesModels\Configuration\Channels\Properties\Repository $channelsPropertiesConfigurationRepository,
 		private readonly DevicesUtilities\DevicePropertiesStates $devicePropertiesStatesManager,
 		private readonly DevicesUtilities\ChannelPropertiesStates $channelPropertiesStatesManager,
 		private readonly DateTimeFactory\Factory $dateTimeFactory,
@@ -94,10 +102,12 @@ final class WritePropertyState implements Queue\Consumer
 			return false;
 		}
 
-		$findConnectorQuery = new Queries\Entities\FindConnectors();
+		$now = $this->dateTimeFactory->getNow();
+
+		$findConnectorQuery = new DevicesQueries\Configuration\FindConnectors();
 		$findConnectorQuery->byId($entity->getConnector());
 
-		$connector = $this->connectorsRepository->findOneBy($findConnectorQuery, Entities\SonoffConnector::class);
+		$connector = $this->connectorsConfigurationRepository->findOneBy($findConnectorQuery);
 
 		if ($connector === null) {
 			$this->logger->error(
@@ -121,11 +131,11 @@ final class WritePropertyState implements Queue\Consumer
 			return true;
 		}
 
-		$findDeviceQuery = new Queries\Entities\FindDevices();
+		$findDeviceQuery = new DevicesQueries\Configuration\FindDevices();
 		$findDeviceQuery->forConnector($connector);
 		$findDeviceQuery->byId($entity->getDevice());
 
-		$device = $this->devicesRepository->findOneBy($findDeviceQuery, Entities\SonoffDevice::class);
+		$device = $this->devicesConfigurationRepository->findOneBy($findDeviceQuery);
 
 		if ($device === null) {
 			$this->logger->error(
@@ -152,11 +162,11 @@ final class WritePropertyState implements Queue\Consumer
 		$channel = null;
 
 		if ($entity instanceof Entities\Messages\WriteChannelPropertyState) {
-			$findChannelQuery = new DevicesQueries\Entities\FindChannels();
+			$findChannelQuery = new DevicesQueries\Configuration\FindChannels();
 			$findChannelQuery->forDevice($device);
 			$findChannelQuery->byId($entity->getChannel());
 
-			$channel = $this->channelsRepository->findOneBy($findChannelQuery);
+			$channel = $this->channelsConfigurationRepository->findOneBy($findChannelQuery);
 
 			if ($channel === null) {
 				$this->logger->error(
@@ -180,13 +190,13 @@ final class WritePropertyState implements Queue\Consumer
 				return true;
 			}
 
-			$findChannelPropertyQuery = new DevicesQueries\Entities\FindChannelDynamicProperties();
+			$findChannelPropertyQuery = new DevicesQueries\Configuration\FindChannelDynamicProperties();
 			$findChannelPropertyQuery->forChannel($channel);
 			$findChannelPropertyQuery->byId($entity->getProperty());
 
-			$property = $this->channelsPropertiesRepository->findOneBy(
+			$property = $this->channelsPropertiesConfigurationRepository->findOneBy(
 				$findChannelPropertyQuery,
-				DevicesEntities\Channels\Properties\Dynamic::class,
+				MetadataDocuments\DevicesModule\ChannelDynamicProperty::class,
 			);
 
 			if ($property === null) {
@@ -211,13 +221,13 @@ final class WritePropertyState implements Queue\Consumer
 				return true;
 			}
 		} else {
-			$findDevicePropertyQuery = new DevicesQueries\Entities\FindDeviceDynamicProperties();
+			$findDevicePropertyQuery = new DevicesQueries\Configuration\FindDeviceDynamicProperties();
 			$findDevicePropertyQuery->forDevice($device);
 			$findDevicePropertyQuery->byId($entity->getProperty());
 
-			$property = $this->devicesPropertiesRepository->findOneBy(
+			$property = $this->devicesPropertiesConfigurationRepository->findOneBy(
 				$findDevicePropertyQuery,
-				DevicesEntities\Devices\Properties\Dynamic::class,
+				MetadataDocuments\DevicesModule\DeviceDynamicProperty::class,
 			);
 
 			if ($property === null) {
@@ -265,7 +275,7 @@ final class WritePropertyState implements Queue\Consumer
 			return true;
 		}
 
-		$state = $property instanceof DevicesEntities\Channels\Properties\Dynamic
+		$state = $property instanceof MetadataDocuments\DevicesModule\ChannelDynamicProperty
 			? $this->channelPropertiesStatesManager->getValue($property)
 			: $this->devicePropertiesStatesManager->getValue($property);
 
@@ -273,22 +283,54 @@ final class WritePropertyState implements Queue\Consumer
 			return true;
 		}
 
-		$expectedValue = MetadataUtilities\ValueHelper::flattenValue(
-			MetadataUtilities\ValueHelper::transformValueToDevice(
-				$property->getDataType(),
-				$property->getFormat(),
-				$state->getExpectedValue(),
-			),
+		$expectedValue = MetadataUtilities\ValueHelper::transformValueToDevice(
+			$property->getDataType(),
+			$property->getFormat(),
+			$state->getExpectedValue(),
 		);
 
 		if ($expectedValue === null) {
+			if ($property instanceof MetadataDocuments\DevicesModule\ChannelDynamicProperty) {
+				$this->channelPropertiesStatesManager->setValue(
+					$property,
+					Utils\ArrayHash::from([
+						DevicesStates\Property::EXPECTED_VALUE_FIELD => null,
+						DevicesStates\Property::PENDING_FIELD => false,
+					]),
+				);
+			} else {
+				$this->devicePropertiesStatesManager->setValue(
+					$property,
+					Utils\ArrayHash::from([
+						DevicesStates\Property::EXPECTED_VALUE_FIELD => null,
+						DevicesStates\Property::PENDING_FIELD => false,
+					]),
+				);
+			}
+
 			return true;
+		}
+
+		if ($property instanceof MetadataDocuments\DevicesModule\ChannelDynamicProperty) {
+			$this->channelPropertiesStatesManager->setValue(
+				$property,
+				Utils\ArrayHash::from([
+					DevicesStates\Property::PENDING_FIELD => $now->format(DateTimeInterface::ATOM),
+				]),
+			);
+		} else {
+			$this->devicePropertiesStatesManager->setValue(
+				$property,
+				Utils\ArrayHash::from([
+					DevicesStates\Property::PENDING_FIELD => $now->format(DateTimeInterface::ATOM),
+				]),
+			);
 		}
 
 		$group = $outlet = null;
 		$parameter = $property->getIdentifier();
 
-		if ($property instanceof DevicesEntities\Devices\Properties\Dynamic) {
+		if ($property instanceof MetadataDocuments\DevicesModule\DeviceDynamicProperty) {
 			$parameter = Helpers\Transformer::devicePropertyToParameter($parameter);
 		}
 
@@ -311,16 +353,16 @@ final class WritePropertyState implements Queue\Consumer
 		}
 
 		try {
-			if ($connector->getClientMode()->equalsValue(Types\ClientMode::AUTO)) {
+			if ($this->connectorHelper->getClientMode($connector)->equalsValue(Types\ClientMode::AUTO)) {
 				$deferred = new Promise\Deferred();
 
-				if ($device->getIpAddress() !== null) {
+				if ($this->deviceHelper->getIpAddress($device) !== null) {
 					$client = $this->connectionManager->getLanConnection();
 
 					$client->setDeviceState(
 						$device->getIdentifier(),
-						$device->getIpAddress(),
-						$device->getPort(),
+						$this->deviceHelper->getIpAddress($device),
+						$this->deviceHelper->getPort($device),
 						$parameter,
 						$expectedValue,
 						$group,
@@ -329,7 +371,7 @@ final class WritePropertyState implements Queue\Consumer
 						->then(static function () use ($deferred): void {
 							$deferred->resolve(true);
 						})
-						->otherwise(
+						->catch(
 							function () use ($deferred, $connector, $device, $parameter, $expectedValue, $group, $outlet): void {
 								$client = $this->connectionManager->getCloudApiConnection($connector);
 
@@ -341,9 +383,9 @@ final class WritePropertyState implements Queue\Consumer
 									$outlet,
 								)
 									->then(static function () use ($deferred): void {
-										$deferred->resolve();
+										$deferred->resolve(true);
 									})
-									->otherwise(static function (Throwable $ex) use ($deferred): void {
+									->catch(static function (Throwable $ex) use ($deferred): void {
 										$deferred->reject($ex);
 									});
 							},
@@ -361,13 +403,13 @@ final class WritePropertyState implements Queue\Consumer
 						->then(static function () use ($deferred): void {
 							$deferred->resolve(true);
 						})
-						->otherwise(static function (Throwable $ex) use ($deferred): void {
+						->catch(static function (Throwable $ex) use ($deferred): void {
 							$deferred->reject($ex);
 						});
 				}
 
 				$result = $deferred->promise();
-			} elseif ($connector->getClientMode()->equalsValue(Types\ClientMode::CLOUD)) {
+			} elseif ($this->connectorHelper->getClientMode($connector)->equalsValue(Types\ClientMode::CLOUD)) {
 				$client = $this->connectionManager->getCloudApiConnection($connector);
 
 				if (!$client->isConnected()) {
@@ -381,8 +423,8 @@ final class WritePropertyState implements Queue\Consumer
 					$group,
 					$outlet,
 				);
-			} elseif ($connector->getClientMode()->equalsValue(Types\ClientMode::LAN)) {
-				if ($device->getIpAddress() === null) {
+			} elseif ($this->connectorHelper->getClientMode($connector)->equalsValue(Types\ClientMode::LAN)) {
+				if ($this->deviceHelper->getIpAddress($device) === null) {
 					throw new Exceptions\InvalidState('Device IP address is not configured');
 				}
 
@@ -390,8 +432,8 @@ final class WritePropertyState implements Queue\Consumer
 
 				$result = $client->setDeviceState(
 					$device->getIdentifier(),
-					$device->getIpAddress(),
-					$device->getPort(),
+					$this->deviceHelper->getIpAddress($device),
+					$this->deviceHelper->getPort($device),
 					$parameter,
 					$expectedValue,
 					$group,
@@ -488,7 +530,7 @@ final class WritePropertyState implements Queue\Consumer
 			function () use ($property): void {
 				$now = $this->dateTimeFactory->getNow();
 
-				if ($property instanceof DevicesEntities\Channels\Properties\Dynamic) {
+				if ($property instanceof MetadataDocuments\DevicesModule\ChannelDynamicProperty) {
 					$state = $this->channelPropertiesStatesManager->getValue($property);
 
 					if ($state?->getExpectedValue() !== null) {
@@ -513,7 +555,7 @@ final class WritePropertyState implements Queue\Consumer
 				}
 			},
 			function (Throwable $ex) use ($connector, $device, $property, $entity): void {
-				if ($property instanceof DevicesEntities\Channels\Properties\Dynamic) {
+				if ($property instanceof MetadataDocuments\DevicesModule\ChannelDynamicProperty) {
 					$this->channelPropertiesStatesManager->setValue(
 						$property,
 						Utils\ArrayHash::from([

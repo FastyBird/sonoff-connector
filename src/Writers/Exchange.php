@@ -15,19 +15,21 @@
 
 namespace FastyBird\Connector\Sonoff\Writers;
 
-use Exception;
 use FastyBird\Connector\Sonoff\Entities;
+use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Helpers;
 use FastyBird\Connector\Sonoff\Queue;
+use FastyBird\DateTimeFactory;
 use FastyBird\Library\Exchange\Consumers as ExchangeConsumers;
 use FastyBird\Library\Exchange\Exceptions as ExchangeExceptions;
 use FastyBird\Library\Metadata\Documents as MetadataDocuments;
+use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
 use FastyBird\Module\Devices\Models as DevicesModels;
 use FastyBird\Module\Devices\Queries as DevicesQueries;
-use Nette;
-use function assert;
+use FastyBird\Module\Devices\Utilities as DevicesUtilities;
+use React\EventLoop;
 
 /**
  * Exchange based properties writer
@@ -37,28 +39,60 @@ use function assert;
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-class Exchange implements Writer, ExchangeConsumers\Consumer
+class Exchange extends Periodic implements Writer, ExchangeConsumers\Consumer
 {
-
-	use Nette\SmartObject;
 
 	public const NAME = 'exchange';
 
+	/**
+	 * @param DevicesModels\Configuration\Devices\Repository<MetadataDocuments\DevicesModule\Device> $devicesConfigurationRepository
+	 * @param DevicesModels\Configuration\Channels\Repository<MetadataDocuments\DevicesModule\Channel> $channelsConfigurationRepository
+	 * @param DevicesModels\Configuration\Channels\Properties\Repository<MetadataDocuments\DevicesModule\ChannelDynamicProperty> $channelsPropertiesConfigurationRepository
+	 *
+	 * @throws ExchangeExceptions\InvalidArgument
+	 */
 	public function __construct(
-		private readonly Entities\SonoffConnector $connector,
-		private readonly Helpers\Entity $entityHelper,
-		private readonly Queue\Queue $queue,
-		private readonly DevicesModels\Entities\Channels\ChannelsRepository $channelsRepository,
+		MetadataDocuments\DevicesModule\Connector $connector,
+		Helpers\Entity $entityHelper,
+		Queue\Queue $queue,
+		DevicesModels\Configuration\Devices\Repository $devicesConfigurationRepository,
+		DevicesModels\Configuration\Channels\Repository $channelsConfigurationRepository,
+		DevicesModels\Configuration\Devices\Properties\Repository $devicesPropertiesConfigurationRepository,
+		DevicesModels\Configuration\Channels\Properties\Repository $channelsPropertiesConfigurationRepository,
+		DevicesUtilities\DevicePropertiesStates $devicePropertiesStatesManager,
+		DevicesUtilities\ChannelPropertiesStates $channelPropertiesStatesManager,
+		DateTimeFactory\Factory $dateTimeFactory,
+		EventLoop\LoopInterface $eventLoop,
 		private readonly ExchangeConsumers\Container $consumer,
 	)
 	{
+		parent::__construct(
+			$connector,
+			$entityHelper,
+			$queue,
+			$devicesConfigurationRepository,
+			$channelsConfigurationRepository,
+			$devicesPropertiesConfigurationRepository,
+			$channelsPropertiesConfigurationRepository,
+			$devicePropertiesStatesManager,
+			$channelPropertiesStatesManager,
+			$dateTimeFactory,
+			$eventLoop,
+		);
+
+		$this->consumer->register($this, null, false);
 	}
 
 	/**
+	 * @throws DevicesExceptions\InvalidState
 	 * @throws ExchangeExceptions\InvalidArgument
+	 * @throws MetadataExceptions\InvalidArgument
+	 * @throws MetadataExceptions\InvalidState
 	 */
 	public function connect(): void
 	{
+		parent::connect();
+
 		$this->consumer->enable(self::class);
 	}
 
@@ -67,12 +101,17 @@ class Exchange implements Writer, ExchangeConsumers\Consumer
 	 */
 	public function disconnect(): void
 	{
+		parent::disconnect();
+
 		$this->consumer->disable(self::class);
 	}
 
 	/**
 	 * @throws DevicesExceptions\InvalidState
-	 * @throws Exception
+	 * @throws Exceptions\Runtime
+	 * @throws MetadataExceptions\InvalidArgument
+	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\MalformedInput
 	 */
 	public function consume(
 		MetadataTypes\ModuleSource|MetadataTypes\PluginSource|MetadataTypes\ConnectorSource|MetadataTypes\AutomatorSource $source,
@@ -80,20 +119,65 @@ class Exchange implements Writer, ExchangeConsumers\Consumer
 		MetadataDocuments\Document|null $entity,
 	): void
 	{
-		if ($entity instanceof MetadataDocuments\DevicesModule\ChannelDynamicProperty) {
-			$findChannelQuery = new DevicesQueries\Entities\FindChannels();
+		if (
+			$entity instanceof MetadataDocuments\DevicesModule\DeviceDynamicProperty
+			|| $entity instanceof MetadataDocuments\DevicesModule\DeviceMappedProperty
+		) {
+			if ($entity->getExpectedValue() === null) {
+				return;
+			}
+
+			$findDeviceQuery = new DevicesQueries\Configuration\FindDevices();
+			$findDeviceQuery->byId($entity->getDevice());
+
+			$device = $this->devicesConfigurationRepository->findOneBy($findDeviceQuery);
+
+			if ($device === null) {
+				return;
+			}
+
+			if (!$device->getConnector()->equals($this->connector->getId())) {
+				return;
+			}
+
+			$this->queue->append(
+				$this->entityHelper->create(
+					Entities\Messages\WriteDevicePropertyState::class,
+					[
+						'connector' => $this->connector->getId(),
+						'device' => $device->getId(),
+						'property' => $entity->getId(),
+					],
+				),
+			);
+
+		} elseif (
+			$entity instanceof MetadataDocuments\DevicesModule\ChannelDynamicProperty
+			|| $entity instanceof MetadataDocuments\DevicesModule\ChannelMappedProperty
+		) {
+			if ($entity->getExpectedValue() === null) {
+				return;
+			}
+
+			$findChannelQuery = new DevicesQueries\Configuration\FindChannels();
 			$findChannelQuery->byId($entity->getChannel());
 
-			$channel = $this->channelsRepository->findOneBy($findChannelQuery);
+			$channel = $this->channelsConfigurationRepository->findOneBy($findChannelQuery);
 
 			if ($channel === null) {
 				return;
 			}
 
-			$device = $channel->getDevice();
-			assert($device instanceof Entities\SonoffDevice);
+			$findDeviceQuery = new DevicesQueries\Configuration\FindDevices();
+			$findDeviceQuery->byId($channel->getDevice());
 
-			if (!$device->getConnector()->getId()->equals($this->connector->getId())) {
+			$device = $this->devicesConfigurationRepository->findOneBy($findDeviceQuery);
+
+			if ($device === null) {
+				return;
+			}
+
+			if (!$device->getConnector()->equals($this->connector->getId())) {
 				return;
 			}
 
@@ -101,10 +185,10 @@ class Exchange implements Writer, ExchangeConsumers\Consumer
 				$this->entityHelper->create(
 					Entities\Messages\WriteChannelPropertyState::class,
 					[
-						'connector' => $this->connector->getId()->toString(),
-						'device' => $device->getId()->toString(),
-						'channel' => $channel->getId()->toString(),
-						'property' => $entity->getId()->toString(),
+						'connector' => $this->connector->getId(),
+						'device' => $device->getId(),
+						'channel' => $channel->getId(),
+						'property' => $entity->getId(),
 					],
 				),
 			);

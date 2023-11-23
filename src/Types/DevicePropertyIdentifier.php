@@ -67,6 +67,8 @@ class DevicePropertyIdentifier extends Consistence\Enum\Enum
 
 	public const STATE_READING_DELAY = 'state_reading_delay';
 
+	public const HEARTBEAT_DELAY = 'heartbeat_delay';
+
 	public function getValue(): string
 	{
 		return strval(parent::getValue());

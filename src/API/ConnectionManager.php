@@ -15,9 +15,11 @@
 
 namespace FastyBird\Connector\Sonoff\API;
 
-use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Exceptions;
+use FastyBird\Connector\Sonoff\Helpers;
+use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
+use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
 use Nette;
 
 /**
@@ -43,6 +45,7 @@ final class ConnectionManager
 		private readonly LanApiFactory $lanApiFactory,
 		private readonly CloudApiFactory $cloudApiFactory,
 		private readonly CloudWsFactory $cloudWsFactory,
+		private readonly Helpers\Connector $connectorHelper,
 	)
 	{
 	}
@@ -57,19 +60,20 @@ final class ConnectionManager
 	}
 
 	/**
-	 * @throws Exceptions\InvalidState
+	 * @throws DevicesExceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\MalformedInput
 	 */
-	public function getCloudApiConnection(Entities\SonoffConnector $connector): CloudApi
+	public function getCloudApiConnection(MetadataDocuments\DevicesModule\Connector $connector): CloudApi
 	{
 		if ($this->cloudApiConnection === null) {
 			$this->cloudApiConnection = $this->cloudApiFactory->create(
-				$connector->getUsername(),
-				$connector->getPassword(),
-				$connector->getAppId(),
-				$connector->getAppSecret(),
-				$connector->getRegion(),
+				$this->connectorHelper->getUsername($connector),
+				$this->connectorHelper->getPassword($connector),
+				$this->connectorHelper->getAppId($connector),
+				$this->connectorHelper->getAppSecret($connector),
+				$this->connectorHelper->getRegion($connector),
 			);
 		}
 
@@ -77,11 +81,13 @@ final class ConnectionManager
 	}
 
 	/**
+	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\MalformedInput
 	 */
-	public function getCloudWsConnection(Entities\SonoffConnector $connector): CloudWs
+	public function getCloudWsConnection(MetadataDocuments\DevicesModule\Connector $connector): CloudWs
 	{
 		if ($this->cloudApiConnection?->getAccessToken() === null) {
 			throw new Exceptions\InvalidState('Cloud API connection have to be established first');
@@ -90,9 +96,9 @@ final class ConnectionManager
 		if ($this->cloudWsConnection === null) {
 			$this->cloudWsConnection = $this->cloudWsFactory->create(
 				$this->cloudApiConnection->getAccessToken(),
-				$connector->getAppId(),
-				$connector->getAppSecret(),
-				$connector->getRegion(),
+				$this->connectorHelper->getAppId($connector),
+				$this->connectorHelper->getAppSecret($connector),
+				$this->connectorHelper->getRegion($connector),
 			);
 		}
 

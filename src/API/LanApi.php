@@ -53,6 +53,7 @@ use function intval;
 use function is_array;
 use function is_numeric;
 use function is_string;
+use function md5;
 use function preg_match;
 use function random_bytes;
 use function sprintf;
@@ -99,6 +100,9 @@ final class LanApi
 
 	/** @var array<string, string> */
 	private array $encodeKeys = [];
+
+	/** @var array<string, string> */
+	private array $validationSchemas = [];
 
 	private Dns\Protocol\Parser $parser;
 
@@ -295,7 +299,7 @@ final class LanApi
 	}
 
 	/**
-	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : Entities\API\Lan\DeviceInfo)
+	 * @return ($async is true ? Promise\PromiseInterface<Entities\API\Lan\DeviceInfo> : Entities\API\Lan\DeviceInfo)
 	 *
 	 * @throws Exceptions\LanApiCall
 	 */
@@ -304,7 +308,7 @@ final class LanApi
 		string $ipAddress,
 		int $port,
 		bool $async = true,
-	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Entities\API\Lan\DeviceInfo
+	): Promise\PromiseInterface|Entities\API\Lan\DeviceInfo
 	{
 		$deferred = new Promise\Deferred();
 
@@ -371,7 +375,7 @@ final class LanApi
 						$deferred->reject($ex);
 					}
 				})
-				->otherwise(static function (Throwable $ex) use ($deferred): void {
+				->catch(static function (Throwable $ex) use ($deferred): void {
 					$deferred->reject($ex);
 				});
 
@@ -382,7 +386,7 @@ final class LanApi
 	}
 
 	/**
-	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : bool)
+	 * @return ($async is true ? Promise\PromiseInterface<bool> : bool)
 	 *
 	 * @throws Exceptions\LanApiCall
 	 */
@@ -395,7 +399,7 @@ final class LanApi
 		string|null $group = null,
 		int|null $outlet = null,
 		bool $async = true,
-	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|bool
+	): Promise\PromiseInterface|bool
 	{
 		$deferred = new Promise\Deferred();
 
@@ -479,7 +483,7 @@ final class LanApi
 						$deferred->reject($ex);
 					}
 				})
-				->otherwise(static function (Throwable $ex) use ($deferred): void {
+				->catch(static function (Throwable $ex) use ($deferred): void {
 					$deferred->reject($ex);
 				});
 
@@ -632,14 +636,14 @@ final class LanApi
 	}
 
 	/**
-	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : Message\ResponseInterface)
+	 * @return ($async is true ? Promise\PromiseInterface<Message\ResponseInterface> : Message\ResponseInterface)
 	 *
 	 * @throws Exceptions\LanApiCall
 	 */
 	private function callRequest(
 		Request $request,
 		bool $async = true,
-	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Message\ResponseInterface
+	): Promise\PromiseInterface|Message\ResponseInterface
 	{
 		$deferred = new Promise\Deferred();
 
@@ -770,15 +774,20 @@ final class LanApi
 	 */
 	private function getSchema(string $schemaFilename): string
 	{
-		try {
-			$schema = Utils\FileSystem::read(
-				Sonoff\Constants::RESOURCES_FOLDER . DIRECTORY_SEPARATOR . $schemaFilename,
-			);
-		} catch (Nette\IOException) {
-			throw new Exceptions\LanApiCall('Validation schema for response could not be loaded');
+		$key = md5($schemaFilename);
+
+		if (!array_key_exists($key, $this->validationSchemas)) {
+			try {
+				$this->validationSchemas[$key] = Utils\FileSystem::read(
+					Sonoff\Constants::RESOURCES_FOLDER . DIRECTORY_SEPARATOR . $schemaFilename,
+				);
+
+			} catch (Nette\IOException) {
+				throw new Exceptions\LanApiCall('Validation schema for response could not be loaded');
+			}
 		}
 
-		return $schema;
+		return $this->validationSchemas[$key];
 	}
 
 	/**

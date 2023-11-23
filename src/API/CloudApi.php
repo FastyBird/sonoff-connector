@@ -40,12 +40,14 @@ use React\Promise;
 use RuntimeException;
 use stdClass;
 use Throwable;
+use function array_key_exists;
 use function assert;
 use function base64_encode;
 use function count;
 use function hash_hmac;
 use function http_build_query;
 use function in_array;
+use function md5;
 use function sprintf;
 use function str_contains;
 use function strval;
@@ -98,6 +100,9 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	private string|null $accessToken = null;
 
 	private string|null $refreshToken = null;
+
+	/** @var array<string, string> */
+	private array $validationSchemas = [];
 
 	private Entities\API\Cloud\User|null $user = null;
 
@@ -170,13 +175,13 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : Family)
+	 * @return ($async is true ? Promise\PromiseInterface<Family> : Family)
 	 *
 	 * @throws Exceptions\CloudApiCall
 	 */
 	public function getFamily(
 		bool $async = true,
-	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Entities\API\Cloud\Family
+	): Promise\PromiseInterface|Entities\API\Cloud\Family
 	{
 		if (!$this->isConnected()) {
 			$this->connect();
@@ -212,7 +217,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 						$deferred->reject($ex);
 					}
 				})
-				->otherwise(static function (Throwable $ex) use ($deferred): void {
+				->catch(static function (Throwable $ex) use ($deferred): void {
 					$deferred->reject($ex);
 				});
 
@@ -223,14 +228,14 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : Things)
+	 * @return ($async is true ? Promise\PromiseInterface<Things> : Things)
 	 *
 	 * @throws Exceptions\CloudApiCall
 	 */
 	public function getFamilyThings(
 		string $familyId,
 		bool $async = true,
-	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Entities\API\Cloud\Things
+	): Promise\PromiseInterface|Entities\API\Cloud\Things
 	{
 		if (!$this->isConnected()) {
 			$this->connect();
@@ -270,7 +275,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 						$deferred->reject($ex);
 					}
 				})
-				->otherwise(static function (Throwable $ex) use ($deferred): void {
+				->catch(static function (Throwable $ex) use ($deferred): void {
 					$deferred->reject($ex);
 				});
 
@@ -281,7 +286,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : ($itemType is 3 ? Entities\API\Cloud\Group : Entities\API\Cloud\Device))
+	 * @return ($async is true ? ($itemType is 3 ? Promise\PromiseInterface<Entities\API\Cloud\Group> : Promise\PromiseInterface<Entities\API\Cloud\Device>) : ($itemType is 3 ? Entities\API\Cloud\Group : Entities\API\Cloud\Device))
 	 *
 	 * @throws Exceptions\CloudApiCall
 	 */
@@ -289,7 +294,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 		string $id,
 		int $itemType = 1,
 		bool $async = true,
-	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Entities\API\Cloud\Device|Entities\API\Cloud\Group
+	): Promise\PromiseInterface|Entities\API\Cloud\Device|Entities\API\Cloud\Group
 	{
 		if (!$this->isConnected()) {
 			$this->connect();
@@ -356,7 +361,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 						$deferred->reject($ex);
 					}
 				})
-				->otherwise(static function (Throwable $ex) use ($deferred): void {
+				->catch(static function (Throwable $ex) use ($deferred): void {
 					$deferred->reject($ex);
 				});
 
@@ -367,7 +372,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : DeviceState)
+	 * @return ($async is true ? Promise\PromiseInterface<DeviceState> : DeviceState)
 	 *
 	 * @throws Exceptions\CloudApiCall
 	 */
@@ -375,7 +380,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 		string $id,
 		int $itemType = 1,
 		bool $async = true,
-	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Entities\API\Cloud\DeviceState
+	): Promise\PromiseInterface|Entities\API\Cloud\DeviceState
 	{
 		if (!$this->isConnected()) {
 			$this->connect();
@@ -415,7 +420,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 						$deferred->reject($ex);
 					}
 				})
-				->otherwise(static function (Throwable $ex) use ($deferred): void {
+				->catch(static function (Throwable $ex) use ($deferred): void {
 					$deferred->reject($ex);
 				});
 
@@ -426,7 +431,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : bool)
+	 * @return ($async is true ? Promise\PromiseInterface<bool> : bool)
 	 *
 	 * @throws Exceptions\CloudApiCall
 	 */
@@ -438,7 +443,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 		int|null $outlet = null,
 		int $itemType = 1,
 		bool $async = true,
-	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|bool
+	): Promise\PromiseInterface|bool
 	{
 		if (!$this->isConnected()) {
 			$this->connect();
@@ -518,7 +523,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 						$deferred->reject($ex);
 					}
 				})
-				->otherwise(static function (Throwable $ex) use ($deferred): void {
+				->catch(static function (Throwable $ex) use ($deferred): void {
 					$deferred->reject($ex);
 				});
 
@@ -529,14 +534,14 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : Entities\API\Cloud\ThirdPartyDevice)
+	 * @return ($async is true ? Promise\PromiseInterface<Entities\API\Cloud\ThirdPartyDevice> : Entities\API\Cloud\ThirdPartyDevice)
 	 *
 	 * @throws Exceptions\CloudApiCall
 	 */
 	public function addThirdPartyDevice(
 		string $id,
 		bool $async = true,
-	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Entities\API\Cloud\ThirdPartyDevice
+	): Promise\PromiseInterface|Entities\API\Cloud\ThirdPartyDevice
 	{
 		if (!$this->isConnected()) {
 			$this->connect();
@@ -606,7 +611,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 						$deferred->reject($ex);
 					}
 				})
-				->otherwise(static function (Throwable $ex) use ($deferred): void {
+				->catch(static function (Throwable $ex) use ($deferred): void {
 					$deferred->reject($ex);
 				});
 
@@ -1097,14 +1102,14 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : Message\ResponseInterface)
+	 * @return ($async is true ? Promise\PromiseInterface<Message\ResponseInterface> : Message\ResponseInterface)
 	 *
 	 * @throws Exceptions\CloudApiCall
 	 */
 	private function callRequest(
 		Request $request,
 		bool $async = true,
-	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Message\ResponseInterface
+	): Promise\PromiseInterface|Message\ResponseInterface
 	{
 		$deferred = new Promise\Deferred();
 
@@ -1298,15 +1303,20 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	 */
 	private function getSchema(string $schemaFilename): string
 	{
-		try {
-			$schema = Utils\FileSystem::read(
-				Sonoff\Constants::RESOURCES_FOLDER . DIRECTORY_SEPARATOR . $schemaFilename,
-			);
-		} catch (Nette\IOException) {
-			throw new Exceptions\CloudApiCall('Validation schema for response could not be loaded');
+		$key = md5($schemaFilename);
+
+		if (!array_key_exists($key, $this->validationSchemas)) {
+			try {
+				$this->validationSchemas[$key] = Utils\FileSystem::read(
+					Sonoff\Constants::RESOURCES_FOLDER . DIRECTORY_SEPARATOR . $schemaFilename,
+				);
+
+			} catch (Nette\IOException) {
+				throw new Exceptions\CloudApiCall('Validation schema for response could not be loaded');
+			}
 		}
 
-		return $schema;
+		return $this->validationSchemas[$key];
 	}
 
 	/**

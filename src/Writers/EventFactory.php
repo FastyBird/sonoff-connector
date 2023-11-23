@@ -15,7 +15,7 @@
 
 namespace FastyBird\Connector\Sonoff\Writers;
 
-use FastyBird\Connector\Sonoff\Entities;
+use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 
 /**
  * System event device state periodic writer factory
@@ -28,6 +28,6 @@ use FastyBird\Connector\Sonoff\Entities;
 interface EventFactory extends WriterFactory
 {
 
-	public function create(Entities\SonoffConnector $connector): Event;
+	public function create(MetadataDocuments\DevicesModule\Connector $connector): Event;
 
 }

@@ -20,15 +20,16 @@ use FastyBird\Connector\Sonoff\API;
 use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Helpers;
-use FastyBird\Connector\Sonoff\Queries;
 use FastyBird\Connector\Sonoff\Queue;
 use FastyBird\DateTimeFactory;
 use FastyBird\Library\Bootstrap\Helpers as BootstrapHelpers;
+use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Events as DevicesEvents;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
 use FastyBird\Module\Devices\Models as DevicesModels;
+use FastyBird\Module\Devices\Queries as DevicesQueries;
 use FastyBird\Module\Devices\Utilities as DevicesUtilities;
 use InvalidArgumentException;
 use Psr\EventDispatcher;
@@ -48,28 +49,27 @@ use Throwable;
 final class Cloud extends ClientProcess implements Client
 {
 
+	/**
+	 * @param DevicesModels\Configuration\Devices\Repository<MetadataDocuments\DevicesModule\Device> $devicesConfigurationRepository
+	 */
 	public function __construct(
-		Entities\SonoffConnector $connector,
-		DevicesModels\Entities\Devices\DevicesRepository $devicesRepository,
+		Helpers\Device $deviceHelper,
 		DevicesUtilities\DeviceConnection $deviceConnectionManager,
-		DevicesUtilities\DevicePropertiesStates $devicePropertiesStates,
-		DevicesUtilities\ChannelPropertiesStates $channelPropertiesStates,
 		DateTimeFactory\Factory $dateTimeFactory,
 		EventLoop\LoopInterface $eventLoop,
+		private readonly MetadataDocuments\DevicesModule\Connector $connector,
 		private readonly bool $autoMode,
 		private readonly API\ConnectionManager $connectionManager,
 		private readonly Helpers\Entity $entityHelper,
 		private readonly Queue\Queue $queue,
 		private readonly Sonoff\Logger $logger,
+		private readonly DevicesModels\Configuration\Devices\Repository $devicesConfigurationRepository,
 		private readonly EventDispatcher\EventDispatcherInterface|null $dispatcher = null,
 	)
 	{
 		parent::__construct(
-			$connector,
-			$devicesRepository,
+			$deviceHelper,
 			$deviceConnectionManager,
-			$devicePropertiesStates,
-			$channelPropertiesStates,
 			$dateTimeFactory,
 			$eventLoop,
 		);
@@ -97,6 +97,13 @@ final class Cloud extends ClientProcess implements Client
 					$this->registerLoopHandler();
 				},
 			);
+
+			$findDevicesQuery = new DevicesQueries\Configuration\FindDevices();
+			$findDevicesQuery->forConnector($this->connector);
+
+			foreach ($this->devicesConfigurationRepository->findAllBy($findDevicesQuery) as $device) {
+				$this->devices[$device->getId()->toString()] = $device;
+			}
 		}
 
 		$cloudApi = $this->connectionManager->getCloudApiConnection($this->connector);
@@ -170,7 +177,7 @@ final class Cloud extends ClientProcess implements Client
 						],
 					);
 				})
-				->otherwise(function (Throwable $ex): void {
+				->catch(function (Throwable $ex): void {
 					$this->logger->error(
 						'eWelink cloud websockets client could not be created',
 						[
@@ -213,9 +220,11 @@ final class Cloud extends ClientProcess implements Client
 	}
 
 	/**
+	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\MalformedInput
 	 */
 	public function disconnect(): void
 	{
@@ -231,12 +240,15 @@ final class Cloud extends ClientProcess implements Client
 	}
 
 	/**
+	 * @return Promise\PromiseInterface<bool>
+	 *
+	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\CloudApiCall
-	 * @throws Exceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\MalformedInput
 	 */
-	protected function readInformation(Entities\SonoffDevice $device): Promise\PromiseInterface
+	protected function readInformation(MetadataDocuments\DevicesModule\Device $device): Promise\PromiseInterface
 	{
 		$deferred = new Promise\Deferred();
 
@@ -263,7 +275,7 @@ final class Cloud extends ClientProcess implements Client
 
 					$deferred->resolve(true);
 			})
-				->otherwise(function (Throwable $ex) use ($deferred, $device): void {
+				->catch(function (Throwable $ex) use ($deferred, $device): void {
 					$this->logger->error(
 						'Could not call cloud openapi',
 						[
@@ -298,31 +310,35 @@ final class Cloud extends ClientProcess implements Client
 	}
 
 	/**
-	 * @throws Exceptions\InvalidState
+	 * @return Promise\PromiseInterface<bool>
+	 *
+	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\MalformedInput
 	 */
-	protected function readState(Entities\SonoffDevice $device): Promise\PromiseInterface
+	protected function readState(MetadataDocuments\DevicesModule\Device $device): Promise\PromiseInterface
 	{
 		$deferred = new Promise\Deferred();
 
 		if (
 			$this->connectionManager->getCloudWsConnection($this->connector)->isConnected()
-			&& $device->getApiKey() !== null
+			&& $this->deviceHelper->getApiKey($device) !== null
 		) {
 			$this->connectionManager
 				->getCloudWsConnection($this->connector)
 				->readStates(
 					$device->getIdentifier(),
-					$device->getApiKey(),
+					$this->deviceHelper->getApiKey($device),
 				)
 				->then(function (Entities\API\Sockets\DeviceStateEvent $result) use ($deferred): void {
 						$this->handleDeviceState($result);
 
 						$deferred->resolve(true);
 				})
-					->otherwise(function () use ($deferred, $device): void {
+					->catch(function () use ($deferred, $device): void {
 						$this->connectionManager
 							->getCloudApiConnection($this->connector)
 							->getThingState(
@@ -333,7 +349,7 @@ final class Cloud extends ClientProcess implements Client
 
 									$deferred->resolve(true);
 							})
-								->otherwise(function (Throwable $ex) use ($deferred, $device): void {
+								->catch(function (Throwable $ex) use ($deferred, $device): void {
 									$this->logger->error(
 										'Calling eWelink cloud failed',
 										[
@@ -373,7 +389,7 @@ final class Cloud extends ClientProcess implements Client
 
 						$deferred->resolve(true);
 				})
-					->otherwise(function (Throwable $ex) use ($deferred, $device): void {
+					->catch(function (Throwable $ex) use ($deferred, $device): void {
 						$this->logger->error(
 							'Calling eWelink cloud failed',
 							[
@@ -411,6 +427,9 @@ final class Cloud extends ClientProcess implements Client
 	/**
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\Runtime
+	 * @throws MetadataExceptions\InvalidArgument
+	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\MalformedInput
 	 */
 	private function handleDeviceState(
 		Entities\API\Cloud\DeviceState|Entities\API\Sockets\DeviceStateEvent $message,
@@ -420,10 +439,10 @@ final class Cloud extends ClientProcess implements Client
 			return;
 		}
 
-		$findDeviceQuery = new Queries\Entities\FindDevices();
+		$findDeviceQuery = new DevicesQueries\Configuration\FindDevices();
 		$findDeviceQuery->byIdentifier($message->getDeviceId());
 
-		$device = $this->devicesRepository->findOneBy($findDeviceQuery, Entities\SonoffDevice::class);
+		$device = $this->devicesConfigurationRepository->findOneBy($findDeviceQuery);
 
 		if ($device === null) {
 			return;

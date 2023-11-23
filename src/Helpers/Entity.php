@@ -26,6 +26,7 @@ use Orisai\ObjectMapper;
 use function array_key_exists;
 use function assert;
 use function class_exists;
+use function md5;
 use function sprintf;
 use const DIRECTORY_SEPARATOR;
 
@@ -43,6 +44,9 @@ final class Entity
 	// phpcs:ignore SlevomatCodingStandard.Files.LineLength.LineTooLong
 	private const KNOW_UUID_TYPES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 14, 15, 16, 17, 18, 19, 22, 24, 25, 27, 28, 29, 30, 31, 32, 33, 34, 36, 44, 52, 57, 59, 77, 78, 81, 82, 83, 84, 102, 103, 104, 107, 195, 1_770, 1_771];
 
+	/** @var array<string, string> */
+	private array $validationSchemas = [];
+
 	public function __construct(
 		private readonly ObjectMapper\Processing\Processor $entityMapper,
 		private readonly MetadataSchemas\Validator $schemaValidator,
@@ -51,7 +55,7 @@ final class Entity
 	}
 
 	/**
-	 * @template T of Entities\API\Entity|Entities\Messages\Entity|Entities\Clients\Entity|Entities\Commands\Entity|Entities\Uiid\Entity
+	 * @template T of Entities\API\Entity|Entities\Messages\Entity|Entities\Clients\Entity|Entities\Uiid\Entity
 	 *
 	 * @param class-string<T> $entity
 	 * @param array<mixed> $data
@@ -63,7 +67,7 @@ final class Entity
 	public function create(
 		string $entity,
 		array $data,
-	): Entities\API\Entity|Entities\Messages\Entity|Entities\Clients\Entity|Entities\Commands\Entity|Entities\Uiid\Entity
+	): Entities\API\Entity|Entities\Messages\Entity|Entities\Clients\Entity|Entities\Uiid\Entity
 	{
 		if (
 			(
@@ -131,18 +135,23 @@ final class Entity
 	 */
 	private function getSchema(int $type): string
 	{
-		try {
-			$schema = Utils\FileSystem::read(
-				Sonoff\Constants::RESOURCES_FOLDER . DIRECTORY_SEPARATOR . 'uiid' . DIRECTORY_SEPARATOR . sprintf(
-					'uiid%d.json',
-					$type,
-				),
-			);
-		} catch (Nette\IOException) {
-			throw new Exceptions\Runtime('Validation schema for UUID could not be loaded');
+		$key = md5(sprintf('uiid%d.json', $type));
+
+		if (!array_key_exists($key, $this->validationSchemas)) {
+			try {
+				$this->validationSchemas[$key] = Utils\FileSystem::read(
+					Sonoff\Constants::RESOURCES_FOLDER . DIRECTORY_SEPARATOR . 'uiid' . DIRECTORY_SEPARATOR . sprintf(
+						'uiid%d.json',
+						$type,
+					),
+				);
+
+			} catch (Nette\IOException) {
+				throw new Exceptions\Runtime('Validation schema for UUID could not be loaded');
+			}
 		}
 
-		return $schema;
+		return $this->validationSchemas[$key];
 	}
 
 }

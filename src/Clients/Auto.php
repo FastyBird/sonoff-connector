@@ -16,12 +16,12 @@
 namespace FastyBird\Connector\Sonoff\Clients;
 
 use BadMethodCallException;
-use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Exceptions;
+use FastyBird\Connector\Sonoff\Helpers;
 use FastyBird\DateTimeFactory;
+use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
-use FastyBird\Module\Devices\Models as DevicesModels;
 use FastyBird\Module\Devices\Utilities as DevicesUtilities;
 use InvalidArgumentException;
 use Nette;
@@ -49,23 +49,18 @@ final class Auto extends ClientProcess implements Client
 	private Cloud $cloudClient;
 
 	public function __construct(
-		Entities\SonoffConnector $connector,
-		DevicesModels\Entities\Devices\DevicesRepository $devicesRepository,
+		Helpers\Device $deviceHelper,
 		DevicesUtilities\DeviceConnection $deviceConnectionManager,
-		DevicesUtilities\DevicePropertiesStates $devicePropertiesStates,
-		DevicesUtilities\ChannelPropertiesStates $channelPropertiesStates,
 		DateTimeFactory\Factory $dateTimeFactory,
 		EventLoop\LoopInterface $eventLoop,
+		private readonly MetadataDocuments\DevicesModule\Connector $connector,
 		private readonly LanFactory $lanClientFactory,
 		private readonly CloudFactory $cloudClientFactory,
 	)
 	{
 		parent::__construct(
-			$connector,
-			$devicesRepository,
+			$deviceHelper,
 			$deviceConnectionManager,
-			$devicePropertiesStates,
-			$channelPropertiesStates,
 			$dateTimeFactory,
 			$eventLoop,
 		);
@@ -102,9 +97,11 @@ final class Auto extends ClientProcess implements Client
 	}
 
 	/**
+	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\MalformedInput
 	 */
 	public function disconnect(): void
 	{
@@ -119,28 +116,34 @@ final class Auto extends ClientProcess implements Client
 	}
 
 	/**
+	 * @return Promise\PromiseInterface<bool>
+	 *
+	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\CloudApiCall
-	 * @throws Exceptions\InvalidState
 	 * @throws Exceptions\LanApiCall
 	 * @throws Exceptions\Runtime
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\MalformedInput
 	 */
-	protected function readInformation(Entities\SonoffDevice $device): Promise\PromiseInterface
+	protected function readInformation(MetadataDocuments\DevicesModule\Device $device): Promise\PromiseInterface
 	{
 		$deferred = new Promise\Deferred();
 
-		if ($device->getIpAddress() !== null && !in_array($device->getId()->toString(), $this->ignoredDevices, true)) {
+		if (
+			$this->deviceHelper->getIpAddress($device) !== null
+			&& !in_array($device->getId()->toString(), $this->ignoredDevices, true)
+		) {
 			$this->lanClient->readInformation($device)
 				->then(static function () use ($deferred): void {
 					$deferred->resolve(true);
 				})
-				->otherwise(function (Throwable $ex) use ($deferred, $device): void {
+				->catch(function (Throwable $ex) use ($deferred, $device): void {
 					$this->cloudClient->readInformation($device)
 						->then(static function () use ($deferred): void {
 							$deferred->resolve(true);
 						})
-						->otherwise(static function (Throwable $ex) use ($deferred): void {
+						->catch(static function (Throwable $ex) use ($deferred): void {
 							$deferred->reject($ex);
 						});
 				});
@@ -149,7 +152,7 @@ final class Auto extends ClientProcess implements Client
 				->then(static function () use ($deferred): void {
 					$deferred->resolve(true);
 				})
-				->otherwise(static function (Throwable $ex) use ($deferred): void {
+				->catch(static function (Throwable $ex) use ($deferred): void {
 					$deferred->reject($ex);
 				});
 		}
@@ -158,12 +161,16 @@ final class Auto extends ClientProcess implements Client
 	}
 
 	/**
+	 * @return Promise\PromiseInterface<bool>
+	 *
+	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\InvalidState
 	 * @throws Exceptions\CloudApiCall
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\MalformedInput
 	 */
-	protected function readState(Entities\SonoffDevice $device): Promise\PromiseInterface
+	protected function readState(MetadataDocuments\DevicesModule\Device $device): Promise\PromiseInterface
 	{
 		$deferred = new Promise\Deferred();
 
@@ -171,7 +178,7 @@ final class Auto extends ClientProcess implements Client
 			->then(static function () use ($deferred): void {
 				$deferred->resolve(true);
 			})
-			->otherwise(static function (Throwable $ex) use ($deferred): void {
+			->catch(static function (Throwable $ex) use ($deferred): void {
 				$deferred->reject($ex);
 			});
 

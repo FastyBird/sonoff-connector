@@ -15,8 +15,8 @@
 
 namespace FastyBird\Connector\Sonoff\Clients;
 
-use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Types;
+use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 
 /**
  * Gateway client factory
@@ -31,6 +31,6 @@ interface GatewayFactory extends ClientFactory
 
 	public const MODE = Types\ClientMode::GATEWAY;
 
-	public function create(Entities\SonoffConnector $connector): Gateway;
+	public function create(MetadataDocuments\DevicesModule\Connector $connector): Gateway;
 
 }

@@ -46,19 +46,20 @@ final class StoreDevice implements Consumer
 
 	use Nette\SmartObject;
 	use DeviceProperty;
+	use ChannelProperty;
 
 	public function __construct(
-		private readonly Sonoff\Logger $logger,
+		protected readonly Sonoff\Logger $logger,
+		protected readonly DevicesModels\Entities\Devices\DevicesRepository $devicesRepository,
+		protected readonly DevicesModels\Entities\Devices\Properties\PropertiesRepository $devicesPropertiesRepository,
+		protected readonly DevicesModels\Entities\Devices\Properties\PropertiesManager $devicesPropertiesManager,
+		protected readonly DevicesModels\Entities\Channels\ChannelsRepository $channelsRepository,
+		protected readonly DevicesModels\Entities\Channels\Properties\PropertiesRepository $channelsPropertiesRepository,
+		protected readonly DevicesModels\Entities\Channels\Properties\PropertiesManager $channelsPropertiesManager,
+		protected readonly DevicesUtilities\Database $databaseHelper,
 		private readonly DevicesModels\Entities\Connectors\ConnectorsRepository $connectorsRepository,
-		private readonly DevicesModels\Entities\Devices\DevicesRepository $devicesRepository,
 		private readonly DevicesModels\Entities\Devices\DevicesManager $devicesManager,
-		private readonly DevicesModels\Entities\Devices\Properties\PropertiesRepository $devicesPropertiesRepository,
-		private readonly DevicesModels\Entities\Devices\Properties\PropertiesManager $devicesPropertiesManager,
-		private readonly DevicesModels\Entities\Channels\ChannelsRepository $channelsRepository,
 		private readonly DevicesModels\Entities\Channels\ChannelsManager $channelsManager,
-		private readonly DevicesModels\Entities\Channels\Properties\PropertiesRepository $channelPropertiesRepository,
-		private readonly DevicesModels\Entities\Channels\Properties\PropertiesManager $channelsPropertiesManager,
-		private readonly DevicesUtilities\Database $databaseHelper,
 	)
 	{
 	}
@@ -342,70 +343,20 @@ final class StoreDevice implements Consumer
 						);
 					}
 
-					$findChannelPropertyQuery = new DevicesQueries\Entities\FindChannelProperties();
-					$findChannelPropertyQuery->forChannel($channel);
-					$findChannelPropertyQuery->byIdentifier($parameter->getIdentifier());
-
-					$property = $this->channelPropertiesRepository->findOneBy($findChannelPropertyQuery);
-
-					if ($property === null) {
-						$property = $this->channelsPropertiesManager->create(Utils\ArrayHash::from([
-							'channel' => $channel,
-							'entity' => DevicesEntities\Channels\Properties\Dynamic::class,
-							'identifier' => $parameter->getIdentifier(),
-							'name' => $parameter->getName(),
-							'dataType' => $parameter->getDataType(),
-							'format' => $parameter->getFormat(),
-							'queryable' => $parameter->isQueryable(),
-							'settable' => $parameter->isSettable(),
-							'scale' => $parameter->getScale(),
-						]));
-
-						$this->logger->debug(
-							'Channel dynamic property was created',
-							[
-								'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-								'type' => 'store-device-message-consumer',
-								'device' => [
-									'id' => $device->getId()->toString(),
-								],
-								'channel' => [
-									'id' => $channel->getId()->toString(),
-								],
-								'property' => [
-									'id' => $property->getId()->toString(),
-									'identifier' => $parameter->getIdentifier(),
-								],
-							],
-						);
-
-					} else {
-						$property = $this->channelsPropertiesManager->update($property, Utils\ArrayHash::from([
-							'dataType' => $parameter->getDataType(),
-							'format' => $parameter->getFormat(),
-							'queryable' => $parameter->isQueryable(),
-							'settable' => $parameter->isSettable(),
-							'scale' => $parameter->getScale(),
-						]));
-
-						$this->logger->debug(
-							'Channel dynamic property was updated',
-							[
-								'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-								'type' => 'store-device-message-consumer',
-								'device' => [
-									'id' => $device->getId()->toString(),
-								],
-								'channel' => [
-									'id' => $channel->getId()->toString(),
-								],
-								'property' => [
-									'id' => $property->getId()->toString(),
-									'identifier' => $parameter->getIdentifier(),
-								],
-							],
-						);
-					}
+					$this->setChannelProperty(
+						DevicesEntities\Channels\Properties\Dynamic::class,
+						$channel->getId(),
+						null,
+						$parameter->getDataType(),
+						$parameter->getIdentifier(),
+						$parameter->getName(),
+						$parameter->getFormat(),
+						null,
+						null,
+						$parameter->getScale(),
+						$parameter->isSettable(),
+						$parameter->isQueryable(),
+					);
 				}
 			}
 

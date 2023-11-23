@@ -16,8 +16,8 @@
 namespace FastyBird\Connector\Sonoff\Clients;
 
 use FastyBird\Connector\Sonoff;
-use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Exceptions;
+use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use Nette;
 use function sprintf;
@@ -36,7 +36,7 @@ final class Gateway implements Client
 	use Nette\SmartObject;
 
 	public function __construct(
-		private readonly Entities\SonoffConnector $connector,
+		private readonly MetadataDocuments\DevicesModule\Connector $connector,
 		private readonly Sonoff\Logger $logger,
 	)
 	{

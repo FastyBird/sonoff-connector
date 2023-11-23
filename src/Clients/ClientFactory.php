@@ -15,7 +15,7 @@
 
 namespace FastyBird\Connector\Sonoff\Clients;
 
-use FastyBird\Connector\Sonoff\Entities;
+use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 
 /**
  * Base device client factory
@@ -30,6 +30,6 @@ interface ClientFactory
 
 	public const MODE_CONSTANT_NAME = 'MODE';
 
-	public function create(Entities\SonoffConnector $connector): Client;
+	public function create(MetadataDocuments\DevicesModule\Connector $connector): Client;
 
 }

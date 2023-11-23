@@ -48,6 +48,7 @@ use function assert;
 use function count;
 use function http_build_query;
 use function intval;
+use function md5;
 use function property_exists;
 use function React\Async\async;
 use function sprintf;
@@ -94,6 +95,9 @@ final class CloudWs implements Evenement\EventEmitterInterface
 
 	private bool $connected = false;
 
+	/** @var array<string, string> */
+	private array $validationSchemas = [];
+
 	private DateTimeInterface|null $lastConnectAttempt = null;
 
 	private DateTimeInterface|null $disconnected = null;
@@ -124,6 +128,9 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	{
 	}
 
+	/**
+	 * @return Promise\PromiseInterface<bool>
+	 */
 	public function connect(): Promise\PromiseInterface
 	{
 		$this->connection = null;
@@ -240,9 +247,9 @@ final class CloudWs implements Evenement\EventEmitterInterface
 
 				$this->emit('connected');
 
-				$deferred->resolve();
+				$deferred->resolve(true);
 			})
-			->otherwise(function (Throwable $ex) use ($deferred): void {
+			->catch(function (Throwable $ex) use ($deferred): void {
 				$this->connection = null;
 
 				$this->connecting = false;
@@ -304,6 +311,9 @@ final class CloudWs implements Evenement\EventEmitterInterface
 		return $this->lost;
 	}
 
+	/**
+	 * @return Promise\PromiseInterface<Entities\API\Sockets\DeviceStateEvent>
+	 */
 	public function readStates(string $id, string $apiKey): Promise\PromiseInterface
 	{
 		$deferred = new Promise\Deferred();
@@ -322,6 +332,9 @@ final class CloudWs implements Evenement\EventEmitterInterface
 		return $deferred->promise();
 	}
 
+	/**
+	 * @return Promise\PromiseInterface<Entities\API\Sockets\DeviceStateEvent>
+	 */
 	public function writeState(
 		string $id,
 		string $apiKey,
@@ -395,6 +408,9 @@ final class CloudWs implements Evenement\EventEmitterInterface
 		return $this->createEntity(Entities\API\Sockets\ApplicationLogin::class, $data);
 	}
 
+	/**
+	 * @return Promise\PromiseInterface<Entities\API\Sockets\ApplicationHandshake>
+	 */
 	private function doWsHandshake(): Promise\PromiseInterface
 	{
 		$deferred = new Promise\Deferred();
@@ -565,6 +581,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	 * @template T of Entities\API\Entity
 	 *
 	 * @param class-string<T> $entityClass
+	 * @param Promise\Deferred<T>|null $deferred
 	 *
 	 * @return T|null
 	 */
@@ -591,6 +608,9 @@ final class CloudWs implements Evenement\EventEmitterInterface
 		return null;
 	}
 
+	/**
+	 * @param Promise\Deferred<Entities\API\Entity>|null $deferred
+	 */
 	private function sendRequest(
 		stdClass $payload,
 		string $action,
@@ -721,14 +741,14 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @return ($async is true ? Promise\ExtendedPromiseInterface|Promise\PromiseInterface : Message\ResponseInterface)
+	 * @return ($async is true ? Promise\PromiseInterface<Message\ResponseInterface> : Message\ResponseInterface)
 	 *
 	 * @throws Exceptions\CloudWsCall
 	 */
 	private function callHttpRequest(
 		Request $request,
 		bool $async = true,
-	): Promise\ExtendedPromiseInterface|Promise\PromiseInterface|Message\ResponseInterface
+	): Promise\PromiseInterface|Message\ResponseInterface
 	{
 		$deferred = new Promise\Deferred();
 
@@ -868,15 +888,20 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	 */
 	private function getSchema(string $schemaFilename): string
 	{
-		try {
-			$schema = Utils\FileSystem::read(
-				Sonoff\Constants::RESOURCES_FOLDER . DIRECTORY_SEPARATOR . $schemaFilename,
-			);
-		} catch (Nette\IOException) {
-			throw new Exceptions\CloudWsCall('Validation schema for response could not be loaded');
+		$key = md5($schemaFilename);
+
+		if (!array_key_exists($key, $this->validationSchemas)) {
+			try {
+				$this->validationSchemas[$key] = Utils\FileSystem::read(
+					Sonoff\Constants::RESOURCES_FOLDER . DIRECTORY_SEPARATOR . $schemaFilename,
+				);
+
+			} catch (Nette\IOException) {
+				throw new Exceptions\CloudWsCall('Validation schema for response could not be loaded');
+			}
 		}
 
-		return $schema;
+		return $this->validationSchemas[$key];
 	}
 
 	/**

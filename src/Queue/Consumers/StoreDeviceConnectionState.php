@@ -18,12 +18,10 @@ namespace FastyBird\Connector\Sonoff\Queue\Consumers;
 use Doctrine\DBAL;
 use FastyBird\Connector\Sonoff;
 use FastyBird\Connector\Sonoff\Entities;
-use FastyBird\Connector\Sonoff\Queries;
 use FastyBird\Connector\Sonoff\Queue;
 use FastyBird\Library\Metadata;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
-use FastyBird\Module\Devices\Entities as DevicesEntities;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
 use FastyBird\Module\Devices\Models as DevicesModels;
 use FastyBird\Module\Devices\Queries as DevicesQueries;
@@ -43,12 +41,18 @@ final class StoreDeviceConnectionState implements Queue\Consumer
 
 	use Nette\SmartObject;
 
+	/**
+	 * @param DevicesModels\Configuration\Devices\Repository<Metadata\Documents\DevicesModule\Device> $devicesConfigurationRepository
+	 * @param DevicesModels\Configuration\Devices\Properties\Repository<Metadata\Documents\DevicesModule\DeviceDynamicProperty> $devicesPropertiesConfigurationRepository
+	 * @param DevicesModels\Configuration\Channels\Repository<Metadata\Documents\DevicesModule\Channel> $channelsConfigurationRepository
+	 * @param DevicesModels\Configuration\Channels\Properties\Repository<Metadata\Documents\DevicesModule\ChannelDynamicProperty> $channelsPropertiesConfigurationRepository
+	 */
 	public function __construct(
 		private readonly Sonoff\Logger $logger,
-		private readonly DevicesModels\Entities\Devices\DevicesRepository $devicesRepository,
-		private readonly DevicesModels\Entities\Devices\Properties\PropertiesRepository $devicesPropertiesRepository,
-		private readonly DevicesModels\Entities\Channels\ChannelsRepository $channelsRepository,
-		private readonly DevicesModels\Entities\Channels\Properties\PropertiesRepository $channelsPropertiesRepository,
+		private readonly DevicesModels\Configuration\Devices\Repository $devicesConfigurationRepository,
+		private readonly DevicesModels\Configuration\Devices\Properties\Repository $devicesPropertiesConfigurationRepository,
+		private readonly DevicesModels\Configuration\Channels\Repository $channelsConfigurationRepository,
+		private readonly DevicesModels\Configuration\Channels\Properties\Repository $channelsPropertiesConfigurationRepository,
 		private readonly DevicesUtilities\DeviceConnection $deviceConnectionManager,
 		private readonly DevicesUtilities\DevicePropertiesStates $devicePropertiesStateManager,
 		private readonly DevicesUtilities\ChannelPropertiesStates $channelPropertiesStateManager,
@@ -71,11 +75,11 @@ final class StoreDeviceConnectionState implements Queue\Consumer
 			return false;
 		}
 
-		$findDeviceQuery = new Queries\Entities\FindDevices();
+		$findDeviceQuery = new DevicesQueries\Configuration\FindDevices();
 		$findDeviceQuery->byConnectorId($entity->getConnector());
-		$findDeviceQuery->byIdentifier($entity->getIdentifier());
+		$findDeviceQuery->startWithIdentifier($entity->getIdentifier());
 
-		$device = $this->devicesRepository->findOneBy($findDeviceQuery, Entities\SonoffDevice::class);
+		$device = $this->devicesConfigurationRepository->findOneBy($findDeviceQuery);
 
 		if ($device === null) {
 			$this->logger->error(
@@ -112,38 +116,38 @@ final class StoreDeviceConnectionState implements Queue\Consumer
 				|| $entity->getState()->equalsValue(Metadata\Types\ConnectionState::STATE_ALERT)
 				|| $entity->getState()->equalsValue(Metadata\Types\ConnectionState::STATE_UNKNOWN)
 			) {
-				$findDevicePropertiesQuery = new DevicesQueries\Entities\FindDeviceDynamicProperties();
+				$findDevicePropertiesQuery = new DevicesQueries\Configuration\FindDeviceDynamicProperties();
 				$findDevicePropertiesQuery->forDevice($device);
 
-				foreach ($this->devicesPropertiesRepository->findAllBy(
+				foreach ($this->devicesPropertiesConfigurationRepository->findAllBy(
 					$findDevicePropertiesQuery,
-					DevicesEntities\Devices\Properties\Dynamic::class,
+					Metadata\Documents\DevicesModule\DeviceDynamicProperty::class,
 				) as $property) {
 					$this->devicePropertiesStateManager->setValidState($property, false);
 				}
 
-				$findChannelsQuery = new DevicesQueries\Entities\FindChannels();
+				$findChannelsQuery = new DevicesQueries\Configuration\FindChannels();
 				$findChannelsQuery->forDevice($device);
 
-				$channels = $this->channelsRepository->findAllBy($findChannelsQuery);
+				$channels = $this->channelsConfigurationRepository->findAllBy($findChannelsQuery);
 
 				foreach ($channels as $channel) {
-					$findChannelPropertiesQuery = new DevicesQueries\Entities\FindChannelDynamicProperties();
+					$findChannelPropertiesQuery = new DevicesQueries\Configuration\FindChannelDynamicProperties();
 					$findChannelPropertiesQuery->forChannel($channel);
 
-					foreach ($this->channelsPropertiesRepository->findAllBy(
+					foreach ($this->channelsPropertiesConfigurationRepository->findAllBy(
 						$findChannelPropertiesQuery,
-						DevicesEntities\Channels\Properties\Dynamic::class,
+						Metadata\Documents\DevicesModule\ChannelDynamicProperty::class,
 					) as $property) {
 						$this->channelPropertiesStateManager->setValidState($property, false);
 					}
 				}
 			}
 
-			$findChildrenDevicesQuery = new Queries\Entities\FindDevices();
+			$findChildrenDevicesQuery = new DevicesQueries\Configuration\FindDevices();
 			$findChildrenDevicesQuery->forParent($device);
 
-			$children = $this->devicesRepository->findAllBy($findChildrenDevicesQuery, Entities\SonoffDevice::class);
+			$children = $this->devicesConfigurationRepository->findAllBy($findChildrenDevicesQuery);
 
 			foreach ($children as $child) {
 				$this->deviceConnectionManager->setState(
@@ -157,28 +161,28 @@ final class StoreDeviceConnectionState implements Queue\Consumer
 					|| $entity->getState()->equalsValue(Metadata\Types\ConnectionState::STATE_ALERT)
 					|| $entity->getState()->equalsValue(Metadata\Types\ConnectionState::STATE_UNKNOWN)
 				) {
-					$findDevicePropertiesQuery = new DevicesQueries\Entities\FindDeviceDynamicProperties();
+					$findDevicePropertiesQuery = new DevicesQueries\Configuration\FindDeviceDynamicProperties();
 					$findDevicePropertiesQuery->forDevice($child);
 
-					foreach ($this->devicesPropertiesRepository->findAllBy(
+					foreach ($this->devicesPropertiesConfigurationRepository->findAllBy(
 						$findDevicePropertiesQuery,
-						DevicesEntities\Devices\Properties\Dynamic::class,
+						Metadata\Documents\DevicesModule\DeviceDynamicProperty::class,
 					) as $property) {
 						$this->devicePropertiesStateManager->setValidState($property, false);
 					}
 
-					$findChannelsQuery = new DevicesQueries\Entities\FindChannels();
+					$findChannelsQuery = new DevicesQueries\Configuration\FindChannels();
 					$findChannelsQuery->forDevice($child);
 
-					$channels = $this->channelsRepository->findAllBy($findChannelsQuery);
+					$channels = $this->channelsConfigurationRepository->findAllBy($findChannelsQuery);
 
 					foreach ($channels as $channel) {
-						$findChannelPropertiesQuery = new DevicesQueries\Entities\FindChannelDynamicProperties();
+						$findChannelPropertiesQuery = new DevicesQueries\Configuration\FindChannelDynamicProperties();
 						$findChannelPropertiesQuery->forChannel($channel);
 
-						foreach ($this->channelsPropertiesRepository->findAllBy(
+						foreach ($this->channelsPropertiesConfigurationRepository->findAllBy(
 							$findChannelPropertiesQuery,
-							DevicesEntities\Channels\Properties\Dynamic::class,
+							Metadata\Documents\DevicesModule\ChannelDynamicProperty::class,
 						) as $property) {
 							$this->channelPropertiesStateManager->setValidState($property, false);
 						}

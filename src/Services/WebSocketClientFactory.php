@@ -16,6 +16,7 @@
 namespace FastyBird\Connector\Sonoff\Services;
 
 use InvalidArgumentException;
+use Ratchet;
 use Ratchet\Client;
 use React\EventLoop;
 use React\Promise;
@@ -38,9 +39,10 @@ class WebSocketClientFactory
 	{
 	}
 
-	public function create(
-		string $topicUrl,
-	): Promise\PromiseInterface|Promise\ExtendedPromiseInterface
+	/**
+	 * @return Promise\PromiseInterface<Ratchet\Client\WebSocket>
+	 */
+	public function create(string $topicUrl): Promise\PromiseInterface
 	{
 		try {
 			$reactConnector = new Socket\Connector([

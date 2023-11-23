@@ -19,6 +19,7 @@ use Doctrine\DBAL;
 use FastyBird\Connector\Sonoff;
 use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Queue\Consumer;
+use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Library\Metadata\Utilities as MetadataUtilities;
@@ -30,6 +31,7 @@ use FastyBird\Module\Devices\States as DevicesStates;
 use FastyBird\Module\Devices\Utilities as DevicesUtilities;
 use Nette;
 use Nette\Utils;
+use function assert;
 
 /**
  * Device state message consumer
@@ -44,13 +46,21 @@ final class StoreParametersStates implements Consumer
 
 	use Nette\SmartObject;
 
+	/**
+	 * @param DevicesModels\Configuration\Devices\Repository<MetadataDocuments\DevicesModule\Device> $devicesConfigurationRepository
+	 * @param DevicesModels\Configuration\Devices\Properties\Repository<MetadataDocuments\DevicesModule\DeviceDynamicProperty|MetadataDocuments\DevicesModule\DeviceVariableProperty> $devicesPropertiesConfigurationRepository
+	 * @param DevicesModels\Configuration\Channels\Repository<MetadataDocuments\DevicesModule\Channel> $channelsConfigurationRepository
+	 * @param DevicesModels\Configuration\Channels\Properties\Repository<MetadataDocuments\DevicesModule\ChannelDynamicProperty|MetadataDocuments\DevicesModule\ChannelVariableProperty> $channelsPropertiesConfigurationRepository
+	 */
 	public function __construct(
 		private readonly Sonoff\Logger $logger,
-		private readonly DevicesModels\Entities\Devices\DevicesRepository $devicesRepository,
-		private readonly DevicesModels\Entities\Channels\ChannelsRepository $channelsRepository,
-		private readonly DevicesModels\Entities\Devices\Properties\PropertiesRepository $devicePropertiesRepository,
+		private readonly DevicesModels\Configuration\Devices\Repository $devicesConfigurationRepository,
+		private readonly DevicesModels\Configuration\Devices\Properties\Repository $devicesPropertiesConfigurationRepository,
+		private readonly DevicesModels\Configuration\Channels\Repository $channelsConfigurationRepository,
+		private readonly DevicesModels\Configuration\Channels\Properties\Repository $channelsPropertiesConfigurationRepository,
+		private readonly DevicesModels\Entities\Devices\Properties\PropertiesRepository $devicesPropertiesRepository,
 		private readonly DevicesModels\Entities\Devices\Properties\PropertiesManager $devicesPropertiesManager,
-		private readonly DevicesModels\Entities\Channels\Properties\PropertiesRepository $channelPropertiesRepository,
+		private readonly DevicesModels\Entities\Channels\Properties\PropertiesRepository $channelsPropertiesRepository,
 		private readonly DevicesModels\Entities\Channels\Properties\PropertiesManager $channelsPropertiesManager,
 		private readonly DevicesUtilities\DevicePropertiesStates $devicePropertiesStateManager,
 		private readonly DevicesUtilities\ChannelPropertiesStates $channelPropertiesStateManager,
@@ -74,11 +84,11 @@ final class StoreParametersStates implements Consumer
 			return false;
 		}
 
-		$findDeviceQuery = new DevicesQueries\Entities\FindDevices();
+		$findDeviceQuery = new DevicesQueries\Configuration\FindDevices();
 		$findDeviceQuery->byConnectorId($entity->getConnector());
 		$findDeviceQuery->startWithIdentifier($entity->getIdentifier());
 
-		$device = $this->devicesRepository->findOneBy($findDeviceQuery, Entities\SonoffDevice::class);
+		$device = $this->devicesConfigurationRepository->findOneBy($findDeviceQuery);
 
 		if ($device === null) {
 			return true;
@@ -86,13 +96,13 @@ final class StoreParametersStates implements Consumer
 
 		foreach ($entity->getParameters() as $parameter) {
 			if ($parameter instanceof Entities\Messages\States\DeviceParameterState) {
-				$findDevicePropertyQuery = new DevicesQueries\Entities\FindDeviceProperties();
+				$findDevicePropertyQuery = new DevicesQueries\Configuration\FindDeviceProperties();
 				$findDevicePropertyQuery->forDevice($device);
 				$findDevicePropertyQuery->byIdentifier($parameter->getName());
 
-				$property = $this->devicePropertiesRepository->findOneBy($findDevicePropertyQuery);
+				$property = $this->devicesPropertiesConfigurationRepository->findOneBy($findDevicePropertyQuery);
 
-				if ($property instanceof DevicesEntities\Devices\Properties\Dynamic) {
+				if ($property instanceof MetadataDocuments\DevicesModule\DeviceDynamicProperty) {
 					$this->devicePropertiesStateManager->setValue($property, Utils\ArrayHash::from([
 						DevicesStates\Property::ACTUAL_VALUE_FIELD => MetadataUtilities\ValueHelper::transformValueFromDevice(
 							$property->getDataType(),
@@ -101,9 +111,18 @@ final class StoreParametersStates implements Consumer
 						),
 						DevicesStates\Property::VALID_FIELD => true,
 					]));
-				} elseif ($property instanceof DevicesEntities\Devices\Properties\Variable) {
+				} elseif ($property instanceof MetadataDocuments\DevicesModule\DeviceVariableProperty) {
 					$this->databaseHelper->transaction(
 						function () use ($property, $parameter): void {
+							$findPropertyQuery = new DevicesQueries\Entities\FindDeviceVariableProperties();
+							$findPropertyQuery->byId($property->getId());
+
+							$property = $this->devicesPropertiesRepository->findOneBy(
+								$findPropertyQuery,
+								DevicesEntities\Devices\Properties\Variable::class,
+							);
+							assert($property instanceof DevicesEntities\Devices\Properties\Variable);
+
 							$this->devicesPropertiesManager->update(
 								$property,
 								Utils\ArrayHash::from([
@@ -118,20 +137,20 @@ final class StoreParametersStates implements Consumer
 					);
 				}
 			} elseif ($parameter instanceof Entities\Messages\States\ChannelParameterState) {
-				$findChannelQuery = new DevicesQueries\Entities\FindChannels();
+				$findChannelQuery = new DevicesQueries\Configuration\FindChannels();
 				$findChannelQuery->forDevice($device);
 				$findChannelQuery->byIdentifier($parameter->getGroup());
 
-				$channel = $this->channelsRepository->findOneBy($findChannelQuery);
+				$channel = $this->channelsConfigurationRepository->findOneBy($findChannelQuery);
 
 				if ($channel !== null) {
-					$findChannelPropertyQuery = new DevicesQueries\Entities\FindChannelProperties();
+					$findChannelPropertyQuery = new DevicesQueries\Configuration\FindChannelProperties();
 					$findChannelPropertyQuery->forChannel($channel);
 					$findChannelPropertyQuery->byIdentifier($parameter->getName());
 
-					$property = $this->channelPropertiesRepository->findOneBy($findChannelPropertyQuery);
+					$property = $this->channelsPropertiesConfigurationRepository->findOneBy($findChannelPropertyQuery);
 
-					if ($property instanceof DevicesEntities\Channels\Properties\Dynamic) {
+					if ($property instanceof MetadataDocuments\DevicesModule\ChannelDynamicProperty) {
 						$this->channelPropertiesStateManager->setValue($property, Utils\ArrayHash::from([
 							DevicesStates\Property::ACTUAL_VALUE_FIELD => MetadataUtilities\ValueHelper::transformValueFromDevice(
 								$property->getDataType(),
@@ -140,9 +159,18 @@ final class StoreParametersStates implements Consumer
 							),
 							DevicesStates\Property::VALID_FIELD => true,
 						]));
-					} elseif ($property instanceof DevicesEntities\Channels\Properties\Variable) {
+					} elseif ($property instanceof MetadataDocuments\DevicesModule\ChannelVariableProperty) {
 						$this->databaseHelper->transaction(
 							function () use ($property, $parameter): void {
+								$findPropertyQuery = new DevicesQueries\Entities\FindChannelVariableProperties();
+								$findPropertyQuery->byId($property->getId());
+
+								$property = $this->channelsPropertiesRepository->findOneBy(
+									$findPropertyQuery,
+									DevicesEntities\Channels\Properties\Variable::class,
+								);
+								assert($property instanceof DevicesEntities\Channels\Properties\Variable);
+
 								$this->channelsPropertiesManager->update(
 									$property,
 									Utils\ArrayHash::from([

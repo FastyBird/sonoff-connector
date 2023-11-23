@@ -20,14 +20,18 @@ use FastyBird\Connector\Sonoff;
 use FastyBird\Connector\Sonoff\Clients;
 use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Exceptions;
+use FastyBird\Connector\Sonoff\Helpers;
 use FastyBird\Connector\Sonoff\Queue;
 use FastyBird\Connector\Sonoff\Writers;
+use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Connectors as DevicesConnectors;
 use FastyBird\Module\Devices\Entities as DevicesEntities;
 use FastyBird\Module\Devices\Events as DevicesEvents;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
+use FastyBird\Module\Devices\Models as DevicesModels;
+use FastyBird\Module\Devices\Queries as DevicesQueries;
 use InvalidArgumentException;
 use Nette;
 use Psr\EventDispatcher as PsrEventDispatcher;
@@ -61,15 +65,18 @@ final class Connector implements DevicesConnectors\Connector
 
 	/**
 	 * @param array<Clients\ClientFactory> $clientsFactories
+	 * @param DevicesModels\Configuration\Connectors\Repository<MetadataDocuments\DevicesModule\Connector> $connectorsConfigurationRepository
 	 */
 	public function __construct(
 		private readonly DevicesEntities\Connectors\Connector $connector,
 		private readonly array $clientsFactories,
 		private readonly Clients\DiscoveryFactory $discoveryClientFactory,
+		private readonly Helpers\Connector $connectorHelper,
 		private readonly Writers\WriterFactory $writerFactory,
 		private readonly Queue\Queue $queue,
 		private readonly Queue\Consumers $consumers,
 		private readonly Sonoff\Logger $logger,
+		private readonly DevicesModels\Configuration\Connectors\Repository $connectorsConfigurationRepository,
 		private readonly EventLoop\LoopInterface $eventLoop,
 		private readonly PsrEventDispatcher\EventDispatcherInterface|null $dispatcher = null,
 	)
@@ -84,6 +91,7 @@ final class Connector implements DevicesConnectors\Connector
 	 * @throws InvalidArgumentException
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\MalformedInput
 	 * @throws RuntimeException
 	 */
 	public function execute(): void
@@ -101,7 +109,27 @@ final class Connector implements DevicesConnectors\Connector
 			],
 		);
 
-		$mode = $this->connector->getClientMode();
+		$findConnector = new DevicesQueries\Configuration\FindConnectors();
+		$findConnector->byId($this->connector->getId());
+
+		$connector = $this->connectorsConfigurationRepository->findOneBy($findConnector);
+
+		if ($connector === null) {
+			$this->logger->error(
+				'Connector could not be loaded',
+				[
+					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+					'type' => 'connector',
+					'connector' => [
+						'id' => $this->connector->getId()->toString(),
+					],
+				],
+			);
+
+			return;
+		}
+
+		$mode = $this->connectorHelper->getClientMode($connector);
 
 		foreach ($this->clientsFactories as $clientFactory) {
 			$rc = new ReflectionClass($clientFactory);
@@ -112,7 +140,7 @@ final class Connector implements DevicesConnectors\Connector
 				array_key_exists(Clients\ClientFactory::MODE_CONSTANT_NAME, $constants)
 				&& $mode->equalsValue($constants[Clients\ClientFactory::MODE_CONSTANT_NAME])
 			) {
-				$this->client = $clientFactory->create($this->connector);
+				$this->client = $clientFactory->create($connector);
 			}
 		}
 
@@ -136,7 +164,7 @@ final class Connector implements DevicesConnectors\Connector
 
 		$this->client->connect();
 
-		$this->writer = $this->writerFactory->create($this->connector);
+		$this->writer = $this->writerFactory->create($connector);
 		$this->writer->connect();
 
 		$this->consumersTimer = $this->eventLoop->addPeriodicTimer(
@@ -152,7 +180,7 @@ final class Connector implements DevicesConnectors\Connector
 				'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
 				'type' => 'connector',
 				'connector' => [
-					'id' => $this->connector->getId()->toString(),
+					'id' => $connector->getId()->toString(),
 				],
 			],
 		);

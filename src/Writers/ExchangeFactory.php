@@ -15,7 +15,7 @@
 
 namespace FastyBird\Connector\Sonoff\Writers;
 
-use FastyBird\Connector\Sonoff\Entities;
+use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 
 /**
  * Event bus exchange device state periodic writer factory
@@ -28,6 +28,6 @@ use FastyBird\Connector\Sonoff\Entities;
 interface ExchangeFactory extends WriterFactory
 {
 
-	public function create(Entities\SonoffConnector $connector): Exchange;
+	public function create(MetadataDocuments\DevicesModule\Connector $connector): Exchange;
 
 }
