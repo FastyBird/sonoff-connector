@@ -244,6 +244,7 @@ final class Cloud extends ClientProcess implements Client
 	 *
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
 	 * @throws MetadataExceptions\MalformedInput
@@ -291,7 +292,25 @@ final class Cloud extends ClientProcess implements Client
 						],
 					);
 
-					if (!$ex instanceof Exceptions\CloudApiCall) {
+					if ($ex instanceof Exceptions\CloudApiError) {
+						$this->queue->append(
+							$this->entityHelper->create(
+								Entities\Messages\StoreDeviceConnectionState::class,
+								[
+									'connector' => $device->getConnector(),
+									'identifier' => $device->getIdentifier(),
+									'state' => MetadataTypes\ConnectionState::get(
+										MetadataTypes\ConnectionState::STATE_ALERT,
+									),
+								],
+							),
+						);
+					}
+
+					if (
+						!$ex instanceof Exceptions\CloudApiCall
+						&& !$ex instanceof Exceptions\CloudApiError
+					) {
 						$this->dispatcher?->dispatch(
 							new DevicesEvents\TerminateConnector(
 								MetadataTypes\ConnectorSource::get(
@@ -314,6 +333,7 @@ final class Cloud extends ClientProcess implements Client
 	 *
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 * @throws Exceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
@@ -365,7 +385,25 @@ final class Cloud extends ClientProcess implements Client
 										],
 									);
 
-									if (!$ex instanceof Exceptions\CloudApiCall) {
+									if ($ex instanceof Exceptions\CloudApiError) {
+										$this->queue->append(
+											$this->entityHelper->create(
+												Entities\Messages\StoreDeviceConnectionState::class,
+												[
+													'connector' => $device->getConnector(),
+													'identifier' => $device->getIdentifier(),
+													'state' => MetadataTypes\ConnectionState::get(
+														MetadataTypes\ConnectionState::STATE_ALERT,
+													),
+												],
+											),
+										);
+									}
+
+									if (
+										!$ex instanceof Exceptions\CloudApiCall
+										&& !$ex instanceof Exceptions\CloudApiError
+									) {
 										$this->dispatcher?->dispatch(
 											new DevicesEvents\TerminateConnector(
 												MetadataTypes\ConnectorSource::get(

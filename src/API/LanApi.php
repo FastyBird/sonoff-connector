@@ -302,6 +302,7 @@ final class LanApi
 	 * @return ($async is true ? Promise\PromiseInterface<Entities\API\Lan\DeviceInfo> : Entities\API\Lan\DeviceInfo)
 	 *
 	 * @throws Exceptions\LanApiCall
+	 * @throws Exceptions\LanApiError
 	 */
 	public function getDeviceInfo(
 		string $id,
@@ -389,6 +390,7 @@ final class LanApi
 	 * @return ($async is true ? Promise\PromiseInterface<bool> : bool)
 	 *
 	 * @throws Exceptions\LanApiCall
+	 * @throws Exceptions\LanApiError
 	 */
 	public function setDeviceState(
 		string $id,
@@ -495,6 +497,7 @@ final class LanApi
 
 	/**
 	 * @throws Exceptions\LanApiCall
+	 * @throws Exceptions\LanApiError
 	 */
 	private function parseGetDeviceInfo(
 		Message\RequestInterface $request,
@@ -523,6 +526,7 @@ final class LanApi
 
 	/**
 	 * @throws Exceptions\LanApiCall
+	 * @throws Exceptions\LanApiError
 	 */
 	private function parseSetDeviceState(
 		Message\RequestInterface $request,
@@ -582,6 +586,7 @@ final class LanApi
 	 * @return ($throw is true ? Utils\ArrayHash : Utils\ArrayHash|false)
 	 *
 	 * @throws Exceptions\LanApiCall
+	 * @throws Exceptions\LanApiError
 	 */
 	private function validateResponseBody(
 		Message\RequestInterface $request,
@@ -770,7 +775,7 @@ final class LanApi
 	}
 
 	/**
-	 * @throws Exceptions\LanApiCall
+	 * @throws Exceptions\LanApiError
 	 */
 	private function getSchema(string $schemaFilename): string
 	{
@@ -783,7 +788,7 @@ final class LanApi
 				);
 
 			} catch (Nette\IOException) {
-				throw new Exceptions\LanApiCall('Validation schema for response could not be loaded');
+				throw new Exceptions\LanApiError('Validation schema for response could not be loaded');
 			}
 		}
 
@@ -794,7 +799,7 @@ final class LanApi
 	 * @param array<string, string|array<string>>|null $headers
 	 * @param array<string, mixed> $params
 	 *
-	 * @throws Exceptions\LanApiCall
+	 * @throws Exceptions\LanApiError
 	 */
 	private function createRequest(
 		string $method,
@@ -812,7 +817,7 @@ final class LanApi
 		try {
 			return new Request($method, $url, $headers, $body);
 		} catch (Exceptions\InvalidArgument $ex) {
-			throw new Exceptions\LanApiCall('Could not create request instance', null, null, $ex->getCode(), $ex);
+			throw new Exceptions\LanApiError('Could not create request instance', $ex->getCode(), $ex);
 		}
 	}
 

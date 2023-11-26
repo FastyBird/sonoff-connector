@@ -128,6 +128,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 	/**
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	public function connect(): void
 	{
@@ -178,6 +179,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	 * @return ($async is true ? Promise\PromiseInterface<Family> : Family)
 	 *
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	public function getFamily(
 		bool $async = true,
@@ -198,7 +200,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 					'Content-Type' => 'application/json',
 				],
 			);
-		} catch (Exceptions\CloudApiCall $ex) {
+		} catch (Exceptions\CloudApiError $ex) {
 			if ($async) {
 				return Promise\reject($ex);
 			}
@@ -231,6 +233,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	 * @return ($async is true ? Promise\PromiseInterface<Things> : Things)
 	 *
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	public function getFamilyThings(
 		string $familyId,
@@ -256,7 +259,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 					'familyId' => $familyId,
 				],
 			);
-		} catch (Exceptions\CloudApiCall $ex) {
+		} catch (Exceptions\CloudApiError $ex) {
 			if ($async) {
 				return Promise\reject($ex);
 			}
@@ -289,6 +292,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	 * @return ($async is true ? ($itemType is 3 ? Promise\PromiseInterface<Entities\API\Cloud\Group> : Promise\PromiseInterface<Entities\API\Cloud\Device>) : ($itemType is 3 ? Entities\API\Cloud\Group : Entities\API\Cloud\Device))
 	 *
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	public function getThing(
 		string $id,
@@ -342,7 +346,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 				[],
 				$body,
 			);
-		} catch (Exceptions\CloudApiCall $ex) {
+		} catch (Exceptions\CloudApiError $ex) {
 			if ($async) {
 				return Promise\reject($ex);
 			}
@@ -375,6 +379,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	 * @return ($async is true ? Promise\PromiseInterface<DeviceState> : DeviceState)
 	 *
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	public function getThingState(
 		string $id,
@@ -401,7 +406,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 					'id' => $id,
 				],
 			);
-		} catch (Exceptions\CloudApiCall $ex) {
+		} catch (Exceptions\CloudApiError $ex) {
 			if ($async) {
 				return Promise\reject($ex);
 			}
@@ -434,6 +439,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	 * @return ($async is true ? Promise\PromiseInterface<bool> : bool)
 	 *
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	public function setThingState(
 		string $id,
@@ -504,7 +510,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 				[],
 				$body,
 			);
-		} catch (Exceptions\CloudApiCall $ex) {
+		} catch (Exceptions\CloudApiError $ex) {
 			if ($async) {
 				return Promise\reject($ex);
 			}
@@ -537,6 +543,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	 * @return ($async is true ? Promise\PromiseInterface<Entities\API\Cloud\ThirdPartyDevice> : Entities\API\Cloud\ThirdPartyDevice)
 	 *
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	public function addThirdPartyDevice(
 		string $id,
@@ -592,7 +599,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 				[],
 				$body,
 			);
-		} catch (Exceptions\CloudApiCall $ex) {
+		} catch (Exceptions\CloudApiError $ex) {
 			if ($async) {
 				return Promise\reject($ex);
 			}
@@ -623,6 +630,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 	/**
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	private function login(bool $redirect = false): Entities\API\Cloud\UserLogin
 	{
@@ -696,6 +704,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 	/**
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	private function refreshToken(): Entities\API\Cloud\UserRefresh
 	{
@@ -751,6 +760,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 	/**
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	private function parseGetFamily(
 		Message\RequestInterface $request,
@@ -777,6 +787,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 	/**
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	private function parseGetFamilyThings(
 		Message\RequestInterface $request,
@@ -825,6 +836,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 	/**
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	private function parseGetThing(
 		Message\RequestInterface $request,
@@ -905,6 +917,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 	/**
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	private function parseGetThingState(
 		string $id,
@@ -941,6 +954,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 	/**
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	private function parseSetThingState(
 		Message\RequestInterface $request,
@@ -964,6 +978,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 
 	/**
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	private function parseAddThirdPartyDevice(
 		Message\RequestInterface $request,
@@ -1071,6 +1086,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	 * @return ($throw is true ? Utils\ArrayHash : Utils\ArrayHash|false)
 	 *
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	private function validateResponseBody(
 		Message\RequestInterface $request,
@@ -1105,6 +1121,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	 * @return ($async is true ? Promise\PromiseInterface<Message\ResponseInterface> : Message\ResponseInterface)
 	 *
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	private function callRequest(
 		Request $request,
@@ -1299,7 +1316,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	private function getSchema(string $schemaFilename): string
 	{
@@ -1312,7 +1329,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 				);
 
 			} catch (Nette\IOException) {
-				throw new Exceptions\CloudApiCall('Validation schema for response could not be loaded');
+				throw new Exceptions\CloudApiError('Validation schema for response could not be loaded');
 			}
 		}
 
@@ -1323,7 +1340,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	 * @param array<string, string|array<string>>|null $headers
 	 * @param array<string, mixed> $params
 	 *
-	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	private function createRequest(
 		string $method,
@@ -1343,7 +1360,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 		try {
 			return new Request($method, $url, $headers, $body);
 		} catch (Exceptions\InvalidArgument $ex) {
-			throw new Exceptions\CloudApiCall('Could not create request instance', null, null, $ex->getCode(), $ex);
+			throw new Exceptions\CloudApiError('Could not create request instance', $ex->getCode(), $ex);
 		}
 	}
 

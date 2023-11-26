@@ -120,7 +120,9 @@ final class Auto extends ClientProcess implements Client
 	 *
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 * @throws Exceptions\LanApiCall
+	 * @throws Exceptions\LanApiError
 	 * @throws Exceptions\Runtime
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
@@ -166,6 +168,7 @@ final class Auto extends ClientProcess implements Client
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\InvalidState
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
 	 * @throws MetadataExceptions\MalformedInput

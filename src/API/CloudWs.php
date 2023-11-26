@@ -448,6 +448,9 @@ final class CloudWs implements Evenement\EventEmitterInterface
 		$this->disconnect();
 	}
 
+	/**
+	 * @throws Exceptions\CloudWsError
+	 */
 	private function handleMessage(string $content): void
 	{
 		try {
@@ -584,6 +587,8 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	 * @param Promise\Deferred<T>|null $deferred
 	 *
 	 * @return T|null
+	 *
+	 * @throws Exceptions\CloudWsError
 	 */
 	private function parseEntity(
 		string $message,
@@ -715,6 +720,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	 * @return ($throw is true ? Utils\ArrayHash : Utils\ArrayHash|false)
 	 *
 	 * @throws Exceptions\CloudWsCall
+	 * @throws Exceptions\CloudWsError
 	 */
 	private function validateData(
 		string $payload,
@@ -884,7 +890,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @throws Exceptions\CloudWsCall
+	 * @throws Exceptions\CloudWsError
 	 */
 	private function getSchema(string $schemaFilename): string
 	{
@@ -897,7 +903,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 				);
 
 			} catch (Nette\IOException) {
-				throw new Exceptions\CloudWsCall('Validation schema for response could not be loaded');
+				throw new Exceptions\CloudWsError('Validation schema for response could not be loaded');
 			}
 		}
 
@@ -908,7 +914,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	 * @param array<string, string|array<string>>|null $headers
 	 * @param array<string, mixed> $params
 	 *
-	 * @throws Exceptions\CloudWsCall
+	 * @throws Exceptions\CloudWsError
 	 */
 	private function createHttpRequest(
 		string $method,
@@ -928,7 +934,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 		try {
 			return new Request($method, $url, $headers, $body);
 		} catch (Exceptions\InvalidArgument $ex) {
-			throw new Exceptions\CloudWsCall('Could not create request instance', $ex->getCode(), $ex);
+			throw new Exceptions\CloudWsError('Could not create request instance', $ex->getCode(), $ex);
 		}
 	}
 

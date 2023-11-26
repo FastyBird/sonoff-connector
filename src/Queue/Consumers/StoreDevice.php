@@ -22,7 +22,6 @@ use FastyBird\Connector\Sonoff\Helpers;
 use FastyBird\Connector\Sonoff\Queries;
 use FastyBird\Connector\Sonoff\Queue\Consumer;
 use FastyBird\Connector\Sonoff\Types;
-use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Entities as DevicesEntities;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
@@ -68,8 +67,6 @@ final class StoreDevice implements Consumer
 	 * @throws DBAL\Exception
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws DevicesExceptions\Runtime
-	 * @throws MetadataExceptions\InvalidArgument
-	 * @throws MetadataExceptions\InvalidState
 	 */
 	public function consume(Entities\Messages\Entity $entity): bool
 	{
@@ -121,29 +118,6 @@ final class StoreDevice implements Consumer
 						'identifier' => $entity->getId(),
 						'address' => $entity->getIpAddress(),
 						'name' => $entity->getName(),
-					],
-				],
-			);
-		} else {
-			$device = $this->databaseHelper->transaction(
-				function () use ($entity, $device): Entities\SonoffDevice {
-					$device = $this->devicesManager->update($device, Utils\ArrayHash::from([
-						'name' => $entity->getName(),
-						'description' => $entity->getDescription(),
-					]));
-					assert($device instanceof Entities\SonoffDevice);
-
-					return $device;
-				},
-			);
-
-			$this->logger->debug(
-				'Device was updated',
-				[
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'store-device-message-consumer',
-					'device' => [
-						'id' => $device->getId()->toString(),
 					],
 				],
 			);

@@ -164,6 +164,7 @@ final class Lan extends ClientProcess implements Client
 	 *
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\LanApiCall
+	 * @throws Exceptions\LanApiError
 	 * @throws Exceptions\Runtime
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
@@ -214,7 +215,35 @@ final class Lan extends ClientProcess implements Client
 					$deferred->resolve(true);
 			})
 				->catch(function (Throwable $ex) use ($deferred, $device): void {
-					if ($ex instanceof Exceptions\LanApiCall) {
+					if ($ex instanceof Exceptions\LanApiError) {
+						$this->queue->append(
+							$this->entityHelper->create(
+								Entities\Messages\StoreDeviceConnectionState::class,
+								[
+									'connector' => $device->getConnector(),
+									'identifier' => $device->getIdentifier(),
+									'state' => MetadataTypes\ConnectionState::get(
+										MetadataTypes\ConnectionState::STATE_ALERT,
+									),
+								],
+							),
+						);
+
+						$this->logger->warning(
+							'Calling device lan api for reading state failed',
+							[
+								'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+								'type' => 'lan-client',
+								'exception' => BootstrapHelpers\Logger::buildException($ex),
+								'connector' => [
+									'id' => $this->connector->getId()->toString(),
+								],
+								'device' => [
+									'id' => $device->getId()->toString(),
+								],
+							],
+						);
+					} elseif ($ex instanceof Exceptions\LanApiCall) {
 						$this->checkError($ex, $device);
 
 						$this->logger->warning(

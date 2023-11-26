@@ -1,14 +1,18 @@
+<p align="center">
+	<img src="https://github.com/fastybird/.github/blob/main/assets/repo_title.png?raw=true" alt="FastyBird"/>
+</p>
+
 # FastyBird IoT Sonoff connector
 
-[![Build Status](https://badgen.net/github/checks/FastyBird/sonoff-connector/main?cache=300&style=flat-square)](https://github.com/FastyBird/sonoff-connector/actions)
-[![Licence](https://badgen.net/github/license/FastyBird/sonoff-connector?cache=300&style=flat-square)](https://github.com/FastyBird/sonoff-connector/blob/main/LICENSE.md)
-[![Code coverage](https://badgen.net/coveralls/c/github/FastyBird/sonoff-connector?cache=300&style=flat-square)](https://coveralls.io/r/FastyBird/sonoff-connector)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/FastyBird/sonoff-connector/ci.yaml?style=flat-square)](https://github.com/FastyBird/sonoff-connector/actions)
+[![Licence](https://img.shields.io/github/license/FastyBird/sonoff-connector?style=flat-square)](https://github.com/FastyBird/sonoff-connector/blob/main/LICENSE.md)
+[![Code coverage](https://img.shields.io/coverallsCoverage/github/FastyBird/sonoff-connector?style=flat-square)](https://coveralls.io/r/FastyBird/sonoff-connector)
 [![Mutation testing](https://img.shields.io/endpoint?style=flat-square&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2FFastyBird%2Fsonoff-connector%2Fmain)](https://dashboard.stryker-mutator.io/reports/github.com/FastyBird/sonoff-connector/main)
 
 ![PHP](https://badgen.net/packagist/php/FastyBird/sonoff-connector?cache=300&style=flat-square)
-[![PHP latest stable](https://badgen.net/packagist/v/FastyBird/sonoff-connector/latest?cache=300&style=flat-square)](https://packagist.org/packages/FastyBird/sonoff-connector)
-[![PHP downloads total](https://badgen.net/packagist/dt/FastyBird/sonoff-connector?cache=300&style=flat-square)](https://packagist.org/packages/FastyBird/sonoff-connector)
-[![PHPStan](https://img.shields.io/badge/phpstan-enabled-brightgreen.svg?style=flat-square)](https://github.com/phpstan/phpstan)
+[![Latest stable](https://badgen.net/packagist/v/FastyBird/sonoff-connector/latest?cache=300&style=flat-square)](https://packagist.org/packages/FastyBird/sonoff-connector)
+[![Downloads total](https://badgen.net/packagist/dt/FastyBird/sonoff-connector?cache=300&style=flat-square)](https://packagist.org/packages/FastyBird/sonoff-connector)
+[![PHPStan](https://img.shields.io/badge/PHPStan-enabled-brightgreen.svg?style=flat-square)](https://github.com/phpstan/phpstan)
 
 ***
 
@@ -16,9 +20,6 @@
 
 Sonoff connector is extension for [FastyBird](https://www.fastybird.com) [IoT](https://en.wikipedia.org/wiki/Internet_of_things) ecosystem
 which is integrating [Sonoff](https://sonoff.tech) devices.
-
-Sonoff Connector is a distributed extension that is developed in [PHP](https://www.php.net), built on the [Nette](https://nette.org) and [Symfony](https://symfony.com) frameworks,
-and is licensed under [Apache2](http://www.apache.org/licenses/LICENSE-2.0).
 
 ### Features:
 
@@ -29,6 +30,9 @@ and is licensed under [Apache2](http://www.apache.org/licenses/LICENSE-2.0).
 - [{JSON:API}](https://jsonapi.org/) schemas for full API access, providing a standardized and consistent way for developers to access and manipulate Sonoff device data
 - Regular updates with new features and bug fixes, ensuring that the Sonoff Connector is always up-to-date and reliable.
 
+Sonoff Connector is a distributed extension that is developed in [PHP](https://www.php.net), built on the [Nette](https://nette.org) and [Symfony](https://symfony.com) frameworks,
+and is licensed under [Apache2](http://www.apache.org/licenses/LICENSE-2.0).
+
 ## Requirements
 
 Sonoff connector is tested against PHP 8.1 and require installed [Process Control](https://www.php.net/manual/en/book.pcntl.php)
@@ -36,18 +40,12 @@ PHP extension.
 
 ## Installation
 
-### Manual installation
-
-The best way to install **fastybird/sonoff-connector** is using [Composer](http://getcomposer.org/):
+This extension is part of the [FastyBird](https://www.fastybird.com) [IoT](https://en.wikipedia.org/wiki/Internet_of_things) ecosystem and is installed by default.
+In case you want to create you own distribution of [FastyBird](https://www.fastybird.com) [IoT](https://en.wikipedia.org/wiki/Internet_of_things) ecosystem you could install this extension with  [Composer](http://getcomposer.org/):
 
 ```sh
 composer require fastybird/sonoff-connector
 ```
-
-### Marketplace installation [WIP]
-
-You could install this connector in your [FastyBird](https://www.fastybird.com) [IoT](https://en.wikipedia.org/wiki/Internet_of_things)
-application under marketplace section.
 
 ## Documentation
 

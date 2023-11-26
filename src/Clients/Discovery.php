@@ -151,6 +151,7 @@ final class Discovery implements Evenement\EventEmitterInterface
 	 * @return Promise\PromiseInterface<bool>
 	 *
 	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 * @throws Exceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
