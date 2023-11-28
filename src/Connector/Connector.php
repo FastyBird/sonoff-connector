@@ -23,7 +23,6 @@ use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Helpers;
 use FastyBird\Connector\Sonoff\Queue;
 use FastyBird\Connector\Sonoff\Writers;
-use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Connectors as DevicesConnectors;
@@ -65,7 +64,6 @@ final class Connector implements DevicesConnectors\Connector
 
 	/**
 	 * @param array<Clients\ClientFactory> $clientsFactories
-	 * @param DevicesModels\Configuration\Connectors\Repository<MetadataDocuments\DevicesModule\Connector> $connectorsConfigurationRepository
 	 */
 	public function __construct(
 		private readonly DevicesEntities\Connectors\Connector $connector,

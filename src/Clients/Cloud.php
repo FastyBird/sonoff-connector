@@ -49,9 +49,6 @@ use Throwable;
 final class Cloud extends ClientProcess implements Client
 {
 
-	/**
-	 * @param DevicesModels\Configuration\Devices\Repository<MetadataDocuments\DevicesModule\Device> $devicesConfigurationRepository
-	 */
 	public function __construct(
 		Helpers\Device $deviceHelper,
 		DevicesUtilities\DeviceConnection $deviceConnectionManager,
@@ -224,7 +221,6 @@ final class Cloud extends ClientProcess implements Client
 	 * @throws Exceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	public function disconnect(): void
 	{
@@ -247,7 +243,6 @@ final class Cloud extends ClientProcess implements Client
 	 * @throws Exceptions\CloudApiError
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	protected function readInformation(MetadataDocuments\DevicesModule\Device $device): Promise\PromiseInterface
 	{
@@ -337,7 +332,6 @@ final class Cloud extends ClientProcess implements Client
 	 * @throws Exceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	protected function readState(MetadataDocuments\DevicesModule\Device $device): Promise\PromiseInterface
 	{
@@ -465,9 +459,6 @@ final class Cloud extends ClientProcess implements Client
 	/**
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\Runtime
-	 * @throws MetadataExceptions\InvalidArgument
-	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	private function handleDeviceState(
 		Entities\API\Cloud\DeviceState|Entities\API\Sockets\DeviceStateEvent $message,

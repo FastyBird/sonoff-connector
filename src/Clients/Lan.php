@@ -51,9 +51,6 @@ use function in_array;
 final class Lan extends ClientProcess implements Client
 {
 
-	/**
-	 * @param DevicesModels\Configuration\Devices\Repository<MetadataDocuments\DevicesModule\Device> $devicesConfigurationRepository
-	 */
 	public function __construct(
 		Helpers\Device $deviceHelper,
 		DevicesUtilities\DeviceConnection $deviceConnectionManager,
@@ -168,7 +165,6 @@ final class Lan extends ClientProcess implements Client
 	 * @throws Exceptions\Runtime
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	protected function readInformation(MetadataDocuments\DevicesModule\Device $device): Promise\PromiseInterface
 	{
@@ -324,9 +320,6 @@ final class Lan extends ClientProcess implements Client
 	/**
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\Runtime
-	 * @throws MetadataExceptions\InvalidArgument
-	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	private function handleDeviceEvent(
 		MetadataDocuments\DevicesModule\Device $device,

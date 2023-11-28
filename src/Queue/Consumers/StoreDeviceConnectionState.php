@@ -41,12 +41,6 @@ final class StoreDeviceConnectionState implements Queue\Consumer
 
 	use Nette\SmartObject;
 
-	/**
-	 * @param DevicesModels\Configuration\Devices\Repository<Metadata\Documents\DevicesModule\Device> $devicesConfigurationRepository
-	 * @param DevicesModels\Configuration\Devices\Properties\Repository<Metadata\Documents\DevicesModule\DeviceDynamicProperty> $devicesPropertiesConfigurationRepository
-	 * @param DevicesModels\Configuration\Channels\Repository<Metadata\Documents\DevicesModule\Channel> $channelsConfigurationRepository
-	 * @param DevicesModels\Configuration\Channels\Properties\Repository<Metadata\Documents\DevicesModule\ChannelDynamicProperty> $channelsPropertiesConfigurationRepository
-	 */
 	public function __construct(
 		private readonly Sonoff\Logger $logger,
 		private readonly DevicesModels\Configuration\Devices\Repository $devicesConfigurationRepository,

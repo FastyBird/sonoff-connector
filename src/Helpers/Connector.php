@@ -37,9 +37,6 @@ use function is_string;
 final class Connector
 {
 
-	/**
-	 * @param DevicesModels\Configuration\Connectors\Properties\Repository<MetadataDocuments\DevicesModule\ConnectorVariableProperty> $connectorsPropertiesConfigurationRepository
-	 */
 	public function __construct(
 		private readonly DevicesModels\Configuration\Connectors\Properties\Repository $connectorsPropertiesConfigurationRepository,
 	)
@@ -51,7 +48,6 @@ final class Connector
 	 * @throws Exceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	public function getClientMode(MetadataDocuments\DevicesModule\Connector $connector): Types\ClientMode
 	{
@@ -77,7 +73,6 @@ final class Connector
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	public function getUsername(MetadataDocuments\DevicesModule\Connector $connector): string
 	{
@@ -104,7 +99,6 @@ final class Connector
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	public function getPassword(MetadataDocuments\DevicesModule\Connector $connector): string
 	{
@@ -131,7 +125,6 @@ final class Connector
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	public function getAppId(MetadataDocuments\DevicesModule\Connector $connector): string
 	{
@@ -158,7 +151,6 @@ final class Connector
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	public function getAppSecret(MetadataDocuments\DevicesModule\Connector $connector): string
 	{
@@ -185,7 +177,6 @@ final class Connector
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	public function getRegion(MetadataDocuments\DevicesModule\Connector $connector): Types\Region
 	{
@@ -211,7 +202,6 @@ final class Connector
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	public function getGatewayId(MetadataDocuments\DevicesModule\Connector $connector): string|null
 	{
@@ -238,7 +228,6 @@ final class Connector
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	public function getGatewayApiKey(MetadataDocuments\DevicesModule\Connector $connector): string|null
 	{

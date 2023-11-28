@@ -63,7 +63,6 @@ final class ConnectionManager
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	public function getCloudApiConnection(MetadataDocuments\DevicesModule\Connector $connector): CloudApi
 	{
@@ -85,7 +84,6 @@ final class ConnectionManager
 	 * @throws Exceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	public function getCloudWsConnection(MetadataDocuments\DevicesModule\Connector $connector): CloudWs
 	{

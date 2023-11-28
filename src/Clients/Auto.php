@@ -101,7 +101,6 @@ final class Auto extends ClientProcess implements Client
 	 * @throws Exceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	public function disconnect(): void
 	{
@@ -126,7 +125,6 @@ final class Auto extends ClientProcess implements Client
 	 * @throws Exceptions\Runtime
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	protected function readInformation(MetadataDocuments\DevicesModule\Device $device): Promise\PromiseInterface
 	{
@@ -171,7 +169,6 @@ final class Auto extends ClientProcess implements Client
 	 * @throws Exceptions\CloudApiError
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
 	 */
 	protected function readState(MetadataDocuments\DevicesModule\Device $device): Promise\PromiseInterface
 	{
