@@ -631,7 +631,7 @@ final class WritePropertyState implements Queue\Consumer
 		);
 
 		$this->logger->debug(
-			'Consumed write sub device state message',
+			'Consumed write device state message',
 			[
 				'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
 				'type' => 'write-property-state-message-consumer',
