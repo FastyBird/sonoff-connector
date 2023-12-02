@@ -124,12 +124,8 @@ final class Cloud extends ClientProcess implements Client
 									'connector' => $this->connector->getId(),
 									'identifier' => $message->getDeviceId(),
 									'state' => $message->isOnline()
-										? MetadataTypes\ConnectionState::get(
-											MetadataTypes\ConnectionState::STATE_CONNECTED,
-										)
-										: MetadataTypes\ConnectionState::get(
-											MetadataTypes\ConnectionState::STATE_DISCONNECTED,
-										),
+										? MetadataTypes\ConnectionState::STATE_CONNECTED
+										: MetadataTypes\ConnectionState::STATE_DISCONNECTED,
 								],
 							),
 						);
@@ -259,12 +255,8 @@ final class Cloud extends ClientProcess implements Client
 								'connector' => $this->connector->getId(),
 								'identifier' => $device->getIdentifier(),
 								'state' => $result->isOnline()
-									? MetadataTypes\ConnectionState::get(
-										MetadataTypes\ConnectionState::STATE_CONNECTED,
-									)
-									: MetadataTypes\ConnectionState::get(
-										MetadataTypes\ConnectionState::STATE_DISCONNECTED,
-									),
+									? MetadataTypes\ConnectionState::STATE_CONNECTED
+									: MetadataTypes\ConnectionState::STATE_DISCONNECTED,
 							],
 						),
 					);
@@ -294,9 +286,7 @@ final class Cloud extends ClientProcess implements Client
 								[
 									'connector' => $device->getConnector(),
 									'identifier' => $device->getIdentifier(),
-									'state' => MetadataTypes\ConnectionState::get(
-										MetadataTypes\ConnectionState::STATE_ALERT,
-									),
+									'state' => MetadataTypes\ConnectionState::STATE_ALERT,
 								],
 							),
 						);
@@ -386,9 +376,7 @@ final class Cloud extends ClientProcess implements Client
 												[
 													'connector' => $device->getConnector(),
 													'identifier' => $device->getIdentifier(),
-													'state' => MetadataTypes\ConnectionState::get(
-														MetadataTypes\ConnectionState::STATE_ALERT,
-													),
+													'state' => MetadataTypes\ConnectionState::STATE_ALERT,
 												],
 											),
 										);

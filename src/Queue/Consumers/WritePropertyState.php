@@ -568,7 +568,7 @@ final class WritePropertyState implements Queue\Consumer
 
 				$extra = [];
 
-				if ($ex instanceof Exceptions\CloudApiCall) {
+				if ($ex instanceof Exceptions\CloudApiCall || $ex instanceof Exceptions\LanApiCall) {
 					$extra = [
 						'request' => [
 							'method' => $ex->getRequest()?->getMethod(),
@@ -579,9 +579,7 @@ final class WritePropertyState implements Queue\Consumer
 							'body' => $ex->getResponse()?->getBody()->getContents(),
 						],
 					];
-				}
 
-				if ($ex instanceof Exceptions\CloudApiCall || $ex instanceof Exceptions\LanApiCall) {
 					$this->queue->append(
 						$this->entityHelper->create(
 							Entities\Messages\StoreDeviceConnectionState::class,
@@ -593,14 +591,14 @@ final class WritePropertyState implements Queue\Consumer
 						),
 					);
 
-				} else {
+				} elseif ($ex instanceof Exceptions\CloudApiError || $ex instanceof Exceptions\LanApiError) {
 					$this->queue->append(
 						$this->entityHelper->create(
 							Entities\Messages\StoreDeviceConnectionState::class,
 							[
 								'connector' => $connector->getId()->toString(),
 								'identifier' => $device->getIdentifier(),
-								'state' => MetadataTypes\ConnectionState::STATE_LOST,
+								'state' => MetadataTypes\ConnectionState::STATE_ALERT,
 							],
 						),
 					);
