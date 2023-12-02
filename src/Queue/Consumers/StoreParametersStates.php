@@ -56,8 +56,8 @@ final class StoreParametersStates implements Consumer
 		private readonly DevicesModels\Entities\Devices\Properties\PropertiesManager $devicesPropertiesManager,
 		private readonly DevicesModels\Entities\Channels\Properties\PropertiesRepository $channelsPropertiesRepository,
 		private readonly DevicesModels\Entities\Channels\Properties\PropertiesManager $channelsPropertiesManager,
-		private readonly DevicesUtilities\DevicePropertiesStates $devicePropertiesStateManager,
-		private readonly DevicesUtilities\ChannelPropertiesStates $channelPropertiesStateManager,
+		private readonly DevicesUtilities\DevicePropertiesStates $devicePropertiesStatesManager,
+		private readonly DevicesUtilities\ChannelPropertiesStates $channelPropertiesStatesManager,
 		private readonly DevicesUtilities\Database $databaseHelper,
 	)
 	{
@@ -97,7 +97,7 @@ final class StoreParametersStates implements Consumer
 				$property = $this->devicesPropertiesConfigurationRepository->findOneBy($findDevicePropertyQuery);
 
 				if ($property instanceof MetadataDocuments\DevicesModule\DeviceDynamicProperty) {
-					$this->devicePropertiesStateManager->setValue($property, Utils\ArrayHash::from([
+					$this->devicePropertiesStatesManager->setValue($property, Utils\ArrayHash::from([
 						DevicesStates\Property::ACTUAL_VALUE_FIELD => MetadataUtilities\ValueHelper::transformValueFromDevice(
 							$property->getDataType(),
 							$property->getFormat(),
@@ -145,7 +145,7 @@ final class StoreParametersStates implements Consumer
 					$property = $this->channelsPropertiesConfigurationRepository->findOneBy($findChannelPropertyQuery);
 
 					if ($property instanceof MetadataDocuments\DevicesModule\ChannelDynamicProperty) {
-						$this->channelPropertiesStateManager->setValue($property, Utils\ArrayHash::from([
+						$this->channelPropertiesStatesManager->setValue($property, Utils\ArrayHash::from([
 							DevicesStates\Property::ACTUAL_VALUE_FIELD => MetadataUtilities\ValueHelper::transformValueFromDevice(
 								$property->getDataType(),
 								$property->getFormat(),
