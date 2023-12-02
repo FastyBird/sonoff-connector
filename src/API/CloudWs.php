@@ -696,7 +696,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	 *
 	 * @return T
 	 *
-	 * @throws Exceptions\CloudWsCall
+	 * @throws Exceptions\CloudWsError
 	 */
 	private function createEntity(string $entity, Utils\ArrayHash $data): Entities\API\Entity
 	{
@@ -706,9 +706,9 @@ final class CloudWs implements Evenement\EventEmitterInterface
 				(array) Utils\Json::decode(Utils\Json::encode($data), Utils\Json::FORCE_ARRAY),
 			);
 		} catch (Exceptions\Runtime $ex) {
-			throw new Exceptions\CloudWsCall('Could not map data to entity', $ex->getCode(), $ex);
+			throw new Exceptions\CloudWsError('Could not map data to entity', $ex->getCode(), $ex);
 		} catch (Utils\JsonException $ex) {
-			throw new Exceptions\CloudWsCall(
+			throw new Exceptions\CloudWsError(
 				'Could not create entity from payload',
 				$ex->getCode(),
 				$ex,

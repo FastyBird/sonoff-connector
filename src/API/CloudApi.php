@@ -1060,7 +1060,7 @@ final class CloudApi implements Evenement\EventEmitterInterface
 	 *
 	 * @return T
 	 *
-	 * @throws Exceptions\CloudApiCall
+	 * @throws Exceptions\CloudApiError
 	 */
 	private function createEntity(string $entity, Utils\ArrayHash $data): Entities\API\Entity
 	{
@@ -1070,12 +1070,10 @@ final class CloudApi implements Evenement\EventEmitterInterface
 				(array) Utils\Json::decode(Utils\Json::encode($data), Utils\Json::FORCE_ARRAY),
 			);
 		} catch (Exceptions\Runtime $ex) {
-			throw new Exceptions\CloudApiCall('Could not map data to entity', null, null, $ex->getCode(), $ex);
+			throw new Exceptions\CloudApiError('Could not map data to entity', $ex->getCode(), $ex);
 		} catch (Utils\JsonException $ex) {
-			throw new Exceptions\CloudApiCall(
+			throw new Exceptions\CloudApiError(
 				'Could not create entity from response',
-				null,
-				null,
 				$ex->getCode(),
 				$ex,
 			);

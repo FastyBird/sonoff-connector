@@ -560,7 +560,7 @@ final class LanApi
 	 *
 	 * @return T
 	 *
-	 * @throws Exceptions\LanApiCall
+	 * @throws Exceptions\LanApiError
 	 */
 	private function createEntity(string $entity, Utils\ArrayHash $data): Entities\API\Entity
 	{
@@ -570,12 +570,10 @@ final class LanApi
 				(array) Utils\Json::decode(Utils\Json::encode($data), Utils\Json::FORCE_ARRAY),
 			);
 		} catch (Exceptions\Runtime $ex) {
-			throw new Exceptions\LanApiCall('Could not map data to entity', null, null, $ex->getCode(), $ex);
+			throw new Exceptions\LanApiError('Could not map data to entity', $ex->getCode(), $ex);
 		} catch (Utils\JsonException $ex) {
-			throw new Exceptions\LanApiCall(
+			throw new Exceptions\LanApiError(
 				'Could not create entity from response',
-				null,
-				null,
 				$ex->getCode(),
 				$ex,
 			);
