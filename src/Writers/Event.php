@@ -17,16 +17,9 @@ namespace FastyBird\Connector\Sonoff\Writers;
 
 use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Exceptions;
-use FastyBird\Connector\Sonoff\Helpers;
-use FastyBird\Connector\Sonoff\Queue;
-use FastyBird\DateTimeFactory;
-use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 use FastyBird\Module\Devices\Events as DevicesEvents;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
-use FastyBird\Module\Devices\Models as DevicesModels;
 use FastyBird\Module\Devices\Queries as DevicesQueries;
-use FastyBird\Module\Devices\Utilities as DevicesUtilities;
-use React\EventLoop;
 use Symfony\Component\EventDispatcher;
 
 /**
@@ -41,35 +34,6 @@ class Event extends Periodic implements Writer, EventDispatcher\EventSubscriberI
 {
 
 	public const NAME = 'event';
-
-	public function __construct(
-		MetadataDocuments\DevicesModule\Connector $connector,
-		Helpers\Entity $entityHelper,
-		Queue\Queue $queue,
-		DevicesModels\Configuration\Devices\Repository $devicesConfigurationRepository,
-		DevicesModels\Configuration\Channels\Repository $channelsConfigurationRepository,
-		DevicesModels\Configuration\Devices\Properties\Repository $devicesPropertiesConfigurationRepository,
-		DevicesModels\Configuration\Channels\Properties\Repository $channelsPropertiesConfigurationRepository,
-		DevicesUtilities\DevicePropertiesStates $devicePropertiesStatesManager,
-		DevicesUtilities\ChannelPropertiesStates $channelPropertiesStatesManager,
-		DateTimeFactory\Factory $dateTimeFactory,
-		EventLoop\LoopInterface $eventLoop,
-	)
-	{
-		parent::__construct(
-			$connector,
-			$entityHelper,
-			$queue,
-			$devicesConfigurationRepository,
-			$channelsConfigurationRepository,
-			$devicesPropertiesConfigurationRepository,
-			$channelsPropertiesConfigurationRepository,
-			$devicePropertiesStatesManager,
-			$channelPropertiesStatesManager,
-			$dateTimeFactory,
-			$eventLoop,
-		);
-	}
 
 	public static function getSubscribedEvents(): array
 	{

@@ -6,7 +6,7 @@
  * @license        More in LICENSE.md
  * @copyright      https://www.fastybird.com
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
- * @package        FastyBird:TuyaConnector!
+ * @package        FastyBird:SonoffConnector!
  * @subpackage     Entities
  * @since          1.0.0
  *
@@ -21,7 +21,7 @@ use Ramsey\Uuid;
 /**
  * Write updated channel property state to hardware message entity
  *
- * @package        FastyBird:TuyaConnector!
+ * @package        FastyBird:SonoffConnector!
  * @subpackage     Entities
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
