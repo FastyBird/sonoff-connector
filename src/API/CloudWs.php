@@ -172,7 +172,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 								'Connected to Sonoff sockets server',
 								[
 									'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-									'type' => 'ws-api',
+									'type' => 'cloud-ws-api',
 								],
 							);
 
@@ -232,7 +232,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 						'Connection to Sonoff sockets server was closed',
 						[
 							'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-							'type' => 'ws-api',
+							'type' => 'cloud-ws-api',
 							'connection' => [
 								'code' => $code,
 								'reason' => $reason,
@@ -460,7 +460,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 				'Received message from Sonoff sockets server not be parsed',
 				[
 					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-					'type' => 'ws-api',
+					'type' => 'cloud-ws-api',
 					'exception' => BootstrapHelpers\Logger::buildException($ex),
 				],
 			);
@@ -764,7 +764,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 			$request->getUri(),
 		), [
 			'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-			'type' => 'ws-api',
+			'type' => 'cloud-ws-api',
 			'request' => [
 				'method' => $request->getMethod(),
 				'url' => strval($request->getUri()),
@@ -798,7 +798,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 
 							$this->logger->debug('Received response', [
 								'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-								'type' => 'ws-api',
+								'type' => 'cloud-ws-api',
 								'request' => [
 									'method' => $request->getMethod(),
 									'url' => strval($request->getUri()),
@@ -849,7 +849,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 
 			$this->logger->debug('Received response', [
 				'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-				'type' => 'ws-api',
+				'type' => 'cloud-ws-api',
 				'request' => [
 					'method' => $request->getMethod(),
 					'url' => strval($request->getUri()),

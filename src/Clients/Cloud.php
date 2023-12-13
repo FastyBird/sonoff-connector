@@ -97,6 +97,7 @@ final class Cloud extends ClientProcess implements Client
 
 			$findDevicesQuery = new DevicesQueries\Configuration\FindDevices();
 			$findDevicesQuery->forConnector($this->connector);
+			$findDevicesQuery->byType(Entities\SonoffDevice::TYPE);
 
 			foreach ($this->devicesConfigurationRepository->findAllBy($findDevicesQuery) as $device) {
 				$this->devices[$device->getId()->toString()] = $device;
@@ -458,6 +459,7 @@ final class Cloud extends ClientProcess implements Client
 
 		$findDeviceQuery = new DevicesQueries\Configuration\FindDevices();
 		$findDeviceQuery->byIdentifier($message->getDeviceId());
+		$findDeviceQuery->byType(Entities\SonoffDevice::TYPE);
 
 		$device = $this->devicesConfigurationRepository->findOneBy($findDeviceQuery);
 

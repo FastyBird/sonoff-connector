@@ -99,6 +99,7 @@ final class Lan extends ClientProcess implements Client
 
 			$findDevicesQuery = new DevicesQueries\Configuration\FindDevices();
 			$findDevicesQuery->forConnector($this->connector);
+			$findDevicesQuery->byType(Entities\SonoffDevice::TYPE);
 
 			foreach ($this->devicesConfigurationRepository->findAllBy($findDevicesQuery) as $device) {
 				$this->devices[$device->getId()->toString()] = $device;
@@ -112,6 +113,7 @@ final class Lan extends ClientProcess implements Client
 			->on('message', function (Entities\API\Lan\DeviceEvent $message): void {
 				$findDeviceQuery = new DevicesQueries\Configuration\FindDevices();
 				$findDeviceQuery->byIdentifier($message->getId());
+				$findDeviceQuery->byType(Entities\SonoffDevice::TYPE);
 
 				$device = $this->devicesConfigurationRepository->findOneBy($findDeviceQuery);
 
@@ -133,6 +135,7 @@ final class Lan extends ClientProcess implements Client
 
 		$findDevicesQuery = new DevicesQueries\Configuration\FindDevices();
 		$findDevicesQuery->forConnector($this->connector);
+		$findDevicesQuery->byType(Entities\SonoffDevice::TYPE);
 
 		foreach ($this->devicesConfigurationRepository->findAllBy($findDevicesQuery) as $device) {
 			if ($this->deviceHelper->getDeviceKey($device) !== null) {
@@ -329,6 +332,7 @@ final class Lan extends ClientProcess implements Client
 			$findDeviceQuery = new DevicesQueries\Configuration\FindDevices();
 			$findDeviceQuery->forParent($device);
 			$findDeviceQuery->byIdentifier($event->getData()->getSubDeviceId());
+			$findDeviceQuery->byType(Entities\SonoffDevice::TYPE);
 
 			$subDevice = $this->devicesConfigurationRepository->findOneBy($findDeviceQuery);
 

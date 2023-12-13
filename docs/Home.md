@@ -36,40 +36,36 @@ There are three types of connectors available for selection:
 - **Cloud** - This connector communicates with the [Sonoff](https://sonoff.tech) cloud instance.
 - **Auto** - This connector is combining both, Local and Auto and if device is supporting DIY mode, use it as primary, otherwise use cloud communication
 
-## Configuring the Connector through the Console
+## Configuring the Connectors and Devices through the Console
 
 To configure the connector through the console, run the following command:
 
 ```shell
-php bin/fb-console fb:sonoff-connector:initialize
+php bin/fb-console fb:sonoff-connector:install
 ```
 
 > **NOTE:**
 The path to the console command may vary depending on your FastyBird application distribution. For more information, refer to the FastyBird documentation.
 
-The console will ask you to confirm that you want to continue with the configuration.
+After triggering the command you will get information message:
 
 ```shell
-Sonoff connector - initialization
-=================================
+Sonoff connector - installer
+============================
 
- ! [NOTE] This action will create|update|delete connector configuration.                                                       
+ ! [NOTE] This action will create|update|delete connector configuration                                                 
 
- Would you like to continue? (yes/no) [no]:
- > y
-```
-
-You will then be prompted to choose an action:
-
-```shell
  What would you like to do? [Nothing]:
-  [0] Create new connector configuration
-  [1] Edit existing connector configuration
-  [2] Delete existing connector configuration
-  [3] List Sonoff connectors
-  [4] Nothing
+  [0] Create connector
+  [1] Edit connector
+  [2] Delete connector
+  [3] Manage connector
+  [4] List connectors
+  [5] Nothing
  > 0
 ```
+
+### Create connector
 
 If you choose to create a new connector, you will be asked to choose the mode in which the connector will communicate with the devices:
 
@@ -77,7 +73,7 @@ If you choose to create a new connector, you will be asked to choose the mode in
  In what mode should this connector communicate with Sonoff devices? [Automatic selection mode (combined local & cloud)]:
   [0] Automatic selection mode (combined local & cloud)
   [1] Local network mode
-  [2] Sonoff cloud server mode
+  [2] Cloud server mode
  > 0
 ```
 
@@ -98,6 +94,10 @@ After providing the necessary information, your new [Sonoff](https://sonoff.tech
 ```shell
  [OK] New connector "My Sonoff" was successfully created                                                                
 ```
+
+### Connectors and Devices management
+
+With this console command you could manage all your connectors and their devices. Just use the main menu to navigate to proper action.
 
 ## Configuring the Connector with the FastyBird User Interface
 
@@ -151,7 +151,7 @@ a list of found devices will be displayed.
 
 
 +---+--------------------------------------+----------------+---------------+--------------+
-| # | ID                                   | Name           | Type          | IP address   |
+| # | ID                                   | Name           | Model         | IP address   |
 +---+--------------------------------------+----------------+---------------+--------------+
 | 1 | 89b1d985-0183-4c05-8d28-69f4acf4128e | MyDevice09889e | SNSW-001P16EU | N/A          |
 | 2 | 8f377380-860f-4ac9-a4de-4be73e5ef59a | MyDevice04690b | SNSW-001P16EU | 10.10.10.126 |

@@ -48,7 +48,7 @@ use function usort;
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-class Discovery extends Console\Command\Command
+class Discover extends Console\Command\Command
 {
 
 	public const NAME = 'fb:sonoff-connector:discover';
@@ -73,7 +73,7 @@ class Discovery extends Console\Command\Command
 	{
 		$this
 			->setName(self::NAME)
-			->setDescription('Sonoff connector devices discovery')
+			->setDescription('Sonoff connector discovery')
 			->setDefinition(
 				new Input\InputDefinition([
 					new Input\InputOption(
@@ -307,7 +307,7 @@ class Discovery extends Console\Command\Command
 			'#',
 			$this->translator->translate('//sonoff-connector.cmd.discovery.data.id'),
 			$this->translator->translate('//sonoff-connector.cmd.discovery.data.name'),
-			$this->translator->translate('//sonoff-connector.cmd.discovery.data.type'),
+			$this->translator->translate('//sonoff-connector.cmd.discovery.data.model'),
 			$this->translator->translate('//sonoff-connector.cmd.discovery.data.ipAddress'),
 		]);
 

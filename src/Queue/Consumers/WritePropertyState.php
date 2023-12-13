@@ -99,6 +99,7 @@ final class WritePropertyState implements Queue\Consumer
 
 		$findConnectorQuery = new DevicesQueries\Configuration\FindConnectors();
 		$findConnectorQuery->byId($entity->getConnector());
+		$findConnectorQuery->byType(Entities\SonoffConnector::TYPE);
 
 		$connector = $this->connectorsConfigurationRepository->findOneBy($findConnectorQuery);
 
@@ -127,6 +128,7 @@ final class WritePropertyState implements Queue\Consumer
 		$findDeviceQuery = new DevicesQueries\Configuration\FindDevices();
 		$findDeviceQuery->forConnector($connector);
 		$findDeviceQuery->byId($entity->getDevice());
+		$findDeviceQuery->byType(Entities\SonoffDevice::TYPE);
 
 		$device = $this->devicesConfigurationRepository->findOneBy($findDeviceQuery);
 
@@ -137,7 +139,7 @@ final class WritePropertyState implements Queue\Consumer
 					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
 					'type' => 'write-property-state-message-consumer',
 					'connector' => [
-						'id' => $connector->getId()->toString(),
+						'id' => $entity->getConnector()->toString(),
 					],
 					'device' => [
 						'id' => $entity->getDevice()->toString(),
@@ -168,10 +170,10 @@ final class WritePropertyState implements Queue\Consumer
 						'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
 						'type' => 'write-property-state-message-consumer',
 						'connector' => [
-							'id' => $connector->getId()->toString(),
+							'id' => $entity->getConnector()->toString(),
 						],
 						'device' => [
-							'id' => $device->getId()->toString(),
+							'id' => $entity->getDevice()->toString(),
 						],
 						'property' => [
 							'id' => $entity->getProperty()->toString(),
@@ -199,10 +201,10 @@ final class WritePropertyState implements Queue\Consumer
 						'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
 						'type' => 'write-property-state-message-consumer',
 						'connector' => [
-							'id' => $connector->getId()->toString(),
+							'id' => $entity->getConnector()->toString(),
 						],
 						'device' => [
-							'id' => $device->getId()->toString(),
+							'id' => $entity->getDevice()->toString(),
 						],
 						'property' => [
 							'id' => $entity->getProperty()->toString(),
@@ -230,10 +232,10 @@ final class WritePropertyState implements Queue\Consumer
 						'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
 						'type' => 'write-property-state-message-consumer',
 						'connector' => [
-							'id' => $connector->getId()->toString(),
+							'id' => $entity->getConnector()->toString(),
 						],
 						'device' => [
-							'id' => $device->getId()->toString(),
+							'id' => $entity->getDevice()->toString(),
 						],
 						'property' => [
 							'id' => $entity->getProperty()->toString(),
@@ -253,13 +255,13 @@ final class WritePropertyState implements Queue\Consumer
 					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
 					'type' => 'write-property-state-message-consumer',
 					'connector' => [
-						'id' => $connector->getId()->toString(),
+						'id' => $entity->getConnector()->toString(),
 					],
 					'device' => [
-						'id' => $device->getId()->toString(),
+						'id' => $entity->getDevice()->toString(),
 					],
 					'property' => [
-						'id' => $property->getId()->toString(),
+						'id' => $entity->getProperty()->toString(),
 					],
 					'data' => $entity->toArray(),
 				],
@@ -454,13 +456,13 @@ final class WritePropertyState implements Queue\Consumer
 					'type' => 'write-property-state-message-consumer',
 					'exception' => BootstrapHelpers\Logger::buildException($ex),
 					'connector' => [
-						'id' => $connector->getId()->toString(),
+						'id' => $entity->getConnector()->toString(),
 					],
 					'device' => [
-						'id' => $device->getId()->toString(),
+						'id' => $entity->getDevice()->toString(),
 					],
 					'property' => [
-						'id' => $property->getId()->toString(),
+						'id' => $entity->getProperty()->toString(),
 					],
 					'data' => $entity->toArray(),
 				],
@@ -502,13 +504,13 @@ final class WritePropertyState implements Queue\Consumer
 						'type' => 'write-property-state-message-consumer',
 						'exception' => BootstrapHelpers\Logger::buildException($ex),
 						'connector' => [
-							'id' => $connector->getId()->toString(),
+							'id' => $entity->getConnector()->toString(),
 						],
 						'device' => [
-							'id' => $device->getId()->toString(),
+							'id' => $entity->getDevice()->toString(),
 						],
 						'property' => [
-							'id' => $property->getId()->toString(),
+							'id' => $entity->getProperty()->toString(),
 						],
 						'data' => $entity->toArray(),
 					],
@@ -612,13 +614,13 @@ final class WritePropertyState implements Queue\Consumer
 							'type' => 'write-property-state-message-consumer',
 							'exception' => BootstrapHelpers\Logger::buildException($ex),
 							'connector' => [
-								'id' => $connector->getId()->toString(),
+								'id' => $entity->getConnector()->toString(),
 							],
 							'device' => [
-								'id' => $device->getId()->toString(),
+								'id' => $entity->getDevice()->toString(),
 							],
 							'property' => [
-								'id' => $property->getId()->toString(),
+								'id' => $entity->getProperty()->toString(),
 							],
 							'data' => $entity->toArray(),
 						],
@@ -634,13 +636,13 @@ final class WritePropertyState implements Queue\Consumer
 				'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
 				'type' => 'write-property-state-message-consumer',
 				'connector' => [
-					'id' => $connector->getId()->toString(),
+					'id' => $entity->getConnector()->toString(),
 				],
 				'device' => [
-					'id' => $device->getId()->toString(),
+					'id' => $entity->getDevice()->toString(),
 				],
 				'property' => [
-					'id' => $property->getId()->toString(),
+					'id' => $entity->getProperty()->toString(),
 				],
 				'data' => $entity->toArray(),
 			],
