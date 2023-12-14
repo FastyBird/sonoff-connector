@@ -23,6 +23,7 @@ use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Queries;
 use FastyBird\Connector\Sonoff\Types;
 use FastyBird\DateTimeFactory;
+use FastyBird\Library\Bootstrap\Exceptions as BootstrapExceptions;
 use FastyBird\Library\Bootstrap\Helpers as BootstrapHelpers;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
@@ -93,6 +94,7 @@ class Install extends Console\Command\Command
 	}
 
 	/**
+	 * @throws BootstrapExceptions\InvalidState
 	 * @throws Console\Exception\ExceptionInterface
 	 * @throws DBAL\Exception
 	 * @throws DevicesExceptions\InvalidState
@@ -567,6 +569,7 @@ class Install extends Console\Command\Command
 	}
 
 	/**
+	 * @throws BootstrapExceptions\InvalidState
 	 * @throws Console\Exception\ExceptionInterface
 	 * @throws DBAL\Exception
 	 * @throws DevicesExceptions\InvalidState
@@ -814,6 +817,7 @@ class Install extends Console\Command\Command
 	}
 
 	/**
+	 * @throws BootstrapExceptions\InvalidState
 	 * @throws Console\Exception\ExceptionInterface
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\InvalidState
@@ -842,6 +846,8 @@ class Install extends Console\Command\Command
 			'--no-interaction' => true,
 			'--quiet' => true,
 		]), $this->output);
+
+		$this->databaseHelper->clear();
 
 		if ($result !== Console\Command\Command::SUCCESS) {
 			$io->error($this->translator->translate('//sonoff-connector.cmd.install.messages.discover.error'));
@@ -906,6 +912,7 @@ class Install extends Console\Command\Command
 	}
 
 	/**
+	 * @throws BootstrapExceptions\InvalidState
 	 * @throws Console\Exception\ExceptionInterface
 	 * @throws DBAL\Exception
 	 * @throws DevicesExceptions\InvalidState
@@ -989,6 +996,7 @@ class Install extends Console\Command\Command
 	}
 
 	/**
+	 * @throws BootstrapExceptions\InvalidState
 	 * @throws Console\Exception\ExceptionInterface
 	 * @throws DBAL\Exception
 	 * @throws DevicesExceptions\InvalidState

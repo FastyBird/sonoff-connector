@@ -44,7 +44,7 @@ cmd:
                 disabled: "Connector is disabled. Disabled connector could not be executed."
             error: "Something went wrong, connector was terminated."
 
-    discovery:
+    discover:
         title: "Sonoff connector - devices discovery"
         subtitle: "This action will run connector devices discovery"
 
