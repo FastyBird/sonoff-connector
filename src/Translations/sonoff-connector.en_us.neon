@@ -112,14 +112,15 @@ cmd:
                 connector:
                     mode: "In what mode should this connector communicate with Sonoff devices?"
                     dataCentre: "Provide which cloud data center you are using?"
-            changeMode: "Do you want to change connector devices support?"
             disable:
                 connector: "Do you want to disable connector?"
             enable:
                 connector: "Do you want to enable connector?"
-            changeUsername: "Do you want to change connector cloud username?"
-            changePassword: "Do you want to change connector cloud password?"
-            enableGateway: "Register connector into eWelink application?"
+            change:
+                mode: "Do you want to change connector devices support?"
+                username: "Do you want to change connector cloud username?"
+                password: "Do you want to change connector cloud password?"
+                gateway: "Register connector into eWelink application?"
 
         answers:
             mode:

@@ -317,7 +317,7 @@ class Install extends Console\Command\Command
 
 		} else {
 			$question = new Console\Question\ConfirmationQuestion(
-				$this->translator->translate('//sonoff-connector.cmd.install.questions.changeMode'),
+				$this->translator->translate('//sonoff-connector.cmd.install.questions.change.mode'),
 				false,
 			);
 
@@ -367,7 +367,7 @@ class Install extends Console\Command\Command
 
 		} else {
 			$question = new Console\Question\ConfirmationQuestion(
-				$this->translator->translate('//sonoff-connector.cmd.install.questions.changeUsername'),
+				$this->translator->translate('//sonoff-connector.cmd.install.questions.change.username'),
 				false,
 			);
 
@@ -389,7 +389,7 @@ class Install extends Console\Command\Command
 
 		} else {
 			$question = new Console\Question\ConfirmationQuestion(
-				$this->translator->translate('//sonoff-connector.cmd.install.questions.changePassword'),
+				$this->translator->translate('//sonoff-connector.cmd.install.questions.change.password'),
 				false,
 			);
 
