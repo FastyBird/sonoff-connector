@@ -605,13 +605,9 @@ class Install extends Console\Command\Command
 		$connectors = $this->connectorsRepository->findAllBy($findConnectorsQuery, Entities\SonoffConnector::class);
 		usort(
 			$connectors,
-			static function (Entities\SonoffConnector $a, Entities\SonoffConnector $b): int {
-				if ($a->getIdentifier() === $b->getIdentifier()) {
-					return $a->getName() <=> $b->getName();
-				}
-
-				return $a->getIdentifier() <=> $b->getIdentifier();
-			},
+			static fn (Entities\SonoffConnector $a, Entities\SonoffConnector $b): int => (
+				($a->getName() ?? $a->getIdentifier()) <=> ($b->getName() ?? $b->getIdentifier())
+			),
 		);
 
 		$table = new Console\Helper\Table($io);
@@ -785,13 +781,9 @@ class Install extends Console\Command\Command
 		$devices = $this->devicesRepository->findAllBy($findDevicesQuery, Entities\SonoffDevice::class);
 		usort(
 			$devices,
-			static function (Entities\SonoffDevice $a, Entities\SonoffDevice $b): int {
-				if ($a->getIdentifier() === $b->getIdentifier()) {
-					return $a->getName() <=> $b->getName();
-				}
-
-				return $a->getIdentifier() <=> $b->getIdentifier();
-			},
+			static fn (Entities\SonoffDevice $a, Entities\SonoffDevice $b): int => (
+				($a->getName() ?? $a->getIdentifier()) <=> ($b->getName() ?? $b->getIdentifier())
+			),
 		);
 
 		$table = new Console\Helper\Table($io);
@@ -1297,13 +1289,13 @@ class Install extends Console\Command\Command
 		);
 		usort(
 			$systemConnectors,
-			// phpcs:ignore SlevomatCodingStandard.Files.LineLength.LineTooLong
-			static fn (Entities\SonoffConnector $a, Entities\SonoffConnector $b): int => $a->getIdentifier() <=> $b->getIdentifier()
+			static fn (Entities\SonoffConnector $a, Entities\SonoffConnector $b): int => (
+				($a->getName() ?? $a->getIdentifier()) <=> ($b->getName() ?? $b->getIdentifier())
+			),
 		);
 
 		foreach ($systemConnectors as $connector) {
-			$connectors[$connector->getIdentifier()] = $connector->getIdentifier()
-				. ($connector->getName() !== null ? ' [' . $connector->getName() . ']' : '');
+			$connectors[$connector->getIdentifier()] = $connector->getName() ?? $connector->getIdentifier();
 		}
 
 		if (count($connectors) === 0) {
@@ -1382,12 +1374,13 @@ class Install extends Console\Command\Command
 		);
 		usort(
 			$connectorDevices,
-			static fn (Entities\SonoffDevice $a, Entities\SonoffDevice $b): int => $a->getIdentifier() <=> $b->getIdentifier()
+			static fn (Entities\SonoffDevice $a, Entities\SonoffDevice $b): int => (
+				($a->getName() ?? $a->getIdentifier()) <=> ($b->getName() ?? $b->getIdentifier())
+			),
 		);
 
 		foreach ($connectorDevices as $device) {
-			$devices[$device->getIdentifier()] = $device->getIdentifier()
-				. ($device->getName() !== null ? ' [' . $device->getName() . ']' : '');
+			$devices[$device->getIdentifier()] = $device->getName() ?? $device->getIdentifier();
 		}
 
 		if (count($devices) === 0) {
