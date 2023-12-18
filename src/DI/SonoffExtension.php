@@ -15,6 +15,7 @@
 
 namespace FastyBird\Connector\Sonoff\DI;
 
+use Contributte\Translation;
 use Doctrine\Persistence;
 use FastyBird\Connector\Sonoff;
 use FastyBird\Connector\Sonoff\API;
@@ -46,7 +47,7 @@ use const DIRECTORY_SEPARATOR;
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-class SonoffExtension extends DI\CompilerExtension
+class SonoffExtension extends DI\CompilerExtension implements Translation\DI\TranslationProviderInterface
 {
 
 	public const NAME = 'fbSonoffConnector';
@@ -357,6 +358,16 @@ class SonoffExtension extends DI\CompilerExtension
 				'FastyBird\Connector\Sonoff\Entities',
 			]);
 		}
+	}
+
+	/**
+	 * @return array<string>
+	 */
+	public function getTranslationResources(): array
+	{
+		return [
+			__DIR__ . '/../Translations/',
+		];
 	}
 
 }
