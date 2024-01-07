@@ -111,10 +111,10 @@ trait ChannelProperty
 		}
 
 		if ($property === null) {
-			$findChannelQuery = new DevicesQueries\Entities\FindChannels();
+			$findChannelQuery = new Sonoff\Queries\Entities\FindChannels();
 			$findChannelQuery->byId($channelId);
 
-			$channel = $this->channelsRepository->findOneBy($findChannelQuery);
+			$channel = $this->channelsRepository->findOneBy($findChannelQuery, Sonoff\Entities\SonoffChannel::class);
 
 			if ($channel === null) {
 				$this->logger->error(

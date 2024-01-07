@@ -269,6 +269,9 @@ class SonoffExtension extends DI\CompilerExtension implements Translation\DI\Tra
 		$builder->addDefinition($this->prefix('schemas.device.sonoff'), new DI\Definitions\ServiceDefinition())
 			->setType(Schemas\SonoffDevice::class);
 
+		$builder->addDefinition($this->prefix('schemas.channel.sonoff'), new DI\Definitions\ServiceDefinition())
+			->setType(Schemas\SonoffChannel::class);
+
 		/**
 		 * JSON-API HYDRATORS
 		 */
@@ -278,6 +281,9 @@ class SonoffExtension extends DI\CompilerExtension implements Translation\DI\Tra
 
 		$builder->addDefinition($this->prefix('hydrators.device.sonoff'), new DI\Definitions\ServiceDefinition())
 			->setType(Hydrators\SonoffDevice::class);
+
+		$builder->addDefinition($this->prefix('hydrators.channel.sonoff'), new DI\Definitions\ServiceDefinition())
+			->setType(Hydrators\SonoffChannel::class);
 
 		/**
 		 * HELPERS

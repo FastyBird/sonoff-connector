@@ -160,6 +160,7 @@ final class WritePropertyState implements Queue\Consumer
 			$findChannelQuery = new DevicesQueries\Configuration\FindChannels();
 			$findChannelQuery->forDevice($device);
 			$findChannelQuery->byId($entity->getChannel());
+			$findChannelQuery->byType(Entities\SonoffChannel::TYPE);
 
 			$channel = $this->channelsConfigurationRepository->findOneBy($findChannelQuery);
 

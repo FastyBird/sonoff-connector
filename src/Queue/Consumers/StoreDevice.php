@@ -290,14 +290,15 @@ final class StoreDevice implements Consumer
 		$this->databaseHelper->transaction(function () use ($entity, $device): bool {
 			foreach ($entity->getParameters() as $parameter) {
 				if ($parameter->getType()->equalsValue(Types\ParameterType::CHANNEL)) {
-					$findChannelQuery = new DevicesQueries\Entities\FindChannels();
+					$findChannelQuery = new Queries\Entities\FindChannels();
 					$findChannelQuery->byIdentifier($parameter->getGroup());
 					$findChannelQuery->forDevice($device);
 
-					$channel = $this->channelsRepository->findOneBy($findChannelQuery);
+					$channel = $this->channelsRepository->findOneBy($findChannelQuery, Entities\SonoffChannel::class);
 
 					if ($channel === null) {
 						$channel = $this->channelsManager->create(Utils\ArrayHash::from([
+							'entity' => Entities\SonoffChannel::class,
 							'device' => $device,
 							'identifier' => $parameter->getGroup(),
 						]));

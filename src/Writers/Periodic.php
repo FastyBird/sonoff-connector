@@ -105,15 +105,14 @@ abstract class Periodic implements Writer
 
 			$findDevicePropertiesQuery = new DevicesQueries\Configuration\FindDeviceProperties();
 			$findDevicePropertiesQuery->forDevice($device);
+			$findDevicePropertiesQuery->settable(true);
 
 			$properties = $this->devicesPropertiesConfigurationRepository->findAllBy($findDevicePropertiesQuery);
 
 			foreach ($properties as $property) {
 				if (
-					(
-						$property instanceof MetadataDocuments\DevicesModule\DeviceDynamicProperty
-						|| $property instanceof MetadataDocuments\DevicesModule\DeviceMappedProperty
-					) && $property->isSettable()
+					$property instanceof MetadataDocuments\DevicesModule\DeviceDynamicProperty
+					|| $property instanceof MetadataDocuments\DevicesModule\DeviceMappedProperty
 				) {
 					$this->properties[$device->getId()->toString()][$property->getId()->toString()] = $property;
 				}
@@ -121,12 +120,14 @@ abstract class Periodic implements Writer
 
 			$findChannelsQuery = new DevicesQueries\Configuration\FindChannels();
 			$findChannelsQuery->forDevice($device);
+			$findChannelsQuery->byType(Entities\SonoffChannel::TYPE);
 
 			$channels = $this->channelsConfigurationRepository->findAllBy($findChannelsQuery);
 
 			foreach ($channels as $channel) {
 				$findChannelPropertiesQuery = new DevicesQueries\Configuration\FindChannelDynamicProperties();
 				$findChannelPropertiesQuery->forChannel($channel);
+				$findChannelPropertiesQuery->settable(true);
 
 				$properties = $this->channelsPropertiesConfigurationRepository->findAllBy(
 					$findChannelPropertiesQuery,
@@ -134,9 +135,7 @@ abstract class Periodic implements Writer
 				);
 
 				foreach ($properties as $property) {
-					if ($property->isSettable()) {
-						$this->properties[$device->getId()->toString()][$property->getId()->toString()] = $property;
-					}
+					$this->properties[$device->getId()->toString()][$property->getId()->toString()] = $property;
 				}
 			}
 		}

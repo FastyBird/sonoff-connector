@@ -135,6 +135,7 @@ final class StoreParametersStates implements Consumer
 				$findChannelQuery = new DevicesQueries\Configuration\FindChannels();
 				$findChannelQuery->forDevice($device);
 				$findChannelQuery->byIdentifier($parameter->getGroup());
+				$findChannelQuery->byType(Entities\SonoffChannel::TYPE);
 
 				$channel = $this->channelsConfigurationRepository->findOneBy($findChannelQuery);
 

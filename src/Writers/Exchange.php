@@ -155,6 +155,7 @@ class Exchange extends Periodic implements Writer, ExchangeConsumers\Consumer
 
 			$findChannelQuery = new DevicesQueries\Configuration\FindChannels();
 			$findChannelQuery->byId($entity->getChannel());
+			$findChannelQuery->byType(Entities\SonoffChannel::TYPE);
 
 			$channel = $this->channelsConfigurationRepository->findOneBy($findChannelQuery);
 
