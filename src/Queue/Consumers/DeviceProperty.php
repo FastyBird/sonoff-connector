@@ -18,7 +18,6 @@ namespace FastyBird\Connector\Sonoff\Queue\Consumers;
 use Doctrine\DBAL;
 use FastyBird\Connector\Sonoff;
 use FastyBird\Connector\Sonoff\Entities;
-use FastyBird\Connector\Sonoff\Queries;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Entities as DevicesEntities;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
@@ -85,10 +84,7 @@ trait DeviceProperty
 			$property !== null
 			&& !$property instanceof DevicesEntities\Devices\Properties\Variable
 		) {
-			$findDevicePropertyQuery = new DevicesQueries\Entities\FindDeviceProperties();
-			$findDevicePropertyQuery->byId($property->getId());
-
-			$property = $this->devicesPropertiesRepository->findOneBy($findDevicePropertyQuery);
+			$property = $this->devicesPropertiesRepository->find($property->getId());
 
 			if ($property !== null) {
 				$this->databaseHelper->transaction(function () use ($property): void {
@@ -115,11 +111,8 @@ trait DeviceProperty
 		}
 
 		if ($property === null) {
-			$findDeviceQuery = new Queries\Entities\FindDevices();
-			$findDeviceQuery->byId($deviceId);
-
-			$device = $this->devicesRepository->findOneBy(
-				$findDeviceQuery,
+			$device = $this->devicesRepository->find(
+				$deviceId,
 				Entities\SonoffDevice::class,
 			);
 

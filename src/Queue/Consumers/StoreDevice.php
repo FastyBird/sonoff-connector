@@ -81,11 +81,8 @@ final class StoreDevice implements Consumer
 		$device = $this->devicesRepository->findOneBy($findDeviceQuery, Entities\SonoffDevice::class);
 
 		if ($device === null) {
-			$findConnectorQuery = new Queries\Entities\FindConnectors();
-			$findConnectorQuery->byId($entity->getConnector());
-
-			$connector = $this->connectorsRepository->findOneBy(
-				$findConnectorQuery,
+			$connector = $this->connectorsRepository->find(
+				$entity->getConnector(),
 				Entities\SonoffConnector::class,
 			);
 
