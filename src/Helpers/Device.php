@@ -63,12 +63,12 @@ final class Device
 			MetadataDocuments\DevicesModule\DeviceVariableProperty::class,
 		);
 
-		if ($property === null) {
+		if ($property?->getValue() === null) {
 			return null;
 		}
 
 		$value = $property->getValue();
-		assert(is_string($value) || $value === null);
+		assert(is_string($value));
 
 		return $value;
 	}
@@ -89,12 +89,12 @@ final class Device
 			MetadataDocuments\DevicesModule\DeviceVariableProperty::class,
 		);
 
-		if ($property === null) {
+		if ($property?->getValue() === null) {
 			return null;
 		}
 
 		$value = $property->getValue();
-		assert(is_string($value) || $value === null);
+		assert(is_string($value));
 
 		return $value;
 	}
@@ -140,12 +140,12 @@ final class Device
 			MetadataDocuments\DevicesModule\DeviceVariableProperty::class,
 		);
 
-		if ($property === null) {
+		if ($property?->getValue() === null) {
 			return null;
 		}
 
 		$value = $property->getValue();
-		assert(is_string($value) || $value === null);
+		assert(is_string($value));
 
 		return $value;
 	}
@@ -166,12 +166,12 @@ final class Device
 			MetadataDocuments\DevicesModule\DeviceVariableProperty::class,
 		);
 
-		if ($property === null) {
+		if ($property?->getValue() === null) {
 			return null;
 		}
 
 		$value = $property->getValue();
-		assert(is_string($value) || $value === null);
+		assert(is_string($value));
 
 		return $value;
 	}
@@ -192,12 +192,12 @@ final class Device
 			MetadataDocuments\DevicesModule\DeviceVariableProperty::class,
 		);
 
-		if ($property === null) {
+		if ($property?->getValue() === null) {
 			return null;
 		}
 
 		$value = $property->getValue();
-		assert(is_string($value) || $value === null);
+		assert(is_string($value));
 
 		return $value;
 	}
@@ -219,11 +219,12 @@ final class Device
 			MetadataDocuments\DevicesModule\DeviceVariableProperty::class,
 		);
 
-		$value = $property?->getValue();
-
-		if (!is_numeric($value)) {
+		if ($property?->getValue() === null) {
 			throw new Exceptions\InvalidState('Device UIID protocol is not defined. Device have to be re-discovered');
 		}
+
+		$value = $property->getValue();
+		assert(is_numeric($value));
 
 		return intval($value);
 	}
@@ -244,11 +245,12 @@ final class Device
 			MetadataDocuments\DevicesModule\DeviceVariableProperty::class,
 		);
 
-		$value = $property?->getValue();
-
-		if (!is_numeric($value)) {
+		if ($property?->getValue() === null) {
 			return Entities\SonoffDevice::STATE_READING_DELAY;
 		}
+
+		$value = $property->getValue();
+		assert(is_numeric($value));
 
 		return floatval($value);
 	}
@@ -269,11 +271,12 @@ final class Device
 			MetadataDocuments\DevicesModule\DeviceVariableProperty::class,
 		);
 
-		$value = $property?->getValue();
-
-		if (!is_numeric($value)) {
+		if ($property?->getValue() === null) {
 			return Entities\SonoffDevice::HEARTBEAT_DELAY;
 		}
+
+		$value = $property->getValue();
+		assert(is_numeric($value));
 
 		return floatval($value);
 	}

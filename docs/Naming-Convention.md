@@ -33,7 +33,7 @@ or to communicate with device. In case some of the mandatory property is missing
 
 ### Channel Property
 
-Channel related properties are used for storing actual state of [Sonoff](https://sonoff.tech) device. It could be switch `state` or light `brightness`.
+Channel related properties are used for storing actual state of [Sonoff](https://sonoff.tech) device. It could be a switch `state` or a light `brightness`.
 These values are read from device and stored in system.
 
 ## Device Mode
