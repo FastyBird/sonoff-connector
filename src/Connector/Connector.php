@@ -185,6 +185,9 @@ final class Connector implements DevicesConnectors\Connector
 		);
 	}
 
+	/**
+	 * @throws DevicesExceptions\InvalidState
+	 */
 	public function discover(): void
 	{
 		assert($this->connector instanceof Entities\SonoffConnector);
@@ -200,7 +203,28 @@ final class Connector implements DevicesConnectors\Connector
 			],
 		);
 
-		$this->client = $this->discoveryClientFactory->create($this->connector);
+		$findConnector = new DevicesQueries\Configuration\FindConnectors();
+		$findConnector->byId($this->connector->getId());
+		$findConnector->byType(Entities\SonoffConnector::TYPE);
+
+		$connector = $this->connectorsConfigurationRepository->findOneBy($findConnector);
+
+		if ($connector === null) {
+			$this->logger->error(
+				'Connector could not be loaded',
+				[
+					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+					'type' => 'connector',
+					'connector' => [
+						'id' => $this->connector->getId()->toString(),
+					],
+				],
+			);
+
+			return;
+		}
+
+		$this->client = $this->discoveryClientFactory->create($connector);
 
 		$this->client->on('finished', function (): void {
 			$this->dispatcher?->dispatch(
@@ -233,7 +257,7 @@ final class Connector implements DevicesConnectors\Connector
 	}
 
 	/**
-	 * @throws Exceptions\InvalidState
+	 * @throws DevicesExceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
 	 */

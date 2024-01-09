@@ -25,6 +25,7 @@ use FastyBird\Connector\Sonoff\Helpers;
 use FastyBird\Connector\Sonoff\Queue;
 use FastyBird\Connector\Sonoff\Types;
 use FastyBird\Library\Bootstrap\Helpers as BootstrapHelpers;
+use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
@@ -80,10 +81,11 @@ final class Discovery implements Evenement\EventEmitterInterface
 	private API\CloudApi|null $cloudApiConnection = null;
 
 	public function __construct(
-		private readonly Entities\SonoffConnector $connector,
+		private readonly MetadataDocuments\DevicesModule\Connector $connector,
 		private readonly API\LanApiFactory $lanApiFactory,
 		private readonly API\CloudApiFactory $cloudApiFactory,
 		private readonly Helpers\Entity $entityHelper,
+		private readonly Helpers\Connector $connectorHelper,
 		private readonly Queue\Queue $queue,
 		private readonly Sonoff\Logger $logger,
 		private readonly EventLoop\LoopInterface $eventLoop,
@@ -105,7 +107,7 @@ final class Discovery implements Evenement\EventEmitterInterface
 
 		$this->discoverCloudDevices()
 			->then(async(function (): void {
-				$mode = $this->connector->getClientMode();
+				$mode = $this->connectorHelper->getClientMode($this->connector);
 
 				if (
 					$mode->equalsValue(Types\ClientMode::LAN)
@@ -132,7 +134,7 @@ final class Discovery implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @throws Exceptions\InvalidState
+	 * @throws DevicesExceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
 	 */
@@ -150,9 +152,9 @@ final class Discovery implements Evenement\EventEmitterInterface
 	/**
 	 * @return Promise\PromiseInterface<bool>
 	 *
+	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\CloudApiCall
 	 * @throws Exceptions\CloudApiError
-	 * @throws Exceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
 	 */
@@ -514,7 +516,7 @@ final class Discovery implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @throws Exceptions\InvalidState
+	 * @throws DevicesExceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
 	 */
@@ -522,11 +524,11 @@ final class Discovery implements Evenement\EventEmitterInterface
 	{
 		if ($this->cloudApiConnection === null) {
 			$this->cloudApiConnection = $this->cloudApiFactory->create(
-				$this->connector->getUsername(),
-				$this->connector->getPassword(),
-				$this->connector->getAppId(),
-				$this->connector->getAppSecret(),
-				$this->connector->getRegion(),
+				$this->connectorHelper->getUsername($this->connector),
+				$this->connectorHelper->getPassword($this->connector),
+				$this->connectorHelper->getAppId($this->connector),
+				$this->connectorHelper->getAppSecret($this->connector),
+				$this->connectorHelper->getRegion($this->connector),
 			);
 		}
 

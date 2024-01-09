@@ -4,4 +4,4 @@
 
 #### TL;DR
 
-- Migrate code from Python implementation into PHP.
+- Initial release

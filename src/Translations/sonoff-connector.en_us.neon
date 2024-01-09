@@ -168,6 +168,8 @@ cmd:
                     success: "Device \"%name%\" was successfully removed."
                     error: "Something went wrong, device could not be removed. An error was logged."
             discover:
+                starting: "Starting Sonoff connector discovery..."
+                stopping: "Stopping Sonoff connector discovery..."
                 success: "Devices discovery was successfully finished"
                 error: "Devices discovery failed. An error was logged."
             noDevices: "No devices registered in selected connector."

@@ -15,7 +15,7 @@
 
 namespace FastyBird\Connector\Sonoff\Clients;
 
-use FastyBird\Connector\Sonoff\Entities;
+use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 
 /**
  * Devices discovery client factory
@@ -28,6 +28,6 @@ use FastyBird\Connector\Sonoff\Entities;
 interface DiscoveryFactory
 {
 
-	public function create(Entities\SonoffConnector $connector): Discovery;
+	public function create(MetadataDocuments\DevicesModule\Connector $connector): Discovery;
 
 }

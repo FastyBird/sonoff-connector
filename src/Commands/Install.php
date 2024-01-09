@@ -837,6 +837,8 @@ class Install extends Console\Command\Command
 
 		$serviceCmd = $symfonyApp->find(DevicesCommands\Connector::NAME);
 
+		$io->info($this->translator->translate('//sonoff-connector.cmd.install.messages.discover.starting'));
+
 		$result = $serviceCmd->run(new Input\ArrayInput([
 			'--connector' => $connector->getId()->toString(),
 			'--mode' => DevicesCommands\Connector::MODE_DISCOVER,
@@ -846,13 +848,15 @@ class Install extends Console\Command\Command
 
 		$this->databaseHelper->clear();
 
+		$io->newLine(2);
+
+		$io->info($this->translator->translate('//sonoff-connector.cmd.install.messages.discover.stopping'));
+
 		if ($result !== Console\Command\Command::SUCCESS) {
 			$io->error($this->translator->translate('//sonoff-connector.cmd.install.messages.discover.error'));
 
 			return;
 		}
-
-		$io->newLine();
 
 		$table = new Console\Helper\Table($io);
 		$table->setHeaders([
@@ -866,7 +870,7 @@ class Install extends Console\Command\Command
 		$foundDevices = 0;
 
 		$findDevicesQuery = new Queries\Entities\FindDevices();
-		$findDevicesQuery->byConnectorId($connector->getId());
+		$findDevicesQuery->forConnector($connector);
 
 		$devices = $this->devicesRepository->findAllBy($findDevicesQuery, Entities\SonoffDevice::class);
 
@@ -890,8 +894,6 @@ class Install extends Console\Command\Command
 		}
 
 		if ($foundDevices > 0) {
-			$io->newLine();
-
 			$io->info(sprintf(
 				$this->translator->translate('//sonoff-connector.cmd.install.messages.foundDevices'),
 				$foundDevices,
