@@ -34,7 +34,7 @@ use function is_string;
 class SonoffDevice extends DevicesEntities\Devices\Device
 {
 
-	public const TYPE = 'sonoff';
+	public const TYPE = 'sonoff-connector';
 
 	public const STATE_READING_DELAY = 5_000.0;
 

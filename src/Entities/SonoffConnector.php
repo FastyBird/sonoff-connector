@@ -30,7 +30,7 @@ use function is_string;
 class SonoffConnector extends DevicesEntities\Connectors\Connector
 {
 
-	public const TYPE = 'sonoff';
+	public const TYPE = 'sonoff-connector';
 
 	public function getType(): string
 	{

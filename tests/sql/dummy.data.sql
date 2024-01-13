@@ -1,7 +1,7 @@
 INSERT
 IGNORE INTO `fb_devices_module_connectors` (`connector_id`, `connector_identifier`, `connector_name`, `connector_comment`, `connector_enabled`, `connector_type`, `created_at`, `updated_at`) VALUES
-(_binary 0xedf4ff52babc43f59e721f38c35e73f0, 'sonoff-cloud', 'Sonoff Cloud', null, true, 'sonoff', '2023-10-10 20:00:00', '2023-10-10 20:00:00'),
-(_binary 0x63a28696cbea475784d7156e52ade4d3, 'sonoff-local', 'Sonoff Local', null, true, 'sonoff', '2023-10-10 20:00:00', '2023-10-10 20:00:00');
+(_binary 0xedf4ff52babc43f59e721f38c35e73f0, 'sonoff-cloud', 'Sonoff Cloud', null, true, 'sonoff-connector', '2023-10-10 20:00:00', '2023-10-10 20:00:00'),
+(_binary 0x63a28696cbea475784d7156e52ade4d3, 'sonoff-local', 'Sonoff Local', null, true, 'sonoff-connector', '2023-10-10 20:00:00', '2023-10-10 20:00:00');
 
 INSERT
 IGNORE INTO `fb_devices_module_connectors_controls` (`control_id`, `connector_id`, `control_name`, `created_at`, `updated_at`) VALUES

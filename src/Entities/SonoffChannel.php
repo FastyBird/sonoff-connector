@@ -25,7 +25,7 @@ use FastyBird\Module\Devices\Entities as DevicesEntities;
 class SonoffChannel extends DevicesEntities\Channels\Channel
 {
 
-	public const TYPE = 'sonoff';
+	public const TYPE = 'sonoff-connector';
 
 	public function getType(): string
 	{
