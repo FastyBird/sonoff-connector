@@ -15,9 +15,7 @@
 
 namespace FastyBird\Connector\Sonoff\Types;
 
-use Consistence;
-use FastyBird\Library\Metadata\Types as MetadataTypes;
-use function strval;
+use FastyBird\Module\Devices\Types as DevicesTypes;
 
 /**
  * Device property identifier types
@@ -27,56 +25,43 @@ use function strval;
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-class DevicePropertyIdentifier extends Consistence\Enum\Enum
+enum DevicePropertyIdentifier: string
 {
 
-	/**
-	 * Define device states
-	 */
-	public const IP_ADDRESS = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_IP_ADDRESS;
+	case IP_ADDRESS = DevicesTypes\DevicePropertyIdentifier::IP_ADDRESS->value;
 
-	public const ADDRESS = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_ADDRESS;
+	case ADDRESS = DevicesTypes\DevicePropertyIdentifier::ADDRESS->value;
 
-	public const STATE = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_STATE;
+	case STATE = DevicesTypes\DevicePropertyIdentifier::STATE->value;
 
-	public const HARDWARE_MODEL = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_HARDWARE_MODEL;
+	case HARDWARE_MODEL = DevicesTypes\DevicePropertyIdentifier::HARDWARE_MODEL->value;
 
-	public const HARDWARE_MAC_ADDRESS = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_HARDWARE_MAC_ADDRESS;
+	case HARDWARE_MAC_ADDRESS = DevicesTypes\DevicePropertyIdentifier::HARDWARE_MAC_ADDRESS->value;
 
-	public const FIRMWARE_VERSION = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_FIRMWARE_VERSION;
+	case FIRMWARE_VERSION = DevicesTypes\DevicePropertyIdentifier::FIRMWARE_VERSION->value;
 
-	public const RSSI = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_RSSI;
+	case RSSI = DevicesTypes\DevicePropertyIdentifier::RSSI->value;
 
-	public const SSID = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_SSID;
+	case SSID = DevicesTypes\DevicePropertyIdentifier::SSID->value;
 
-	public const STATUS_LED = MetadataTypes\DevicePropertyIdentifier::IDENTIFIER_STATUS_LED;
+	case STATUS_LED = DevicesTypes\DevicePropertyIdentifier::STATUS_LED->value;
 
-	public const API_KEY = 'api_key';
+	case API_KEY = 'api_key';
 
-	public const DEVICE_KEY = 'device_key';
+	case DEVICE_KEY = 'device_key';
 
-	public const BRAND_NAME = 'brand_name';
+	case BRAND_NAME = 'brand_name';
 
-	public const BRAND_LOGO = 'brand_logo';
+	case BRAND_LOGO = 'brand_logo';
 
-	public const PRODUCT_MODEL = 'product_model';
+	case PRODUCT_MODEL = 'product_model';
 
-	public const PORT = 'port';
+	case PORT = 'port';
 
-	public const UIID = 'uiid';
+	case UIID = 'uiid';
 
-	public const STATE_READING_DELAY = 'state_reading_delay';
+	case STATE_READING_DELAY = 'state_reading_delay';
 
-	public const HEARTBEAT_DELAY = 'heartbeat_delay';
-
-	public function getValue(): string
-	{
-		return strval(parent::getValue());
-	}
-
-	public function __toString(): string
-	{
-		return self::getValue();
-	}
+	case HEARTBEAT_DELAY = 'heartbeat_delay';
 
 }

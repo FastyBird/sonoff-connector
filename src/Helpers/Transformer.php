@@ -68,24 +68,24 @@ final class Transformer
 
 	public static function deviceParameterToProperty(string $identifier): string
 	{
-		if ($identifier === Types\Parameter::STATUS_LED) {
-			return Types\DevicePropertyIdentifier::STATUS_LED;
+		if ($identifier === Types\Parameter::STATUS_LED->value) {
+			return Types\DevicePropertyIdentifier::STATUS_LED->value;
 		}
 
-		if ($identifier === Types\Parameter::FIRMWARE_VERSION) {
-			return Types\DevicePropertyIdentifier::FIRMWARE_VERSION;
+		if ($identifier === Types\Parameter::FIRMWARE_VERSION->value) {
+			return Types\DevicePropertyIdentifier::FIRMWARE_VERSION->value;
 		}
 
-		if ($identifier === Types\Parameter::RSSI) {
-			return Types\DevicePropertyIdentifier::RSSI;
+		if ($identifier === Types\Parameter::RSSI->value) {
+			return Types\DevicePropertyIdentifier::RSSI->value;
 		}
 
-		if ($identifier === Types\Parameter::SSID) {
-			return Types\DevicePropertyIdentifier::SSID;
+		if ($identifier === Types\Parameter::SSID->value) {
+			return Types\DevicePropertyIdentifier::SSID->value;
 		}
 
-		if ($identifier === Types\Parameter::BSSID) {
-			return Types\DevicePropertyIdentifier::HARDWARE_MAC_ADDRESS;
+		if ($identifier === Types\Parameter::BSSID->value) {
+			return Types\DevicePropertyIdentifier::HARDWARE_MAC_ADDRESS->value;
 		}
 
 		return $identifier;
@@ -93,24 +93,24 @@ final class Transformer
 
 	public static function devicePropertyToParameter(string $identifier): string
 	{
-		if ($identifier === Types\DevicePropertyIdentifier::STATUS_LED) {
-			return Types\Parameter::STATUS_LED;
+		if ($identifier === Types\DevicePropertyIdentifier::STATUS_LED->value) {
+			return Types\Parameter::STATUS_LED->value;
 		}
 
-		if ($identifier === Types\DevicePropertyIdentifier::FIRMWARE_VERSION) {
-			return Types\Parameter::FIRMWARE_VERSION;
+		if ($identifier === Types\DevicePropertyIdentifier::FIRMWARE_VERSION->value) {
+			return Types\Parameter::FIRMWARE_VERSION->value;
 		}
 
-		if ($identifier === Types\DevicePropertyIdentifier::RSSI) {
-			return Types\Parameter::RSSI;
+		if ($identifier === Types\DevicePropertyIdentifier::RSSI->value) {
+			return Types\Parameter::RSSI->value;
 		}
 
-		if ($identifier === Types\DevicePropertyIdentifier::SSID) {
-			return Types\Parameter::SSID;
+		if ($identifier === Types\DevicePropertyIdentifier::SSID->value) {
+			return Types\Parameter::SSID->value;
 		}
 
-		if ($identifier === Types\DevicePropertyIdentifier::HARDWARE_MAC_ADDRESS) {
-			return Types\Parameter::BSSID;
+		if ($identifier === Types\DevicePropertyIdentifier::HARDWARE_MAC_ADDRESS->value) {
+			return Types\Parameter::BSSID->value;
 		}
 
 		return $identifier;

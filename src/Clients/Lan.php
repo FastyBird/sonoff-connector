@@ -18,27 +18,30 @@ namespace FastyBird\Connector\Sonoff\Clients;
 use BadMethodCallException;
 use FastyBird\Connector\Sonoff;
 use FastyBird\Connector\Sonoff\API;
-use FastyBird\Connector\Sonoff\Entities;
+use FastyBird\Connector\Sonoff\Documents;
 use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Helpers;
+use FastyBird\Connector\Sonoff\Queries;
 use FastyBird\Connector\Sonoff\Queue;
 use FastyBird\Connector\Sonoff\Types;
 use FastyBird\DateTimeFactory;
-use FastyBird\Library\Bootstrap\Helpers as BootstrapHelpers;
-use FastyBird\Library\Metadata\Documents as MetadataDocuments;
+use FastyBird\Library\Application\Helpers as ApplicationHelpers;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Events as DevicesEvents;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
 use FastyBird\Module\Devices\Models as DevicesModels;
-use FastyBird\Module\Devices\Queries as DevicesQueries;
+use FastyBird\Module\Devices\Types as DevicesTypes;
 use FastyBird\Module\Devices\Utilities as DevicesUtilities;
 use Psr\EventDispatcher;
 use React\EventLoop;
 use React\Promise;
 use RuntimeException;
 use Throwable;
+use TypeError;
+use ValueError;
 use function in_array;
+use function React\Async\async;
 
 /**
  * Lan client
@@ -56,10 +59,10 @@ final class Lan extends ClientProcess implements Client
 		DevicesUtilities\DeviceConnection $deviceConnectionManager,
 		DateTimeFactory\Factory $dateTimeFactory,
 		EventLoop\LoopInterface $eventLoop,
-		private readonly MetadataDocuments\DevicesModule\Connector $connector,
+		private readonly Documents\Connectors\Connector $connector,
 		private readonly bool $autoMode,
 		private readonly API\ConnectionManager $connectionManager,
-		private readonly Helpers\Entity $entityHelper,
+		private readonly Helpers\MessageBuilder $entityHelper,
 		private readonly Queue\Queue $queue,
 		private readonly Sonoff\Logger $logger,
 		private readonly DevicesModels\Configuration\Devices\Repository $devicesConfigurationRepository,
@@ -77,10 +80,13 @@ final class Lan extends ClientProcess implements Client
 	/**
 	 * @throws BadMethodCallException
 	 * @throws DevicesExceptions\InvalidState
+	 * @throws Exceptions\InvalidArgument
 	 * @throws Exceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
 	 * @throws RuntimeException
+	 * @throws TypeError
+	 * @throws ValueError
 	 */
 	public function connect(): void
 	{
@@ -92,52 +98,64 @@ final class Lan extends ClientProcess implements Client
 
 			$this->eventLoop->addTimer(
 				self::HANDLER_START_DELAY,
-				function (): void {
+				async(function (): void {
 					$this->registerLoopHandler();
-				},
+				}),
 			);
 
-			$findDevicesQuery = new DevicesQueries\Configuration\FindDevices();
+			$findDevicesQuery = new Queries\Configuration\FindDevices();
 			$findDevicesQuery->forConnector($this->connector);
-			$findDevicesQuery->byType(Entities\SonoffDevice::TYPE);
 
-			foreach ($this->devicesConfigurationRepository->findAllBy($findDevicesQuery) as $device) {
+			$devices = $this->devicesConfigurationRepository->findAllBy(
+				$findDevicesQuery,
+				Documents\Devices\Device::class,
+			);
+
+			foreach ($devices as $device) {
 				$this->devices[$device->getId()->toString()] = $device;
 			}
 		}
 
 		$this->connectionManager->getLanConnection()->connect();
 
-		$this->connectionManager
-			->getLanConnection()
-			->on('message', function (Entities\API\Lan\DeviceEvent $message): void {
-				$findDeviceQuery = new DevicesQueries\Configuration\FindDevices();
-				$findDeviceQuery->byIdentifier($message->getId());
-				$findDeviceQuery->byType(Entities\SonoffDevice::TYPE);
+		$lanClient = $this->connectionManager->getLanConnection();
 
-				$device = $this->devicesConfigurationRepository->findOneBy($findDeviceQuery);
+		$lanClient->onMessage[] = function (API\Messages\Message $message): void {
+			if ($message instanceof API\Messages\Response\Lan\DeviceEvent) {
+				$findDeviceQuery = new Queries\Configuration\FindDevices();
+				$findDeviceQuery->byIdentifier($message->getId());
+
+				$device = $this->devicesConfigurationRepository->findOneBy(
+					$findDeviceQuery,
+					Documents\Devices\Device::class,
+				);
 
 				if ($device !== null) {
 					$this->queue->append(
 						$this->entityHelper->create(
-							Entities\Messages\StoreDeviceConnectionState::class,
+							Queue\Messages\StoreDeviceConnectionState::class,
 							[
 								'connector' => $device->getConnector(),
 								'identifier' => $device->getIdentifier(),
-								'state' => MetadataTypes\ConnectionState::STATE_CONNECTED,
+								'state' => DevicesTypes\ConnectionState::CONNECTED,
 							],
 						),
 					);
 
 					$this->handleDeviceEvent($device, $message);
 				}
-			});
+			}
+		};
 
-		$findDevicesQuery = new DevicesQueries\Configuration\FindDevices();
+		$findDevicesQuery = new Queries\Configuration\FindDevices();
 		$findDevicesQuery->forConnector($this->connector);
-		$findDevicesQuery->byType(Entities\SonoffDevice::TYPE);
 
-		foreach ($this->devicesConfigurationRepository->findAllBy($findDevicesQuery) as $device) {
+		$devices = $this->devicesConfigurationRepository->findAllBy(
+			$findDevicesQuery,
+			Documents\Devices\Device::class,
+		);
+
+		foreach ($devices as $device) {
 			if ($this->deviceHelper->getDeviceKey($device) !== null) {
 				$this->connectionManager
 					->getLanConnection()
@@ -161,22 +179,27 @@ final class Lan extends ClientProcess implements Client
 	 * @return Promise\PromiseInterface<bool>
 	 *
 	 * @throws DevicesExceptions\InvalidState
+	 * @throws Exceptions\InvalidArgument
 	 * @throws Exceptions\LanApiCall
 	 * @throws Exceptions\LanApiError
 	 * @throws Exceptions\Runtime
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws TypeError
+	 * @throws ValueError
 	 */
-	protected function readInformation(MetadataDocuments\DevicesModule\Device $device): Promise\PromiseInterface
+	protected function readInformation(
+		Documents\Devices\Device $device,
+	): Promise\PromiseInterface
 	{
 		if ($this->deviceHelper->getIpAddress($device) === null) {
 			$this->queue->append(
 				$this->entityHelper->create(
-					Entities\Messages\StoreDeviceConnectionState::class,
+					Queue\Messages\StoreDeviceConnectionState::class,
 					[
 						'connector' => $device->getConnector(),
 						'identifier' => $device->getIdentifier(),
-						'state' => MetadataTypes\ConnectionState::STATE_ALERT,
+						'state' => DevicesTypes\ConnectionState::ALERT,
 					],
 				),
 			);
@@ -193,14 +216,14 @@ final class Lan extends ClientProcess implements Client
 				$this->deviceHelper->getIpAddress($device),
 				$this->deviceHelper->getPort($device),
 			)
-			->then(function (Entities\API\Lan\DeviceInfo $result) use ($deferred, $device): void {
+			->then(function (API\Messages\Response\Lan\DeviceInfo $result) use ($deferred, $device): void {
 					$this->queue->append(
 						$this->entityHelper->create(
-							Entities\Messages\StoreDeviceConnectionState::class,
+							Queue\Messages\StoreDeviceConnectionState::class,
 							[
 								'connector' => $device->getConnector(),
 								'identifier' => $device->getIdentifier(),
-								'state' => MetadataTypes\ConnectionState::STATE_CONNECTED,
+								'state' => DevicesTypes\ConnectionState::CONNECTED,
 							],
 						),
 					);
@@ -213,11 +236,11 @@ final class Lan extends ClientProcess implements Client
 					if ($ex instanceof Exceptions\LanApiError) {
 						$this->queue->append(
 							$this->entityHelper->create(
-								Entities\Messages\StoreDeviceConnectionState::class,
+								Queue\Messages\StoreDeviceConnectionState::class,
 								[
 									'connector' => $device->getConnector(),
 									'identifier' => $device->getIdentifier(),
-									'state' => MetadataTypes\ConnectionState::STATE_ALERT,
+									'state' => DevicesTypes\ConnectionState::ALERT,
 								],
 							),
 						);
@@ -225,9 +248,9 @@ final class Lan extends ClientProcess implements Client
 						$this->logger->warning(
 							'Calling device lan api for reading state failed',
 							[
-								'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+								'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 								'type' => 'lan-client',
-								'exception' => BootstrapHelpers\Logger::buildException($ex),
+								'exception' => ApplicationHelpers\Logger::buildException($ex),
 								'connector' => [
 									'id' => $this->connector->getId()->toString(),
 								],
@@ -242,9 +265,9 @@ final class Lan extends ClientProcess implements Client
 						$this->logger->warning(
 							'Calling device lan api for reading state failed',
 							[
-								'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+								'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 								'type' => 'lan-client',
-								'exception' => BootstrapHelpers\Logger::buildException($ex),
+								'exception' => ApplicationHelpers\Logger::buildException($ex),
 								'connector' => [
 									'id' => $this->connector->getId()->toString(),
 								],
@@ -257,9 +280,9 @@ final class Lan extends ClientProcess implements Client
 						$this->logger->error(
 							'Could not call device lan api',
 							[
-								'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+								'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 								'type' => 'lan-client',
-								'exception' => BootstrapHelpers\Logger::buildException($ex),
+								'exception' => ApplicationHelpers\Logger::buildException($ex),
 								'connector' => [
 									'id' => $this->connector->getId()->toString(),
 								],
@@ -271,9 +294,7 @@ final class Lan extends ClientProcess implements Client
 
 						$this->dispatcher?->dispatch(
 							new DevicesEvents\TerminateConnector(
-								MetadataTypes\ConnectorSource::get(
-									MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-								),
+								MetadataTypes\Sources\Connector::SONOFF,
 								'Could not call device lan api',
 								$ex,
 							),
@@ -289,13 +310,16 @@ final class Lan extends ClientProcess implements Client
 	/**
 	 * @return Promise\PromiseInterface<bool>
 	 */
-	protected function readState(MetadataDocuments\DevicesModule\Device $device): Promise\PromiseInterface
+	protected function readState(Documents\Devices\Device $device): Promise\PromiseInterface
 	{
 		// Reading device state is not supported by LAN api
 		return Promise\resolve(true);
 	}
 
-	private function checkError(Exceptions\LanApiCall $ex, MetadataDocuments\DevicesModule\Device $device): void
+	private function checkError(
+		Exceptions\LanApiCall $ex,
+		Documents\Devices\Device $device,
+	): void
 	{
 		if (
 			in_array(
@@ -319,8 +343,8 @@ final class Lan extends ClientProcess implements Client
 	 * @throws Exceptions\Runtime
 	 */
 	private function handleDeviceEvent(
-		MetadataDocuments\DevicesModule\Device $device,
-		Entities\API\Lan\DeviceEvent $event,
+		Documents\Devices\Device $device,
+		API\Messages\Response\Lan\DeviceEvent $event,
 	): void
 	{
 		if ($event->getData() === null) {
@@ -329,18 +353,20 @@ final class Lan extends ClientProcess implements Client
 
 		// Special handling for Sonoff SPM devices acting as sub-devices
 		if ($event->getData()->getSubDeviceId() !== null) {
-			$findDeviceQuery = new DevicesQueries\Configuration\FindDevices();
+			$findDeviceQuery = new Queries\Configuration\FindDevices();
 			$findDeviceQuery->forParent($device);
 			$findDeviceQuery->byIdentifier($event->getData()->getSubDeviceId());
-			$findDeviceQuery->byType(Entities\SonoffDevice::TYPE);
 
-			$subDevice = $this->devicesConfigurationRepository->findOneBy($findDeviceQuery);
+			$subDevice = $this->devicesConfigurationRepository->findOneBy(
+				$findDeviceQuery,
+				Documents\Devices\Device::class,
+			);
 
 			if ($subDevice === null) {
 				$this->logger->error(
 					'Sonoff SPM sub-device could not be found',
 					[
-						'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+						'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 						'type' => 'lan-client',
 						'connector' => [
 							'id' => $this->connector->getId()->toString(),
@@ -365,109 +391,109 @@ final class Lan extends ClientProcess implements Client
 		if ($event->getData()->isSwitch() || $event->getData()->isLight()) {
 			if ($event->getData()->getSwitch() !== null) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::SWITCH,
-					Types\PropertyParameter::VALUE => $event->getData()->getSwitch(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::SWITCH,
+					Types\PropertyParameter::NAME->value => Types\Parameter::SWITCH->value,
+					Types\PropertyParameter::VALUE->value => $event->getData()->getSwitch(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::SWITCH->value,
 				];
 			}
 
 			if ($event->getData()->getStartup() !== null) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::STARTUP,
-					Types\PropertyParameter::VALUE => $event->getData()->getStartup(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::SWITCH,
+					Types\PropertyParameter::NAME->value => Types\Parameter::STARTUP->value,
+					Types\PropertyParameter::VALUE->value => $event->getData()->getStartup(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::SWITCH->value,
 				];
 			}
 
 			if ($event->getData()->getPulse() !== null) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::PULSE,
-					Types\PropertyParameter::VALUE => $event->getData()->getPulse(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::SWITCH,
+					Types\PropertyParameter::NAME->value => Types\Parameter::PULSE->value,
+					Types\PropertyParameter::VALUE->value => $event->getData()->getPulse(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::SWITCH->value,
 				];
 			}
 
 			if ($event->getData()->getPulseWidth() !== null) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::PULSE_WIDTH,
-					Types\PropertyParameter::VALUE => $event->getData()->getPulseWidth(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::SWITCH,
+					Types\PropertyParameter::NAME->value => Types\Parameter::PULSE_WIDTH->value,
+					Types\PropertyParameter::VALUE->value => $event->getData()->getPulseWidth(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::SWITCH->value,
 				];
 			}
 
 			if ($event->getData()->getBrightness() !== null) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::BRIGHTNESS_2,
-					Types\PropertyParameter::VALUE => $event->getData()->getBrightness(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::LIGHT,
+					Types\PropertyParameter::NAME->value => Types\Parameter::BRIGHTNESS_2->value,
+					Types\PropertyParameter::VALUE->value => $event->getData()->getBrightness(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::LIGHT->value,
 				];
 			}
 
 			if ($event->getData()->getMinimumBrightness() !== null) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::MINIMUM_BRIGHTNESS,
-					Types\PropertyParameter::VALUE => $event->getData()->getMinimumBrightness(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::LIGHT,
+					Types\PropertyParameter::NAME->value => Types\Parameter::MINIMUM_BRIGHTNESS->value,
+					Types\PropertyParameter::VALUE->value => $event->getData()->getMinimumBrightness(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::LIGHT->value,
 				];
 			}
 
 			if ($event->getData()->getMaximumBrightness() !== null) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::MAXIMUM_BRIGHTNESS,
-					Types\PropertyParameter::VALUE => $event->getData()->getMaximumBrightness(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::LIGHT,
+					Types\PropertyParameter::NAME->value => Types\Parameter::MAXIMUM_BRIGHTNESS->value,
+					Types\PropertyParameter::VALUE->value => $event->getData()->getMaximumBrightness(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::LIGHT->value,
 				];
 			}
 
 			if ($event->getData()->getMode() !== null) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::MODE,
-					Types\PropertyParameter::VALUE => $event->getData()->getMode(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::LIGHT,
+					Types\PropertyParameter::NAME->value => Types\Parameter::MODE->value,
+					Types\PropertyParameter::VALUE->value => $event->getData()->getMode(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::LIGHT->value,
 				];
 			}
 		} elseif ($event->getData()->isSwitches()) {
 			foreach ($event->getData()->getSwitchesStates() as $switchState) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::SWITCH,
-					Types\PropertyParameter::VALUE => $switchState->getSwitch(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::SWITCH . '_' . $switchState->getOutlet(),
+					Types\PropertyParameter::NAME->value => Types\Parameter::SWITCH->value,
+					Types\PropertyParameter::VALUE->value => $switchState->getSwitch(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::SWITCH->value . '_' . $switchState->getOutlet(),
 				];
 			}
 		}
 
 		if ($event->getData()->getRssi() !== null) {
 			$states[] = [
-				Types\PropertyParameter::NAME => Types\Parameter::RSSI,
-				Types\PropertyParameter::VALUE => $event->getData()->getRssi(),
+				Types\PropertyParameter::NAME->value => Types\Parameter::RSSI->value,
+				Types\PropertyParameter::VALUE->value => $event->getData()->getRssi(),
 			];
 		}
 
 		if ($event->getData()->getSsid() !== null) {
 			$states[] = [
-				Types\PropertyParameter::NAME => Types\Parameter::SSID,
-				Types\PropertyParameter::VALUE => $event->getData()->getSsid(),
+				Types\PropertyParameter::NAME->value => Types\Parameter::SSID->value,
+				Types\PropertyParameter::VALUE->value => $event->getData()->getSsid(),
 			];
 		}
 
 		if ($event->getData()->getBssid() !== null) {
 			$states[] = [
-				Types\PropertyParameter::NAME => Types\Parameter::BSSID,
-				Types\PropertyParameter::VALUE => $event->getData()->getBssid(),
+				Types\PropertyParameter::NAME->value => Types\Parameter::BSSID->value,
+				Types\PropertyParameter::VALUE->value => $event->getData()->getBssid(),
 			];
 		}
 
 		if ($event->getData()->getFirmwareVersion() !== null) {
 			$states[] = [
-				Types\PropertyParameter::NAME => Types\Parameter::FIRMWARE_VERSION,
-				Types\PropertyParameter::VALUE => $event->getData()->getFirmwareVersion(),
+				Types\PropertyParameter::NAME->value => Types\Parameter::FIRMWARE_VERSION->value,
+				Types\PropertyParameter::VALUE->value => $event->getData()->getFirmwareVersion(),
 			];
 		}
 
 		if ($event->getData()->getStatusLed() !== null) {
 			$states[] = [
-				Types\PropertyParameter::NAME => Types\Parameter::STATUS_LED,
-				Types\PropertyParameter::VALUE => $event->getData()->getStatusLed(),
+				Types\PropertyParameter::NAME->value => Types\Parameter::STATUS_LED->value,
+				Types\PropertyParameter::VALUE->value => $event->getData()->getStatusLed(),
 			];
 		}
 
@@ -477,7 +503,7 @@ final class Lan extends ClientProcess implements Client
 
 		$this->queue->append(
 			$this->entityHelper->create(
-				Entities\Messages\StoreParametersStates::class,
+				Queue\Messages\StoreParametersStates::class,
 				[
 					'connector' => $this->connector->getId(),
 					'identifier' => $device->getIdentifier(),
@@ -490,136 +516,136 @@ final class Lan extends ClientProcess implements Client
 	/**
 	 * @throws Exceptions\Runtime
 	 */
-	private function handleDeviceInfo(Entities\API\Lan\DeviceInfo $info): void
+	private function handleDeviceInfo(API\Messages\Response\Lan\DeviceInfo $info): void
 	{
 		$states = [];
 
 		if ($info->isSwitch() || $info->isLight()) {
 			if ($info->getSwitch() !== null) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::SWITCH,
-					Types\PropertyParameter::VALUE => $info->getSwitch(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::SWITCH,
+					Types\PropertyParameter::NAME->value => Types\Parameter::SWITCH->value,
+					Types\PropertyParameter::VALUE->value => $info->getSwitch(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::SWITCH->value,
 				];
 			}
 
 			if ($info->getStartup() !== null) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::STARTUP,
-					Types\PropertyParameter::VALUE => $info->getStartup(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::SWITCH,
+					Types\PropertyParameter::NAME->value => Types\Parameter::STARTUP->value,
+					Types\PropertyParameter::VALUE->value => $info->getStartup(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::SWITCH->value,
 				];
 			}
 
 			if ($info->getPulse() !== null) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::PULSE,
-					Types\PropertyParameter::VALUE => $info->getPulse(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::SWITCH,
+					Types\PropertyParameter::NAME->value => Types\Parameter::PULSE->value,
+					Types\PropertyParameter::VALUE->value => $info->getPulse(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::SWITCH->value,
 				];
 			}
 
 			if ($info->getPulseWidth() !== null) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::PULSE_WIDTH,
-					Types\PropertyParameter::VALUE => $info->getPulseWidth(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::SWITCH,
+					Types\PropertyParameter::NAME->value => Types\Parameter::PULSE_WIDTH->value,
+					Types\PropertyParameter::VALUE->value => $info->getPulseWidth(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::SWITCH->value,
 				];
 			}
 
 			if ($info->getBrightness() !== null) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::BRIGHTNESS_2,
-					Types\PropertyParameter::VALUE => $info->getBrightness(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::LIGHT,
+					Types\PropertyParameter::NAME->value => Types\Parameter::BRIGHTNESS_2->value,
+					Types\PropertyParameter::VALUE->value => $info->getBrightness(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::LIGHT->value,
 				];
 			}
 
 			if ($info->getMinimumBrightness() !== null) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::MINIMUM_BRIGHTNESS,
-					Types\PropertyParameter::VALUE => $info->getMinimumBrightness(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::LIGHT,
+					Types\PropertyParameter::NAME->value => Types\Parameter::MINIMUM_BRIGHTNESS->value,
+					Types\PropertyParameter::VALUE->value => $info->getMinimumBrightness(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::LIGHT->value,
 				];
 			}
 
 			if ($info->getMaximumBrightness() !== null) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::MAXIMUM_BRIGHTNESS,
-					Types\PropertyParameter::VALUE => $info->getMaximumBrightness(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::LIGHT,
+					Types\PropertyParameter::NAME->value => Types\Parameter::MAXIMUM_BRIGHTNESS->value,
+					Types\PropertyParameter::VALUE->value => $info->getMaximumBrightness(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::LIGHT->value,
 				];
 			}
 
 			if ($info->getMode() !== null) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::MODE,
-					Types\PropertyParameter::VALUE => $info->getMode(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::LIGHT,
+					Types\PropertyParameter::NAME->value => Types\Parameter::MODE->value,
+					Types\PropertyParameter::VALUE->value => $info->getMode(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::LIGHT->value,
 				];
 			}
 		} elseif ($info->isSwitches()) {
 			foreach ($info->getSwitchesStates() as $switchState) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::SWITCH,
-					Types\PropertyParameter::VALUE => $switchState->getSwitch(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::SWITCH . '_' . $switchState->getOutlet(),
+					Types\PropertyParameter::NAME->value => Types\Parameter::SWITCH->value,
+					Types\PropertyParameter::VALUE->value => $switchState->getSwitch(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::SWITCH->value . '_' . $switchState->getOutlet(),
 				];
 			}
 
 			foreach ($info->getSwitchesPulses() as $switchPulse) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::PULSE,
-					Types\PropertyParameter::VALUE => $switchPulse->getPulse(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::SWITCH . '_' . $switchPulse->getOutlet(),
+					Types\PropertyParameter::NAME->value => Types\Parameter::PULSE->value,
+					Types\PropertyParameter::VALUE->value => $switchPulse->getPulse(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::SWITCH->value . '_' . $switchPulse->getOutlet(),
 				];
 
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::PULSE_WIDTH,
-					Types\PropertyParameter::VALUE => $switchPulse->getWidth(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::SWITCH . '_' . $switchPulse->getOutlet(),
+					Types\PropertyParameter::NAME->value => Types\Parameter::PULSE_WIDTH->value,
+					Types\PropertyParameter::VALUE->value => $switchPulse->getWidth(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::SWITCH->value . '_' . $switchPulse->getOutlet(),
 				];
 			}
 
 			foreach ($info->getSwitchesConfiguration() as $switchConfiguration) {
 				$states[] = [
-					Types\PropertyParameter::NAME => Types\Parameter::STARTUP,
-					Types\PropertyParameter::VALUE => $switchConfiguration->getStartup(),
-					Types\PropertyParameter::GROUP => Types\ParameterGroup::SWITCH . '_' . $switchConfiguration->getOutlet(),
+					Types\PropertyParameter::NAME->value => Types\Parameter::STARTUP->value,
+					Types\PropertyParameter::VALUE->value => $switchConfiguration->getStartup(),
+					Types\PropertyParameter::GROUP->value => Types\ParameterGroup::SWITCH->value . '_' . $switchConfiguration->getOutlet(),
 				];
 			}
 		}
 
 		$states[] = [
-			Types\PropertyParameter::NAME => Types\Parameter::RSSI,
-			Types\PropertyParameter::VALUE => $info->getRssi(),
+			Types\PropertyParameter::NAME->value => Types\Parameter::RSSI->value,
+			Types\PropertyParameter::VALUE->value => $info->getRssi(),
 		];
 
 		$states[] = [
-			Types\PropertyParameter::NAME => Types\Parameter::SSID,
-			Types\PropertyParameter::VALUE => $info->getSsid(),
+			Types\PropertyParameter::NAME->value => Types\Parameter::SSID->value,
+			Types\PropertyParameter::VALUE->value => $info->getSsid(),
 		];
 
 		$states[] = [
-			Types\PropertyParameter::NAME => Types\DevicePropertyIdentifier::HARDWARE_MAC_ADDRESS,
-			Types\PropertyParameter::VALUE => $info->getBssid(),
+			Types\PropertyParameter::NAME->value => Types\DevicePropertyIdentifier::HARDWARE_MAC_ADDRESS->value,
+			Types\PropertyParameter::VALUE->value => $info->getBssid(),
 		];
 
 		$states[] = [
-			Types\PropertyParameter::NAME => Types\Parameter::FIRMWARE_VERSION,
-			Types\PropertyParameter::VALUE => $info->getFirmwareVersion(),
+			Types\PropertyParameter::NAME->value => Types\Parameter::FIRMWARE_VERSION->value,
+			Types\PropertyParameter::VALUE->value => $info->getFirmwareVersion(),
 		];
 
 		if ($info->getStatusLed() !== null) {
 			$states[] = [
-				Types\PropertyParameter::NAME => Types\Parameter::STATUS_LED,
-				Types\PropertyParameter::VALUE => $info->getStatusLed(),
+				Types\PropertyParameter::NAME->value => Types\Parameter::STATUS_LED->value,
+				Types\PropertyParameter::VALUE->value => $info->getStatusLed(),
 			];
 		}
 
 		$this->queue->append(
 			$this->entityHelper->create(
-				Entities\Messages\StoreParametersStates::class,
+				Queue\Messages\StoreParametersStates::class,
 				[
 					'connector' => $this->connector->getId(),
 					'identifier' => $info->getId(),

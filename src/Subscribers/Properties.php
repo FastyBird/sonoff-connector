@@ -19,12 +19,14 @@ use Doctrine\Common;
 use Doctrine\ORM;
 use Doctrine\Persistence;
 use FastyBird\Connector\Sonoff\Entities;
+use FastyBird\Connector\Sonoff\Exceptions;
+use FastyBird\Connector\Sonoff\Queries;
 use FastyBird\Connector\Sonoff\Types;
+use FastyBird\Library\Application\Exceptions as ApplicationExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Entities as DevicesEntities;
-use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
 use FastyBird\Module\Devices\Models as DevicesModels;
-use FastyBird\Module\Devices\Queries as DevicesQueries;
+use FastyBird\Module\Devices\Types as DevicesTypes;
 use FastyBird\Module\Devices\Utilities as DevicesUtilities;
 use IPub\DoctrineCrud;
 use Nette;
@@ -60,7 +62,8 @@ final class Properties implements Common\EventSubscriber
 	/**
 	 * @param Persistence\Event\LifecycleEventArgs<ORM\EntityManagerInterface> $eventArgs
 	 *
-	 * @throws DevicesExceptions\InvalidState
+	 * @throws ApplicationExceptions\InvalidState
+	 * @throws Exceptions\InvalidArgument
 	 * @throws DoctrineCrud\Exceptions\InvalidArgumentException
 	 */
 	public function postPersist(Persistence\Event\LifecycleEventArgs $eventArgs): void
@@ -69,11 +72,11 @@ final class Properties implements Common\EventSubscriber
 		$entity = $eventArgs->getObject();
 
 		// Check for valid entity
-		if (!$entity instanceof Entities\SonoffDevice) {
+		if (!$entity instanceof Entities\Devices\Device) {
 			return;
 		}
 
-		$findDevicePropertyQuery = new DevicesQueries\Entities\FindDeviceProperties();
+		$findDevicePropertyQuery = new Queries\Entities\FindDeviceProperties();
 		$findDevicePropertyQuery->forDevice($entity);
 		$findDevicePropertyQuery->byIdentifier(Types\DevicePropertyIdentifier::STATE);
 
@@ -87,13 +90,13 @@ final class Properties implements Common\EventSubscriber
 
 		if ($stateProperty !== null) {
 			$this->propertiesManager->update($stateProperty, Utils\ArrayHash::from([
-				'dataType' => MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_ENUM),
+				'dataType' => MetadataTypes\DataType::ENUM,
 				'unit' => null,
 				'format' => [
-					MetadataTypes\ConnectionState::STATE_CONNECTED,
-					MetadataTypes\ConnectionState::STATE_DISCONNECTED,
-					MetadataTypes\ConnectionState::STATE_ALERT,
-					MetadataTypes\ConnectionState::STATE_UNKNOWN,
+					DevicesTypes\ConnectionState::CONNECTED->value,
+					DevicesTypes\ConnectionState::DISCONNECTED->value,
+					DevicesTypes\ConnectionState::ALERT->value,
+					DevicesTypes\ConnectionState::UNKNOWN->value,
 				],
 				'settable' => false,
 				'queryable' => false,
@@ -102,15 +105,15 @@ final class Properties implements Common\EventSubscriber
 			$this->propertiesManager->create(Utils\ArrayHash::from([
 				'device' => $entity,
 				'entity' => DevicesEntities\Devices\Properties\Dynamic::class,
-				'identifier' => Types\DevicePropertyIdentifier::STATE,
-				'name' => DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::STATE),
-				'dataType' => MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_ENUM),
+				'identifier' => Types\DevicePropertyIdentifier::STATE->value,
+				'name' => DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::STATE->value),
+				'dataType' => MetadataTypes\DataType::ENUM,
 				'unit' => null,
 				'format' => [
-					MetadataTypes\ConnectionState::STATE_CONNECTED,
-					MetadataTypes\ConnectionState::STATE_DISCONNECTED,
-					MetadataTypes\ConnectionState::STATE_ALERT,
-					MetadataTypes\ConnectionState::STATE_UNKNOWN,
+					DevicesTypes\ConnectionState::CONNECTED->value,
+					DevicesTypes\ConnectionState::DISCONNECTED->value,
+					DevicesTypes\ConnectionState::ALERT->value,
+					DevicesTypes\ConnectionState::UNKNOWN->value,
 				],
 				'settable' => false,
 				'queryable' => false,

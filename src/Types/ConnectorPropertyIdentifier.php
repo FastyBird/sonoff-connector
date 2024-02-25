@@ -15,9 +15,6 @@
 
 namespace FastyBird\Connector\Sonoff\Types;
 
-use Consistence;
-use function strval;
-
 /**
  * Connector property identifiers
  *
@@ -26,36 +23,23 @@ use function strval;
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-class ConnectorPropertyIdentifier extends Consistence\Enum\Enum
+enum ConnectorPropertyIdentifier: string
 {
 
-	/**
-	 * Define device states
-	 */
-	public const CLIENT_MODE = 'mode';
+	case CLIENT_MODE = 'mode';
 
-	public const USERNAME = 'username';
+	case USERNAME = 'username';
 
-	public const PASSWORD = 'password';
+	case PASSWORD = 'password';
 
-	public const REGION = 'region';
+	case REGION = 'region';
 
-	public const APP_ID = 'app_id';
+	case APP_ID = 'app_id';
 
-	public const APP_SECRET = 'app_secret';
+	case APP_SECRET = 'app_secret';
 
-	public const GATEWAY_ID = 'gateway_id';
+	case GATEWAY_ID = 'gateway_id';
 
-	public const GATEWAY_API_KEY = 'gateway_api_key';
-
-	public function getValue(): string
-	{
-		return strval(parent::getValue());
-	}
-
-	public function __toString(): string
-	{
-		return self::getValue();
-	}
+	case GATEWAY_API_KEY = 'gateway_api_key';
 
 }

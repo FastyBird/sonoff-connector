@@ -15,9 +15,6 @@
 
 namespace FastyBird\Connector\Sonoff\Types;
 
-use Consistence;
-use function strval;
-
 /**
  * CoolKit api endpoint types
  *
@@ -26,28 +23,15 @@ use function strval;
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-class CloudApiEndpoint extends Consistence\Enum\Enum
+enum CloudApiEndpoint: string
 {
 
-	/**
-	 * Define versions
-	 */
-	public const CHINA = 'https://cn-apia.coolkit.cn';
+	case CHINA = 'https://cn-apia.coolkit.cn';
 
-	public const AMERICA = 'https://us-apia.coolkit.cc';
+	case AMERICA = 'https://us-apia.coolkit.cc';
 
-	public const EUROPE = 'https://eu-apia.coolkit.cc';
+	case EUROPE = 'https://eu-apia.coolkit.cc';
 
-	public const ASIA = 'https://as-apia.coolkit.cc';
-
-	public function getValue(): string
-	{
-		return strval(parent::getValue());
-	}
-
-	public function __toString(): string
-	{
-		return self::getValue();
-	}
+	case ASIA = 'https://as-apia.coolkit.cc';
 
 }

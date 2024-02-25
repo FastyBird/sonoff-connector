@@ -15,7 +15,7 @@
 
 namespace FastyBird\Connector\Sonoff\ValueObjects;
 
-use FastyBird\Connector\Sonoff\Entities;
+use FastyBird\Connector\Sonoff\API;
 use Orisai\ObjectMapper;
 use React\EventLoop;
 use React\Promise;
@@ -29,27 +29,27 @@ use stdClass;
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-final class WsMessage implements ObjectMapper\MappedObject
+final readonly class WsMessage implements ObjectMapper\MappedObject
 {
 
 	/**
-	 * @param Promise\Deferred<Entities\API\Entity>|null $deferred
+	 * @param Promise\Deferred<API\Messages\Message>|null $deferred
 	 */
 	public function __construct(
 		#[ObjectMapper\Rules\InstanceOfValue(type: stdClass::class)]
-		private readonly stdClass $payload,
+		private stdClass $payload,
 		#[ObjectMapper\Rules\StringValue(notEmpty: true)]
-		private readonly string $action,
+		private string $action,
 		#[ObjectMapper\Rules\AnyOf([
 			new ObjectMapper\Rules\InstanceOfValue(type: Promise\Deferred::class),
 			new ObjectMapper\Rules\NullValue(),
 		])]
-		private readonly Promise\Deferred|null $deferred = null,
+		private Promise\Deferred|null $deferred = null,
 		#[ObjectMapper\Rules\AnyOf([
 			new ObjectMapper\Rules\InstanceOfValue(type: EventLoop\TimerInterface::class),
 			new ObjectMapper\Rules\NullValue(),
 		])]
-		private readonly EventLoop\TimerInterface|null $timer = null,
+		private EventLoop\TimerInterface|null $timer = null,
 	)
 	{
 	}
@@ -65,7 +65,7 @@ final class WsMessage implements ObjectMapper\MappedObject
 	}
 
 	/**
-	 * @return Promise\Deferred<Entities\API\Entity>|null
+	 * @return Promise\Deferred<API\Messages\Message>|null
 	 */
 	public function getDeferred(): Promise\Deferred|null
 	{

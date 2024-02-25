@@ -8,7 +8,8 @@ use FastyBird\Connector\Sonoff\API;
 use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Services;
 use FastyBird\Connector\Sonoff\Tests;
-use FastyBird\Library\Bootstrap\Exceptions as BootstrapExceptions;
+use FastyBird\Connector\Sonoff\Types;
+use FastyBird\Library\Application\Exceptions as ApplicationExceptions;
 use Fig\Http\Message\RequestMethodInterface;
 use GuzzleHttp;
 use Nette\DI;
@@ -17,6 +18,10 @@ use Psr\Http;
 use RuntimeException;
 use function strval;
 
+/**
+ * @runTestsInSeparateProcesses
+ * @preserveGlobalState disabled
+ */
 final class CloudApiTest extends Tests\Cases\Unit\DbTestCase
 {
 
@@ -25,7 +30,7 @@ final class CloudApiTest extends Tests\Cases\Unit\DbTestCase
 	private const PASSWORD = 'dBCQZohQNR2U4rW9';
 
 	/**
-	 * @throws BootstrapExceptions\InvalidArgument
+	 * @throws ApplicationExceptions\InvalidArgument
 	 * @throws DI\MissingServiceException
 	 * @throws Exceptions\InvalidArgument
 	 * @throws Exceptions\CloudApiCall
@@ -149,7 +154,7 @@ final class CloudApiTest extends Tests\Cases\Unit\DbTestCase
 	}
 
 	/**
-	 * @throws BootstrapExceptions\InvalidArgument
+	 * @throws ApplicationExceptions\InvalidArgument
 	 * @throws DI\MissingServiceException
 	 * @throws Exceptions\InvalidArgument
 	 * @throws Exceptions\CloudApiCall
@@ -235,7 +240,7 @@ final class CloudApiTest extends Tests\Cases\Unit\DbTestCase
 	}
 
 	/**
-	 * @throws BootstrapExceptions\InvalidArgument
+	 * @throws ApplicationExceptions\InvalidArgument
 	 * @throws DI\MissingServiceException
 	 * @throws Exceptions\InvalidArgument
 	 * @throws Exceptions\CloudApiCall
@@ -317,11 +322,11 @@ final class CloudApiTest extends Tests\Cases\Unit\DbTestCase
 		$device = $cloudApi->getThing('1000191aa7', 1, false);
 
 		self::assertSame('1000191aa7', $device->getDeviceId());
-		self::assertInstanceOf(Sonoff\Entities\Uiid\Uiid1::class, $device->getState());
+		self::assertInstanceOf(API\Messages\Uiid\Uiid1::class, $device->getState());
 	}
 
 	/**
-	 * @throws BootstrapExceptions\InvalidArgument
+	 * @throws ApplicationExceptions\InvalidArgument
 	 * @throws DI\MissingServiceException
 	 * @throws Exceptions\InvalidArgument
 	 * @throws Exceptions\CloudApiCall
@@ -400,7 +405,7 @@ final class CloudApiTest extends Tests\Cases\Unit\DbTestCase
 			Sonoff\Constants::DEFAULT_APP_SECRET,
 		);
 
-		$result = $cloudApi->setThingState('1000191aa7', 'switch', 'off', 'switches', 0, 1, false);
+		$result = $cloudApi->setThingState('1000191aa7', 'switch', 'off', Types\ChannelGroup::SWITCHES, 0, 1, false);
 
 		self::assertTrue($result);
 	}

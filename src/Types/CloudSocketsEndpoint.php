@@ -15,9 +15,6 @@
 
 namespace FastyBird\Connector\Sonoff\Types;
 
-use Consistence;
-use function strval;
-
 /**
  * CoolKit sockets endpoint types
  *
@@ -26,28 +23,15 @@ use function strval;
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-class CloudSocketsEndpoint extends Consistence\Enum\Enum
+enum CloudSocketsEndpoint: string
 {
 
-	/**
-	 * Define versions
-	 */
-	public const CHINA = 'https://cn-dispa.coolkit.cn';
+	case CHINA = 'https://cn-dispa.coolkit.cn';
 
-	public const AMERICA = 'https://us-dispa.coolkit.cc';
+	case AMERICA = 'https://us-dispa.coolkit.cc';
 
-	public const EUROPE = 'https://eu-dispa.coolkit.cc';
+	case EUROPE = 'https://eu-dispa.coolkit.cc';
 
-	public const ASIA = 'https://as-dispa.coolkit.cc';
-
-	public function getValue(): string
-	{
-		return strval(parent::getValue());
-	}
-
-	public function __toString(): string
-	{
-		return self::getValue();
-	}
+	case ASIA = 'https://as-dispa.coolkit.cc';
 
 }

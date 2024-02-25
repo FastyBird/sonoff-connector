@@ -16,10 +16,10 @@
 namespace FastyBird\Connector\Sonoff\Clients;
 
 use BadMethodCallException;
+use FastyBird\Connector\Sonoff\Documents;
 use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Helpers;
 use FastyBird\DateTimeFactory;
-use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
 use FastyBird\Module\Devices\Utilities as DevicesUtilities;
@@ -29,7 +29,10 @@ use React\EventLoop;
 use React\Promise;
 use RuntimeException;
 use Throwable;
+use TypeError;
+use ValueError;
 use function in_array;
+use function React\Async\async;
 
 /**
  * Lan client
@@ -53,7 +56,7 @@ final class Auto extends ClientProcess implements Client
 		DevicesUtilities\DeviceConnection $deviceConnectionManager,
 		DateTimeFactory\Factory $dateTimeFactory,
 		EventLoop\LoopInterface $eventLoop,
-		private readonly MetadataDocuments\DevicesModule\Connector $connector,
+		private readonly Documents\Connectors\Connector $connector,
 		private readonly LanFactory $lanClientFactory,
 		private readonly CloudFactory $cloudClientFactory,
 	)
@@ -74,6 +77,8 @@ final class Auto extends ClientProcess implements Client
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
 	 * @throws RuntimeException
+	 * @throws TypeError
+	 * @throws ValueError
 	 */
 	public function connect(): void
 	{
@@ -87,9 +92,9 @@ final class Auto extends ClientProcess implements Client
 
 		$this->eventLoop->addTimer(
 			self::HANDLER_START_DELAY,
-			function (): void {
+			async(function (): void {
 				$this->registerLoopHandler();
-			},
+			}),
 		);
 
 		$this->cloudClient->connect();
@@ -98,9 +103,12 @@ final class Auto extends ClientProcess implements Client
 
 	/**
 	 * @throws DevicesExceptions\InvalidState
+	 * @throws Exceptions\InvalidArgument
 	 * @throws Exceptions\InvalidState
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws TypeError
+	 * @throws ValueError
 	 */
 	public function disconnect(): void
 	{
@@ -118,6 +126,7 @@ final class Auto extends ClientProcess implements Client
 	 * @return Promise\PromiseInterface<bool>
 	 *
 	 * @throws DevicesExceptions\InvalidState
+	 * @throws Exceptions\InvalidArgument
 	 * @throws Exceptions\CloudApiCall
 	 * @throws Exceptions\CloudApiError
 	 * @throws Exceptions\LanApiCall
@@ -125,8 +134,12 @@ final class Auto extends ClientProcess implements Client
 	 * @throws Exceptions\Runtime
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws TypeError
+	 * @throws ValueError
 	 */
-	protected function readInformation(MetadataDocuments\DevicesModule\Device $device): Promise\PromiseInterface
+	protected function readInformation(
+		Documents\Devices\Device $device,
+	): Promise\PromiseInterface
 	{
 		$deferred = new Promise\Deferred();
 
@@ -164,13 +177,16 @@ final class Auto extends ClientProcess implements Client
 	 * @return Promise\PromiseInterface<bool>
 	 *
 	 * @throws DevicesExceptions\InvalidState
+	 * @throws Exceptions\InvalidArgument
 	 * @throws Exceptions\InvalidState
 	 * @throws Exceptions\CloudApiCall
 	 * @throws Exceptions\CloudApiError
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws TypeError
+	 * @throws ValueError
 	 */
-	protected function readState(MetadataDocuments\DevicesModule\Device $device): Promise\PromiseInterface
+	protected function readState(Documents\Devices\Device $device): Promise\PromiseInterface
 	{
 		$deferred = new Promise\Deferred();
 

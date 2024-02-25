@@ -15,9 +15,6 @@
 
 namespace FastyBird\Connector\Sonoff\Types;
 
-use Consistence;
-use function strval;
-
 /**
  * Property parameters
  *
@@ -26,23 +23,13 @@ use function strval;
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-class PropertyParameter extends Consistence\Enum\Enum
+enum PropertyParameter: string
 {
 
-	public const NAME = 'name';
+	case NAME = 'name';
 
-	public const VALUE = 'value';
+	case VALUE = 'value';
 
-	public const GROUP = 'group';
-
-	public function getValue(): string
-	{
-		return strval(parent::getValue());
-	}
-
-	public function __toString(): string
-	{
-		return self::getValue();
-	}
+	case GROUP = 'group';
 
 }

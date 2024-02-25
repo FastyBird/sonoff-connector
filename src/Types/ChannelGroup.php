@@ -15,9 +15,6 @@
 
 namespace FastyBird\Connector\Sonoff\Types;
 
-use Consistence;
-use function strval;
-
 /**
  * Device parameters channels groups
  *
@@ -26,28 +23,15 @@ use function strval;
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-class ChannelGroup extends Consistence\Enum\Enum
+enum ChannelGroup: string
 {
 
-	/**
-	 * Define versions
-	 */
-	public const SWITCHES = 'switches';
+	case SWITCHES = 'switches';
 
-	public const CONFIGURE = 'configure';
+	case CONFIGURE = 'configure';
 
-	public const PULSES = 'pulses';
+	case PULSES = 'pulses';
 
-	public const RF_LIST = 'rfList';
-
-	public function getValue(): string
-	{
-		return strval(parent::getValue());
-	}
-
-	public function __toString(): string
-	{
-		return self::getValue();
-	}
+	case RF_LIST = 'rfList';
 
 }

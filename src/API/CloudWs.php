@@ -15,17 +15,16 @@
 
 namespace FastyBird\Connector\Sonoff\API;
 
+use Closure;
 use DateTimeInterface;
-use Evenement;
 use FastyBird\Connector\Sonoff;
-use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Helpers;
 use FastyBird\Connector\Sonoff\Services;
 use FastyBird\Connector\Sonoff\Types;
 use FastyBird\Connector\Sonoff\ValueObjects;
 use FastyBird\DateTimeFactory;
-use FastyBird\Library\Bootstrap\Helpers as BootstrapHelpers;
+use FastyBird\Library\Application\Helpers as ApplicationHelpers;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Schemas as MetadataSchemas;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
@@ -63,11 +62,10 @@ use const DIRECTORY_SEPARATOR;
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-final class CloudWs implements Evenement\EventEmitterInterface
+final class CloudWs
 {
 
 	use Nette\SmartObject;
-	use Evenement\EventEmitterTrait;
 
 	private const SOCKETS_LOGIN_API_ENDPOINT = '/dispatch/app';
 
@@ -90,6 +88,21 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	private const QUERY_ACTION = 'query';
 
 	private const WAIT_FOR_REPLY_TIMEOUT = 15.0;
+
+	/** @var array<Closure(): void> */
+	public array $onConnected = [];
+
+	/** @var array<Closure(): void> */
+	public array $onDisconnected = [];
+
+	/** @var array<Closure(): void> */
+	public array $onLost = [];
+
+	/** @var array<Closure(Messages\Message $message): void> */
+	public array $onMessage = [];
+
+	/** @var array<Closure(Throwable $error): void> */
+	public array $onError = [];
 
 	private bool $connecting = false;
 
@@ -118,7 +131,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 		private readonly Types\Region $region,
 		private readonly Services\HttpClientFactory $httpClientFactory,
 		private readonly Services\WebSocketClientFactory $webSocketClientFactory,
-		private readonly Helpers\Entity $entityHelper,
+		private readonly Helpers\MessageBuilder $entityHelper,
 		private readonly Sonoff\Logger $logger,
 		private readonly MetadataSchemas\Validator $schemaValidator,
 		private readonly DateTimeFactory\Factory $dateTimeFactory,
@@ -161,7 +174,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 
 				$this->doWsHandshake()
 					->then(
-						function (Entities\API\Sockets\ApplicationHandshake $response): void {
+						function (Messages\Response\Sockets\ApplicationHandshake $response): void {
 							$this->connecting = false;
 							$this->connected = true;
 
@@ -171,7 +184,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 							$this->logger->debug(
 								'Connected to Sonoff sockets server',
 								[
-									'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+									'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 									'type' => 'cloud-ws-api',
 								],
 							);
@@ -195,15 +208,13 @@ final class CloudWs implements Evenement\EventEmitterInterface
 							$this->connecting = false;
 							$this->connected = false;
 
-							$this->emit(
-								'error',
-								[
-									new Exceptions\InvalidState(
-										'Handshake with Sonoff sockets server failed',
-										$ex->getCode(),
-										$ex,
-									),
-								],
+							Utils\Arrays::invoke(
+								$this->onError,
+								new Exceptions\InvalidState(
+									'Handshake with Sonoff sockets server failed',
+									$ex->getCode(),
+									$ex,
+								),
 							);
 						},
 					);
@@ -215,15 +226,13 @@ final class CloudWs implements Evenement\EventEmitterInterface
 				$connection->on('error', function (Throwable $ex): void {
 					$this->lost();
 
-					$this->emit(
-						'error',
-						[
-							new Exceptions\InvalidState(
-								'An error occurred on Sonoff sockets server connection',
-								$ex->getCode(),
-								$ex,
-							),
-						],
+					Utils\Arrays::invoke(
+						$this->onError,
+						new Exceptions\InvalidState(
+							'An error occurred on Sonoff sockets server connection',
+							$ex->getCode(),
+							$ex,
+						),
 					);
 				});
 
@@ -231,7 +240,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 					$this->logger->debug(
 						'Connection to Sonoff sockets server was closed',
 						[
-							'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+							'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 							'type' => 'cloud-ws-api',
 							'connection' => [
 								'code' => $code,
@@ -242,10 +251,10 @@ final class CloudWs implements Evenement\EventEmitterInterface
 
 					$this->disconnect();
 
-					$this->emit('disconnected');
+					Utils\Arrays::invoke($this->onDisconnected);
 				});
 
-				$this->emit('connected');
+				Utils\Arrays::invoke($this->onConnected);
 
 				$deferred->resolve(true);
 			})
@@ -255,7 +264,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 				$this->connecting = false;
 				$this->connected = false;
 
-				$this->emit('error', [$ex]);
+				Utils\Arrays::invoke($this->onError, $ex);
 
 				$deferred->reject(
 					new Exceptions\InvalidState(
@@ -312,7 +321,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @return Promise\PromiseInterface<Entities\API\Sockets\DeviceStateEvent>
+	 * @return Promise\PromiseInterface<Messages\Response\Sockets\DeviceStateEvent>
 	 */
 	public function readStates(string $id, string $apiKey): Promise\PromiseInterface
 	{
@@ -333,7 +342,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @return Promise\PromiseInterface<Entities\API\Sockets\DeviceStateEvent>
+	 * @return Promise\PromiseInterface<Messages\Response\Sockets\DeviceStateEvent>
 	 */
 	public function writeState(
 		string $id,
@@ -379,7 +388,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	 * @throws Exceptions\CloudWsCall
 	 * @throws RuntimeException
 	 */
-	private function login(): Entities\API\Sockets\ApplicationLogin
+	private function login(): Messages\Response\Sockets\ApplicationLogin
 	{
 		$request = $this->createHttpRequest(
 			RequestMethodInterface::METHOD_GET,
@@ -405,11 +414,11 @@ final class CloudWs implements Evenement\EventEmitterInterface
 			);
 		}
 
-		return $this->createEntity(Entities\API\Sockets\ApplicationLogin::class, $data);
+		return $this->createEntity(Messages\Response\Sockets\ApplicationLogin::class, $data);
 	}
 
 	/**
-	 * @return Promise\PromiseInterface<Entities\API\Sockets\ApplicationHandshake>
+	 * @return Promise\PromiseInterface<Messages\Response\Sockets\ApplicationHandshake>
 	 */
 	private function doWsHandshake(): Promise\PromiseInterface
 	{
@@ -443,7 +452,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	{
 		$this->lost = $this->dateTimeFactory->getNow();
 
-		$this->emit('lost');
+		Utils\Arrays::invoke($this->onLost);
 
 		$this->disconnect();
 	}
@@ -459,13 +468,13 @@ final class CloudWs implements Evenement\EventEmitterInterface
 			$this->logger->debug(
 				'Received message from Sonoff sockets server not be parsed',
 				[
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+					'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 					'type' => 'cloud-ws-api',
-					'exception' => BootstrapHelpers\Logger::buildException($ex),
+					'exception' => ApplicationHelpers\Logger::buildException($ex),
 				],
 			);
 
-			$this->emit('error', [$ex]);
+			Utils\Arrays::invoke($this->onError, $ex);
 
 			return;
 		}
@@ -485,11 +494,11 @@ final class CloudWs implements Evenement\EventEmitterInterface
 				$entity = $this->parseEntity(
 					$content,
 					self::SYSTEM_MESSAGE_SCHEMA_FILENAME,
-					Entities\API\Sockets\DeviceConnectionStateEvent::class,
+					Messages\Response\Sockets\DeviceConnectionStateEvent::class,
 				);
 
 				if ($entity !== null) {
-					$this->emit('message', [$entity]);
+					Utils\Arrays::invoke($this->onMessage, $entity);
 				}
 			}
 		}
@@ -518,7 +527,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 			$this->parseEntity(
 				$content,
 				self::HANDSHAKE_MESSAGE_SCHEMA_FILENAME,
-				Entities\API\Sockets\ApplicationHandshake::class,
+				Messages\Response\Sockets\ApplicationHandshake::class,
 				$message->getDeferred(),
 			);
 
@@ -541,20 +550,20 @@ final class CloudWs implements Evenement\EventEmitterInterface
 				$entity = $this->parseEntity(
 					Utils\Json::encode($payload),
 					self::DEVICE_UPDATE_MESSAGE_SCHEMA_FILENAME,
-					Entities\API\Sockets\DeviceStateEvent::class,
+					Messages\Response\Sockets\DeviceStateEvent::class,
 					$message?->getDeferred(),
 				);
 			} catch (Utils\JsonException) {
 				$entity = $this->parseEntity(
 					$content,
 					self::DEVICE_UPDATE_MESSAGE_SCHEMA_FILENAME,
-					Entities\API\Sockets\DeviceStateEvent::class,
+					Messages\Response\Sockets\DeviceStateEvent::class,
 					$message?->getDeferred(),
 				);
 			}
 
 			if ($message?->getDeferred() === null && $entity !== null) {
-				$this->emit('message', [$entity]);
+				Utils\Arrays::invoke($this->onMessage, $entity);
 			}
 
 			unset($this->messages[$sequence]);
@@ -568,12 +577,12 @@ final class CloudWs implements Evenement\EventEmitterInterface
 			$entity = $this->parseEntity(
 				$content,
 				self::DEVICE_QUERY_MESSAGE_SCHEMA_FILENAME,
-				Entities\API\Sockets\DeviceStateEvent::class,
+				Messages\Response\Sockets\DeviceStateEvent::class,
 				$this->messages[$sequence]->getDeferred(),
 			);
 
 			if ($message?->getDeferred() === null && $entity !== null) {
-				$this->emit('message', [$entity]);
+				Utils\Arrays::invoke($this->onMessage, $entity);
 			}
 
 			unset($this->messages[$sequence]);
@@ -581,7 +590,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @template T of Entities\API\Entity
+	 * @template T of Messages\Message
 	 *
 	 * @param class-string<T> $entityClass
 	 * @param Promise\Deferred<T>|null $deferred
@@ -595,7 +604,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 		string $schemaFilename,
 		string $entityClass,
 		Promise\Deferred|null $deferred = null,
-	): Entities\API\Entity|null
+	): Messages\Message|null
 	{
 		try {
 			$entity = $this->createEntity(
@@ -614,7 +623,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @param Promise\Deferred<Entities\API\Entity>|null $deferred
+	 * @param Promise\Deferred<Messages\Message>|null $deferred
 	 */
 	private function sendRequest(
 		stdClass $payload,
@@ -690,7 +699,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	}
 
 	/**
-	 * @template T of Entities\API\Entity
+	 * @template T of Messages\Message
 	 *
 	 * @param class-string<T> $entity
 	 *
@@ -698,7 +707,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	 *
 	 * @throws Exceptions\CloudWsError
 	 */
-	private function createEntity(string $entity, Utils\ArrayHash $data): Entities\API\Entity
+	private function createEntity(string $entity, Utils\ArrayHash $data): Messages\Message
 	{
 		try {
 			return $this->entityHelper->create(
@@ -758,20 +767,23 @@ final class CloudWs implements Evenement\EventEmitterInterface
 	{
 		$deferred = new Promise\Deferred();
 
-		$this->logger->debug(sprintf(
-			'Request: method = %s url = %s',
-			$request->getMethod(),
-			$request->getUri(),
-		), [
-			'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-			'type' => 'cloud-ws-api',
-			'request' => [
-				'method' => $request->getMethod(),
-				'url' => strval($request->getUri()),
-				'headers' => $request->getHeaders(),
-				'body' => $request->getContent(),
+		$this->logger->debug(
+			sprintf(
+				'Request: method = %s url = %s',
+				$request->getMethod(),
+				$request->getUri(),
+			),
+			[
+				'source' => MetadataTypes\Sources\Connector::SONOFF->value,
+				'type' => 'cloud-ws-api',
+				'request' => [
+					'method' => $request->getMethod(),
+					'url' => strval($request->getUri()),
+					'headers' => $request->getHeaders(),
+					'body' => $request->getContent(),
+				],
 			],
-		]);
+		);
 
 		if ($async) {
 			try {
@@ -796,20 +808,23 @@ final class CloudWs implements Evenement\EventEmitterInterface
 								return;
 							}
 
-							$this->logger->debug('Received response', [
-								'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-								'type' => 'cloud-ws-api',
-								'request' => [
-									'method' => $request->getMethod(),
-									'url' => strval($request->getUri()),
-									'headers' => $request->getHeaders(),
-									'body' => $request->getContent(),
+							$this->logger->debug(
+								'Received response',
+								[
+									'source' => MetadataTypes\Sources\Connector::SONOFF->value,
+									'type' => 'cloud-ws-api',
+									'request' => [
+										'method' => $request->getMethod(),
+										'url' => strval($request->getUri()),
+										'headers' => $request->getHeaders(),
+										'body' => $request->getContent(),
+									],
+									'response' => [
+										'code' => $response->getStatusCode(),
+										'body' => $responseBody,
+									],
 								],
-								'response' => [
-									'code' => $response->getStatusCode(),
-									'body' => $responseBody,
-								],
-							]);
+							);
 
 							$deferred->resolve($response);
 						},
@@ -847,20 +862,23 @@ final class CloudWs implements Evenement\EventEmitterInterface
 				);
 			}
 
-			$this->logger->debug('Received response', [
-				'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-				'type' => 'cloud-ws-api',
-				'request' => [
-					'method' => $request->getMethod(),
-					'url' => strval($request->getUri()),
-					'headers' => $request->getHeaders(),
-					'body' => $request->getContent(),
+			$this->logger->debug(
+				'Received response',
+				[
+					'source' => MetadataTypes\Sources\Connector::SONOFF->value,
+					'type' => 'cloud-ws-api',
+					'request' => [
+						'method' => $request->getMethod(),
+						'url' => strval($request->getUri()),
+						'headers' => $request->getHeaders(),
+						'body' => $request->getContent(),
+					],
+					'response' => [
+						'code' => $response->getStatusCode(),
+						'body' => $responseBody,
+					],
 				],
-				'response' => [
-					'code' => $response->getStatusCode(),
-					'body' => $responseBody,
-				],
-			]);
+			);
 
 			return $response;
 		} catch (GuzzleHttp\Exception\GuzzleException | InvalidArgumentException $ex) {
@@ -874,19 +892,19 @@ final class CloudWs implements Evenement\EventEmitterInterface
 
 	private function getSocketsEndpoint(): Types\CloudSocketsEndpoint
 	{
-		if ($this->region->equalsValue(Types\Region::EUROPE)) {
-			return Types\CloudSocketsEndpoint::get(Types\CloudSocketsEndpoint::EUROPE);
+		if ($this->region === Types\Region::EUROPE) {
+			return Types\CloudSocketsEndpoint::EUROPE;
 		}
 
-		if ($this->region->equalsValue(Types\Region::AMERICA)) {
-			return Types\CloudSocketsEndpoint::get(Types\CloudSocketsEndpoint::AMERICA);
+		if ($this->region === Types\Region::AMERICA) {
+			return Types\CloudSocketsEndpoint::AMERICA;
 		}
 
-		if ($this->region->equalsValue(Types\Region::ASIA)) {
-			return Types\CloudSocketsEndpoint::get(Types\CloudSocketsEndpoint::ASIA);
+		if ($this->region === Types\Region::ASIA) {
+			return Types\CloudSocketsEndpoint::ASIA;
 		}
 
-		return Types\CloudSocketsEndpoint::get(Types\CloudSocketsEndpoint::CHINA);
+		return Types\CloudSocketsEndpoint::CHINA;
 	}
 
 	/**
@@ -924,7 +942,7 @@ final class CloudWs implements Evenement\EventEmitterInterface
 		string|null $body = null,
 	): Request
 	{
-		$url = $this->getSocketsEndpoint()->getValue() . $path;
+		$url = $this->getSocketsEndpoint()->value . $path;
 
 		if (count($params) > 0) {
 			$url .= '?';

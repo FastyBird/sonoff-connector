@@ -16,27 +16,28 @@
 namespace FastyBird\Connector\Sonoff\Clients;
 
 use BadMethodCallException;
-use Evenement;
 use FastyBird\Connector\Sonoff;
 use FastyBird\Connector\Sonoff\API;
-use FastyBird\Connector\Sonoff\Entities;
+use FastyBird\Connector\Sonoff\Documents;
 use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Helpers;
 use FastyBird\Connector\Sonoff\Queue;
 use FastyBird\Connector\Sonoff\Types;
-use FastyBird\Library\Bootstrap\Helpers as BootstrapHelpers;
-use FastyBird\Library\Metadata\Documents as MetadataDocuments;
+use FastyBird\Library\Application\Helpers as ApplicationHelpers;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
+use FastyBird\Module\Devices\Events as DevicesEvents;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
 use Nette;
 use Nette\Utils;
+use Psr\EventDispatcher as PsrEventDispatcher;
 use React\EventLoop;
 use React\Promise;
 use RuntimeException;
-use SplObjectStorage;
 use stdClass;
 use Throwable;
+use TypeError;
+use ValueError;
 use function array_key_exists;
 use function array_map;
 use function assert;
@@ -60,20 +61,16 @@ use const DIRECTORY_SEPARATOR;
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-final class Discovery implements Evenement\EventEmitterInterface
+final class Discovery
 {
 
 	use Nette\SmartObject;
-	use Evenement\EventEmitterTrait;
 
 	private const LAN_SEARCH_TIMEOUT = 60;
 
 	private EventLoop\TimerInterface|null $handlerTimer = null;
 
-	/** @var SplObjectStorage<Entities\Clients\DiscoveredCloudDevice, null> */
-	private SplObjectStorage $discoveredDevices;
-
-	/** @var array<string, Entities\Clients\DiscoveredLocalDevice> */
+	/** @var array<string, array<string, string|int>> */
 	private array $foundLocalDevices = [];
 
 	private API\LanApi|null $lanApiConnection = null;
@@ -81,17 +78,17 @@ final class Discovery implements Evenement\EventEmitterInterface
 	private API\CloudApi|null $cloudApiConnection = null;
 
 	public function __construct(
-		private readonly MetadataDocuments\DevicesModule\Connector $connector,
+		private readonly Documents\Connectors\Connector $connector,
 		private readonly API\LanApiFactory $lanApiFactory,
 		private readonly API\CloudApiFactory $cloudApiFactory,
-		private readonly Helpers\Entity $entityHelper,
+		private readonly Helpers\MessageBuilder $entityHelper,
 		private readonly Helpers\Connector $connectorHelper,
 		private readonly Queue\Queue $queue,
 		private readonly Sonoff\Logger $logger,
 		private readonly EventLoop\LoopInterface $eventLoop,
+		private readonly PsrEventDispatcher\EventDispatcherInterface|null $dispatcher = null,
 	)
 	{
-		$this->discoveredDevices = new SplObjectStorage();
 	}
 
 	/**
@@ -103,40 +100,41 @@ final class Discovery implements Evenement\EventEmitterInterface
 	 */
 	public function discover(): void
 	{
-		$this->discoveredDevices = new SplObjectStorage();
-
 		$this->discoverCloudDevices()
 			->then(async(function (): void {
 				$mode = $this->connectorHelper->getClientMode($this->connector);
 
 				if (
-					$mode->equalsValue(Types\ClientMode::LAN)
-					|| $mode->equalsValue(Types\ClientMode::AUTO)
+					$mode === Types\ClientMode::LAN
+					|| $mode === Types\ClientMode::AUTO
 				) {
 					await($this->discoverLanDevices());
 				}
 
-				$this->handleFoundDevices();
-
-				$this->discoveredDevices->rewind();
-
-				$devices = [];
-
-				foreach ($this->discoveredDevices as $device) {
-					$devices[] = $device;
-				}
-
-				$this->emit('finished', [$devices]);
+				$this->dispatcher?->dispatch(
+					new DevicesEvents\TerminateConnector(
+						MetadataTypes\Sources\Connector::SONOFF,
+						'Devices discovery finished',
+					),
+				);
 			}))
 			->catch(function (): void {
-				$this->emit('failed');
+				$this->dispatcher?->dispatch(
+					new DevicesEvents\TerminateConnector(
+						MetadataTypes\Sources\Connector::SONOFF,
+						'Devices discovery failed',
+					),
+				);
 			});
 	}
 
 	/**
 	 * @throws DevicesExceptions\InvalidState
+	 * @throws Exceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws TypeError
+	 * @throws ValueError
 	 */
 	public function disconnect(): void
 	{
@@ -153,10 +151,13 @@ final class Discovery implements Evenement\EventEmitterInterface
 	 * @return Promise\PromiseInterface<bool>
 	 *
 	 * @throws DevicesExceptions\InvalidState
+	 * @throws Exceptions\InvalidArgument
 	 * @throws Exceptions\CloudApiCall
 	 * @throws Exceptions\CloudApiError
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws TypeError
+	 * @throws ValueError
 	 */
 	private function discoverCloudDevices(): Promise\PromiseInterface
 	{
@@ -165,7 +166,7 @@ final class Discovery implements Evenement\EventEmitterInterface
 		$this->logger->debug(
 			'Starting cloud devices discovery',
 			[
-				'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+				'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 				'type' => 'discovery-client',
 			],
 		);
@@ -179,9 +180,9 @@ final class Discovery implements Evenement\EventEmitterInterface
 			$this->logger->error(
 				'Log into eWelink account failed',
 				[
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+					'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 					'type' => 'discovery-client',
-					'exception' => BootstrapHelpers\Logger::buildException($ex),
+					'exception' => ApplicationHelpers\Logger::buildException($ex),
 				],
 			);
 
@@ -189,9 +190,9 @@ final class Discovery implements Evenement\EventEmitterInterface
 		}
 
 		$apiClient->getFamily()
-			->then(function (Entities\API\Cloud\Family $family) use ($deferred, $apiClient): void {
+			->then(function (API\Messages\Response\Cloud\Family $family) use ($deferred, $apiClient): void {
 				$apiClient->getFamilyThings($family->getFamilyId())
-					->then(function (Entities\API\Cloud\Things $things) use ($deferred): void {
+					->then(function (API\Messages\Response\Cloud\Things $things) use ($deferred): void {
 						$this->handleFoundCloudDevices($things);
 
 						$deferred->resolve(true);
@@ -200,9 +201,9 @@ final class Discovery implements Evenement\EventEmitterInterface
 						$this->logger->error(
 							'Loading devices from cloud failed',
 							[
-								'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+								'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 								'type' => 'discovery-client',
-								'exception' => BootstrapHelpers\Logger::buildException($ex),
+								'exception' => ApplicationHelpers\Logger::buildException($ex),
 							],
 						);
 
@@ -213,9 +214,9 @@ final class Discovery implements Evenement\EventEmitterInterface
 				$this->logger->error(
 					'Loading homes from cloud failed',
 					[
-						'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+						'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 						'type' => 'discovery-client',
-						'exception' => BootstrapHelpers\Logger::buildException($ex),
+						'exception' => ApplicationHelpers\Logger::buildException($ex),
 					],
 				);
 
@@ -237,7 +238,7 @@ final class Discovery implements Evenement\EventEmitterInterface
 		$this->logger->debug(
 			'Starting lan devices discovery',
 			[
-				'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+				'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 				'type' => 'discovery-client',
 			],
 		);
@@ -246,19 +247,15 @@ final class Discovery implements Evenement\EventEmitterInterface
 
 		$apiClient = $this->getLanConnection();
 
-		$apiClient->on(
-			'message',
-			function (Entities\API\Lan\DeviceEvent $message): void {
-				$this->foundLocalDevices[$message->getId()] = $this->entityHelper->create(
-					Entities\Clients\DiscoveredLocalDevice::class,
-					[
-						'ipAddress' => $message->getIpAddress(),
-						'domain' => $message->getDomain(),
-						'port' => $message->getPort(),
-					],
-				);
-			},
-		);
+		$apiClient->onMessage[] = function (API\Messages\Message $message): void {
+			if ($message instanceof API\Messages\Response\Lan\DeviceEvent) {
+				$this->foundLocalDevices[$message->getId()] = [
+					'ipAddress' => $message->getIpAddress(),
+					'domain' => $message->getDomain(),
+					'port' => $message->getPort(),
+				];
+			}
+		};
 
 		// Searching timeout
 		$this->handlerTimer = $this->eventLoop->addTimer(
@@ -275,10 +272,7 @@ final class Discovery implements Evenement\EventEmitterInterface
 		return $deferred->promise();
 	}
 
-	/**
-	 * @throws Exceptions\Runtime
-	 */
-	private function handleFoundCloudDevices(Entities\API\Cloud\Things $things): void
+	private function handleFoundCloudDevices(API\Messages\Response\Cloud\Things $things): void
 	{
 		foreach ($things->getDevices() as $device) {
 			try {
@@ -288,9 +282,9 @@ final class Discovery implements Evenement\EventEmitterInterface
 				$this->logger->error(
 					'Params mapping for device UIID could not be loaded',
 					[
-						'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+						'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 						'type' => 'discovery-client',
-						'exception' => BootstrapHelpers\Logger::buildException($ex),
+						'exception' => ApplicationHelpers\Logger::buildException($ex),
 						'device' => [
 							'id' => $device->getDeviceId(),
 							'uiid' => $device->getExtra()->getUiid(),
@@ -303,9 +297,9 @@ final class Discovery implements Evenement\EventEmitterInterface
 				$this->logger->error(
 					'Device params mapping could not be prepared for mapping',
 					[
-						'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+						'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 						'type' => 'discovery-client',
-						'exception' => BootstrapHelpers\Logger::buildException($ex),
+						'exception' => ApplicationHelpers\Logger::buildException($ex),
 						'device' => [
 							'id' => $device->getDeviceId(),
 							'uiid' => $device->getExtra()->getUiid(),
@@ -322,7 +316,7 @@ final class Discovery implements Evenement\EventEmitterInterface
 			foreach (get_object_vars($mappingConfiguration) as $identifier => $configuration) {
 				assert($configuration instanceof stdClass);
 
-				if ($identifier === Types\ChannelGroup::RF_LIST) {
+				if ($identifier === Types\ChannelGroup::RF_LIST->value) {
 					// TODO: Not supported now
 				} else {
 					if (property_exists($configuration, 'properties') && property_exists($configuration, 'length')) {
@@ -332,7 +326,7 @@ final class Discovery implements Evenement\EventEmitterInterface
 
 						$count = intval($configuration->length);
 
-						if ($identifier === Types\ChannelGroup::SWITCHES) {
+						if ($identifier === Types\ChannelGroup::SWITCHES->value) {
 							$count = intval($configuration->length);
 
 							if ($device->getState() !== null) {
@@ -386,7 +380,7 @@ final class Discovery implements Evenement\EventEmitterInterface
 						if (
 							in_array($identifier, $device->getDenyFeatures(), true)
 							|| (
-								$identifier === Types\Parameter::STATUS_LED
+								$identifier === Types\Parameter::STATUS_LED->value
 								&& in_array('sled', $device->getDenyFeatures(), true)
 							)
 						) {
@@ -410,73 +404,45 @@ final class Discovery implements Evenement\EventEmitterInterface
 				}
 			}
 
-			$this->discoveredDevices->attach(
-				$this->entityHelper->create(
-					Entities\Clients\DiscoveredCloudDevice::class,
-					[
-						'id' => $device->getDeviceId(),
-						'apiKey' => $device->getApiKey(),
-						'deviceKey' => $device->getDeviceKey(),
-						'uiid' => $device->getExtra()->getUiid(),
-						'name' => $device->getName(),
-						'description' => $device->getExtra()->getDescription(),
-						'brandName' => $device->getBrandName(),
-						'brandLogo' => $device->getBrandLogo(),
-						'productModel' => $device->getProductModel(),
-						'model' => $device->getExtra()->getModel(),
-						'mac' => $device->getExtra()->getMac(),
-						'parameters' => $parameters,
-					],
-				),
-			);
-		}
-	}
-
-	private function handleFoundDevices(): void
-	{
-		$this->discoveredDevices->rewind();
-
-		foreach ($this->discoveredDevices as $device) {
 			$localConfiguration = null;
 
-			if (array_key_exists($device->getId(), $this->foundLocalDevices)) {
-				$localConfiguration = $this->foundLocalDevices[$device->getId()];
+			if (array_key_exists($device->getDeviceId(), $this->foundLocalDevices)) {
+				$localConfiguration = $this->foundLocalDevices[$device->getDeviceId()];
 			}
 
 			try {
 				$this->queue->append(
 					$this->entityHelper->create(
-						Entities\Messages\StoreDevice::class,
+						Queue\Messages\StoreDevice::class,
 						[
 							'connector' => $this->connector->getId(),
-							'id' => $device->getId(),
+							'id' => $device->getDeviceId(),
 							'apiKey' => $device->getApiKey(),
 							'deviceKey' => $device->getDeviceKey(),
-							'uiid' => $device->getUiid(),
+							'uiid' => $device->getExtra()->getUiid(),
 							'name' => $device->getName(),
-							'description' => $device->getDescription(),
+							'description' => $device->getExtra()->getDescription(),
 							'brandName' => $device->getBrandName(),
 							'brandLogo' => $device->getBrandLogo(),
 							'productModel' => $device->getProductModel(),
-							'model' => $device->getModel(),
-							'mac' => $device->getMac(),
-							'ipAddress' => $localConfiguration?->getIpAddress(),
-							'domain' => $localConfiguration?->getDomain(),
-							'port' => $localConfiguration?->getPort(),
+							'model' => $device->getExtra()->getModel(),
+							'mac' => $device->getExtra()->getMac(),
+							'ipAddress' => $localConfiguration !== null ? $localConfiguration['ipAddress'] : null,
+							'domain' => $localConfiguration !== null ? $localConfiguration['domain'] : null,
+							'port' => $localConfiguration !== null ? $localConfiguration['port'] : null,
 							'parameters' => array_map(
-							// phpcs:ignore SlevomatCodingStandard.Files.LineLength.LineTooLong
-								static fn (Entities\Clients\DiscoveredDeviceParameter $parameter): array => [
-									'group' => $parameter->getGroup(),
-									'identifier' => $parameter->getIdentifier(),
-									'name' => $parameter->getName(),
-									'type' => $parameter->getType(),
-									'dataType' => $parameter->getDataType(),
-									'format' => $parameter->getFormat(),
-									'settable' => $parameter->isSettable(),
-									'queryable' => $parameter->isQueryable(),
-									'scale' => $parameter->getScale(),
+								static fn (array $parameter): array => [
+									'group' => $parameter['group'],
+									'identifier' => $parameter['identifier'],
+									'name' => $parameter['name'],
+									'type' => $parameter['type'],
+									'dataType' => $parameter['dataType'],
+									'format' => $parameter['format'],
+									'settable' => $parameter['settable'],
+									'queryable' => $parameter['queryable'],
+									'scale' => $parameter['scale'],
 								],
-								$device->getParameters(),
+								$parameters,
 							),
 						],
 					),
@@ -485,9 +451,9 @@ final class Discovery implements Evenement\EventEmitterInterface
 				$this->logger->error(
 					'Found device could not be attached to processing queue',
 					[
-						'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+						'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 						'type' => 'discovery-client',
-						'exception' => BootstrapHelpers\Logger::buildException($ex),
+						'exception' => ApplicationHelpers\Logger::buildException($ex),
 						'device' => $device->toArray(),
 					],
 				);
@@ -517,8 +483,11 @@ final class Discovery implements Evenement\EventEmitterInterface
 
 	/**
 	 * @throws DevicesExceptions\InvalidState
+	 * @throws Exceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws TypeError
+	 * @throws ValueError
 	 */
 	private function getCloudApiConnection(): API\CloudApi
 	{

@@ -15,9 +15,6 @@
 
 namespace FastyBird\Connector\Sonoff\Types;
 
-use Consistence;
-use function strval;
-
 /**
  * Cloud region
  *
@@ -26,25 +23,15 @@ use function strval;
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-class Region extends Consistence\Enum\Enum
+enum Region: string
 {
 
-	public const CHINA = 'cn';
+	case CHINA = 'cn';
 
-	public const ASIA = 'as';
+	case ASIA = 'as';
 
-	public const AMERICA = 'us';
+	case AMERICA = 'us';
 
-	public const EUROPE = 'eu';
-
-	public function getValue(): string
-	{
-		return strval(parent::getValue());
-	}
-
-	public function __toString(): string
-	{
-		return self::getValue();
-	}
+	case EUROPE = 'eu';
 
 }

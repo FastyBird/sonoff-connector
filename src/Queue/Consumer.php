@@ -7,7 +7,7 @@
  * @copyright      https://www.fastybird.com
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  * @package        FastyBird:SonoffConnector!
- * @subpackage     Consumers
+ * @subpackage     Queue
  * @since          1.0.0
  *
  * @date           06.05.23
@@ -15,19 +15,17 @@
 
 namespace FastyBird\Connector\Sonoff\Queue;
 
-use FastyBird\Connector\Sonoff\Entities;
-
 /**
  * Clients messages consumer interface
  *
  * @package        FastyBird:SonoffConnector!
- * @subpackage     Consumers
+ * @subpackage     Queue
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
 interface Consumer
 {
 
-	public function consume(Entities\Messages\Entity $entity): bool;
+	public function consume(Messages\Message $message): bool;
 
 }

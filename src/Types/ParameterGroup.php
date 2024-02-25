@@ -15,9 +15,6 @@
 
 namespace FastyBird\Connector\Sonoff\Types;
 
-use Consistence;
-use function strval;
-
 /**
  * Device parameters groups
  *
@@ -26,57 +23,47 @@ use function strval;
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-class ParameterGroup extends Consistence\Enum\Enum
+enum ParameterGroup: string
 {
 
-	public const DEVICE = 'device';
+	case DEVICE = 'device';
 
-	public const LIGHT = 'light';
+	case LIGHT = 'light';
 
-	public const SWITCH = 'switch';
+	case SWITCH = 'switch';
 
-	public const THERMOSTAT = 'thermostat';
+	case THERMOSTAT = 'thermostat';
 
-	public const FAN = 'fan';
+	case FAN = 'fan';
 
-	public const SENSOR = 'sensor';
+	case SENSOR = 'sensor';
 
-	public const HUMIDIFIER = 'humidifier';
+	case HUMIDIFIER = 'humidifier';
 
-	public const OTHER = 'other';
+	case OTHER = 'other';
 
-	public const BRIDGE = 'bridge';
+	case BRIDGE = 'bridge';
 
-	public const SCENE_WHITE = 'white';
+	case SCENE_WHITE = 'white';
 
-	public const SCENE_BRIGHT = 'bright';
+	case SCENE_BRIGHT = 'bright';
 
-	public const SCENE_READ = 'read';
+	case SCENE_READ = 'read';
 
-	public const SCENE_COMPUTER = 'computer';
+	case SCENE_COMPUTER = 'computer';
 
-	public const SCENE_NIGHT_LIGHT = 'nightLight';
+	case SCENE_NIGHT_LIGHT = 'nightLight';
 
-	public const SCENE_COLOR = 'color';
+	case SCENE_COLOR = 'color';
 
-	public const SCENE_GOOD_NIGHT = 'goodNight';
+	case SCENE_GOOD_NIGHT = 'goodNight';
 
-	public const SCENE_PARTY = 'party';
+	case SCENE_PARTY = 'party';
 
-	public const SCENE_LEISURE = 'leisure';
+	case SCENE_LEISURE = 'leisure';
 
-	public const SCENE_SOFT = 'soft';
+	case SCENE_SOFT = 'soft';
 
-	public const SCENE_COLORFUL = 'colorful';
-
-	public function getValue(): string
-	{
-		return strval(parent::getValue());
-	}
-
-	public function __toString(): string
-	{
-		return self::getValue();
-	}
+	case SCENE_COLORFUL = 'colorful';
 
 }

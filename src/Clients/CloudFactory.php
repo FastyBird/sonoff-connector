@@ -15,8 +15,8 @@
 
 namespace FastyBird\Connector\Sonoff\Clients;
 
+use FastyBird\Connector\Sonoff\Documents;
 use FastyBird\Connector\Sonoff\Types;
-use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 
 /**
  * Cloud client factory
@@ -31,6 +31,9 @@ interface CloudFactory extends ClientFactory
 
 	public const MODE = Types\ClientMode::CLOUD;
 
-	public function create(MetadataDocuments\DevicesModule\Connector $connector, bool $autoMode = false): Cloud;
+	public function create(
+		Documents\Connectors\Connector $connector,
+		bool $autoMode = false,
+	): Cloud;
 
 }

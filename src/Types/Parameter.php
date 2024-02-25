@@ -15,9 +15,6 @@
 
 namespace FastyBird\Connector\Sonoff\Types;
 
-use Consistence;
-use function strval;
-
 /**
  * Device parameters
  *
@@ -26,155 +23,145 @@ use function strval;
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-class Parameter extends Consistence\Enum\Enum
+enum Parameter: string
 {
 
-	public const STATUS_LED = 'sledOnline';
+	case STATUS_LED = 'sledOnline';
 
-	public const FIRMWARE_VERSION = 'fwVersion';
+	case FIRMWARE_VERSION = 'fwVersion';
 
-	public const RSSI = 'rssi';
+	case RSSI = 'rssi';
 
-	public const SSID = 'ssid';
+	case SSID = 'ssid';
 
-	public const BSSID = 'bssid';
+	case BSSID = 'bssid';
 
-	public const SWITCH = 'switch';
+	case SWITCH = 'switch';
 
-	public const STARTUP = 'startup';
+	case STARTUP = 'startup';
 
-	public const PULSE = 'pulse';
+	case PULSE = 'pulse';
 
-	public const PULSE_WIDTH = 'pulseWidth';
+	case PULSE_WIDTH = 'pulseWidth';
 
-	public const MINIMUM_BRIGHTNESS = 'brightMin';
+	case MINIMUM_BRIGHTNESS = 'brightMin';
 
-	public const MAXIMUM_BRIGHTNESS = 'brightMax';
+	case MAXIMUM_BRIGHTNESS = 'brightMax';
 
-	public const MODE = 'mode';
+	case MODE = 'mode';
 
-	public const POWER = 'power';
+	case POWER = 'power';
 
-	public const VOLTAGE = 'voltage';
+	case VOLTAGE = 'voltage';
 
-	public const CURRENT = 'current';
+	case CURRENT = 'current';
 
-	public const CONSUMPTION = 'oneKwh';
+	case CONSUMPTION = 'oneKwh';
 
-	public const CONSUMPTION_DATA = 'oneKwhData';
+	case CONSUMPTION_DATA = 'oneKwhData';
 
-	public const START_TIME = 'startTime';
+	case START_TIME = 'startTime';
 
-	public const END_TIME = 'endTime';
+	case END_TIME = 'endTime';
 
-	public const MAIN_SWITCH = 'mainSwitch';
+	case MAIN_SWITCH = 'mainSwitch';
 
-	public const DEVICE_TYPE = 'deviceType';
+	case DEVICE_TYPE = 'deviceType';
 
-	public const SENSOR_TYPE = 'sensorType';
+	case SENSOR_TYPE = 'sensorType';
 
-	public const CURRENT_TEMPERATURE = 'currentTemperature';
+	case CURRENT_TEMPERATURE = 'currentTemperature';
 
-	public const CURRENT_HUMIDITY = 'currentHumidity';
+	case CURRENT_HUMIDITY = 'currentHumidity';
 
-	public const CHANNEL_0 = 'channel0';
+	case CHANNEL_0 = 'channel0';
 
-	public const CHANNEL_1 = 'channel1';
+	case CHANNEL_1 = 'channel1';
 
-	public const CHANNEL_2 = 'channel2';
+	case CHANNEL_2 = 'channel2';
 
-	public const CHANNEL_3 = 'channel3';
+	case CHANNEL_3 = 'channel3';
 
-	public const CHANNEL_4 = 'channel4';
+	case CHANNEL_4 = 'channel4';
 
-	public const TYPE = 'type';
+	case TYPE = 'type';
 
-	public const FAN = 'fan';
+	case FAN = 'fan';
 
-	public const SPEED = 'speed';
+	case SPEED = 'speed';
 
-	public const SHAKE = 'shake';
+	case SHAKE = 'shake';
 
-	public const DUSTY = 'dusty';
+	case DUSTY = 'dusty';
 
-	public const NOISE = 'noise';
+	case NOISE = 'noise';
 
-	public const LIGHT = 'light';
+	case LIGHT = 'light';
 
-	public const TEMPERATURE = 'temperature';
+	case TEMPERATURE = 'temperature';
 
-	public const HUMIDITY = 'humidity';
+	case HUMIDITY = 'humidity';
 
-	public const STATE = 'state';
+	case STATE = 'state';
 
-	public const WATER = 'water';
+	case WATER = 'water';
 
-	public const LIGHT_TYPE = 'light_type';
+	case LIGHT_TYPE = 'light_type';
 
-	public const LIGHT_SWITCH = 'lightswitch';
+	case LIGHT_SWITCH = 'lightswitch';
 
-	public const LIGHT_MODE = 'lightmode';
+	case LIGHT_MODE = 'lightmode';
 
-	public const LIGHT_RED_COLOR = 'lightRcolor';
+	case LIGHT_RED_COLOR = 'lightRcolor';
 
-	public const LIGHT_GREEN_BLUE = 'lightGcolor';
+	case LIGHT_GREEN_BLUE = 'lightGcolor';
 
-	public const LIGHT_BLUE_COLOR = 'lightBcolor';
+	case LIGHT_BLUE_COLOR = 'lightBcolor';
 
-	public const LIGHT_BRIGHTNESS = 'lightbright';
+	case LIGHT_BRIGHTNESS = 'lightbright';
 
-	public const REMOTE_TYPE = 'remote_type';
+	case REMOTE_TYPE = 'remote_type';
 
-	public const COMMAND = 'cmd';
+	case COMMAND = 'cmd';
 
-	public const RF_CHANNEL = 'rfChl';
+	case RF_CHANNEL = 'rfChl';
 
-	public const RED = 'colorR';
+	case RED = 'colorR';
 
-	public const GREEN = 'colorG';
+	case GREEN = 'colorG';
 
-	public const BLUE = 'colorB';
+	case BLUE = 'colorB';
 
-	public const SENSITIVITY = 'sensitive';
+	case SENSITIVITY = 'sensitive';
 
-	public const BRIGHTNESS = 'bright';
+	case BRIGHTNESS = 'bright';
 
-	public const BRIGHTNESS_2 = 'brightness';
+	case BRIGHTNESS_2 = 'brightness';
 
-	public const BATTERY = 'battery';
+	case BATTERY = 'battery';
 
-	public const LAST_UPDATE_TIME = 'lastUpdateTime';
+	case LAST_UPDATE_TIME = 'lastUpdateTime';
 
-	public const ACTION_TIME = 'actionTime';
+	case ACTION_TIME = 'actionTime';
 
-	public const LIGHT_WITH_SCENES_TYPE = 'ltype';
+	case LIGHT_WITH_SCENES_TYPE = 'ltype';
 
-	public const PROTOCOL_VERSION = 'pVer';
+	case PROTOCOL_VERSION = 'pVer';
 
-	public const SCENE_BRIGHTNESS = 'br';
+	case SCENE_BRIGHTNESS = 'br';
 
-	public const SCENE_COLOR_TEMPERATURE = 'ct';
+	case SCENE_COLOR_TEMPERATURE = 'ct';
 
-	public const SCENE_COLOR_RED = 'r';
+	case SCENE_COLOR_RED = 'r';
 
-	public const SCENE_COLOR_GREEN = 'g';
+	case SCENE_COLOR_GREEN = 'g';
 
-	public const SCENE_COLOR_BLUE = 'b';
+	case SCENE_COLOR_BLUE = 'b';
 
-	public const SCENE_NAME = 'name';
+	case SCENE_NAME = 'name';
 
-	public const SCENE_COLOR_MODE = 'tf';
+	case SCENE_COLOR_MODE = 'tf';
 
-	public const SCENE_SPEED_CHANGE = 'sp';
-
-	public function getValue(): string
-	{
-		return strval(parent::getValue());
-	}
-
-	public function __toString(): string
-	{
-		return self::getValue();
-	}
+	case SCENE_SPEED_CHANGE = 'sp';
 
 }

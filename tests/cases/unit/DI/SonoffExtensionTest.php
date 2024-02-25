@@ -15,14 +15,14 @@ use FastyBird\Connector\Sonoff\Services;
 use FastyBird\Connector\Sonoff\Subscribers;
 use FastyBird\Connector\Sonoff\Tests;
 use FastyBird\Connector\Sonoff\Writers;
-use FastyBird\Library\Bootstrap\Exceptions as BootstrapExceptions;
+use FastyBird\Library\Application\Exceptions as ApplicationExceptions;
 use Nette;
 
 final class SonoffExtensionTest extends Tests\Cases\Unit\BaseTestCase
 {
 
 	/**
-	 * @throws BootstrapExceptions\InvalidArgument
+	 * @throws ApplicationExceptions\InvalidArgument
 	 * @throws Nette\DI\MissingServiceException
 	 * @throws Error
 	 */
@@ -30,7 +30,7 @@ final class SonoffExtensionTest extends Tests\Cases\Unit\BaseTestCase
 	{
 		$container = $this->createContainer();
 
-		self::assertNotNull($container->getByType(Writers\WriterFactory::class, false));
+		self::assertCount(2, $container->findByType(Writers\WriterFactory::class));
 
 		self::assertNotNull($container->getByType(Clients\LanFactory::class, false));
 		self::assertNotNull($container->getByType(Clients\CloudFactory::class, false));
@@ -48,20 +48,21 @@ final class SonoffExtensionTest extends Tests\Cases\Unit\BaseTestCase
 		self::assertNotNull($container->getByType(Queue\Consumers\StoreDevice::class, false));
 		self::assertNotNull($container->getByType(Queue\Consumers\StoreDeviceConnectionState::class, false));
 		self::assertNotNull($container->getByType(Queue\Consumers\StoreParametersStates::class, false));
-		self::assertNotNull($container->getByType(Queue\Consumers\WritePropertyState::class, false));
+		self::assertNotNull($container->getByType(Queue\Consumers\WriteDevicePropertyState::class, false));
+		self::assertNotNull($container->getByType(Queue\Consumers\WriteChannelPropertyState::class, false));
 		self::assertNotNull($container->getByType(Queue\Consumers::class, false));
 		self::assertNotNull($container->getByType(Queue\Queue::class, false));
 
 		self::assertNotNull($container->getByType(Subscribers\Properties::class, false));
 		self::assertNotNull($container->getByType(Subscribers\Controls::class, false));
 
-		self::assertNotNull($container->getByType(Schemas\SonoffConnector::class, false));
-		self::assertNotNull($container->getByType(Schemas\SonoffDevice::class, false));
+		self::assertNotNull($container->getByType(Schemas\Connectors\Connector::class, false));
+		self::assertNotNull($container->getByType(Schemas\Devices\Device::class, false));
 
-		self::assertNotNull($container->getByType(Hydrators\SonoffConnector::class, false));
-		self::assertNotNull($container->getByType(Hydrators\SonoffDevice::class, false));
+		self::assertNotNull($container->getByType(Hydrators\Connectors\Connector::class, false));
+		self::assertNotNull($container->getByType(Hydrators\Devices\Device::class, false));
 
-		self::assertNotNull($container->getByType(Helpers\Entity::class, false));
+		self::assertNotNull($container->getByType(Helpers\MessageBuilder::class, false));
 
 		self::assertNotNull($container->getByType(Commands\Execute::class, false));
 		self::assertNotNull($container->getByType(Commands\Discover::class, false));

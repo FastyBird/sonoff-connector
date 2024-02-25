@@ -7,7 +7,7 @@
  * @copyright      https://www.fastybird.com
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  * @package        FastyBird:SonoffConnector!
- * @subpackage     Consumers
+ * @subpackage     Queue
  * @since          1.0.0
  *
  * @date           19.05.23
@@ -18,13 +18,15 @@ namespace FastyBird\Connector\Sonoff\Queue\Consumers;
 use Doctrine\DBAL;
 use FastyBird\Connector\Sonoff;
 use FastyBird\Connector\Sonoff\Entities;
+use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Helpers;
 use FastyBird\Connector\Sonoff\Queries;
-use FastyBird\Connector\Sonoff\Queue\Consumer;
+use FastyBird\Connector\Sonoff\Queue;
 use FastyBird\Connector\Sonoff\Types;
+use FastyBird\Library\Application\Exceptions as ApplicationExceptions;
+use FastyBird\Library\Application\Helpers as ApplicationHelpers;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Entities as DevicesEntities;
-use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
 use FastyBird\Module\Devices\Models as DevicesModels;
 use FastyBird\Module\Devices\Queries as DevicesQueries;
 use FastyBird\Module\Devices\Utilities as DevicesUtilities;
@@ -36,11 +38,11 @@ use function assert;
  * Device discovery message consumer
  *
  * @package        FastyBird:SonoffConnector!
- * @subpackage     Consumers
+ * @subpackage     Queue
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-final class StoreDevice implements Consumer
+final class StoreDevice implements Queue\Consumer
 {
 
 	use Nette\SmartObject;
@@ -55,7 +57,7 @@ final class StoreDevice implements Consumer
 		protected readonly DevicesModels\Entities\Channels\ChannelsRepository $channelsRepository,
 		protected readonly DevicesModels\Entities\Channels\Properties\PropertiesRepository $channelsPropertiesRepository,
 		protected readonly DevicesModels\Entities\Channels\Properties\PropertiesManager $channelsPropertiesManager,
-		protected readonly DevicesUtilities\Database $databaseHelper,
+		protected readonly ApplicationHelpers\Database $databaseHelper,
 		private readonly DevicesModels\Entities\Connectors\ConnectorsRepository $connectorsRepository,
 		private readonly DevicesModels\Entities\Devices\DevicesManager $devicesManager,
 		private readonly DevicesModels\Entities\Channels\ChannelsManager $channelsManager,
@@ -64,26 +66,27 @@ final class StoreDevice implements Consumer
 	}
 
 	/**
+	 * @throws ApplicationExceptions\InvalidState
+	 * @throws ApplicationExceptions\Runtime
 	 * @throws DBAL\Exception
-	 * @throws DevicesExceptions\InvalidState
-	 * @throws DevicesExceptions\Runtime
+	 * @throws Exceptions\InvalidArgument
 	 */
-	public function consume(Entities\Messages\Entity $entity): bool
+	public function consume(Queue\Messages\Message $message): bool
 	{
-		if (!$entity instanceof Entities\Messages\StoreDevice) {
+		if (!$message instanceof Queue\Messages\StoreDevice) {
 			return false;
 		}
 
 		$findDeviceQuery = new Queries\Entities\FindDevices();
-		$findDeviceQuery->byConnectorId($entity->getConnector());
-		$findDeviceQuery->byIdentifier($entity->getId());
+		$findDeviceQuery->byConnectorId($message->getConnector());
+		$findDeviceQuery->byIdentifier($message->getId());
 
-		$device = $this->devicesRepository->findOneBy($findDeviceQuery, Entities\SonoffDevice::class);
+		$device = $this->devicesRepository->findOneBy($findDeviceQuery, Entities\Devices\Device::class);
 
 		if ($device === null) {
 			$connector = $this->connectorsRepository->find(
-				$entity->getConnector(),
-				Entities\SonoffConnector::class,
+				$message->getConnector(),
+				Entities\Connectors\Connector::class,
 			);
 
 			if ($connector === null) {
@@ -91,15 +94,15 @@ final class StoreDevice implements Consumer
 			}
 
 			$device = $this->databaseHelper->transaction(
-				function () use ($entity, $connector): Entities\SonoffDevice {
+				function () use ($message, $connector): Entities\Devices\Device {
 					$device = $this->devicesManager->create(Utils\ArrayHash::from([
-						'entity' => Entities\SonoffDevice::class,
+						'entity' => Entities\Devices\Device::class,
 						'connector' => $connector,
-						'identifier' => $entity->getId(),
-						'name' => $entity->getName(),
-						'description' => $entity->getDescription(),
+						'identifier' => $message->getId(),
+						'name' => $message->getName(),
+						'description' => $message->getDescription(),
 					]));
-					assert($device instanceof Entities\SonoffDevice);
+					assert($device instanceof Entities\Devices\Device);
 
 					return $device;
 				},
@@ -108,13 +111,16 @@ final class StoreDevice implements Consumer
 			$this->logger->info(
 				'Device was created',
 				[
-					'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+					'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 					'type' => 'store-device-message-consumer',
+					'connector' => [
+						'id' => $connector->getId()->toString(),
+					],
 					'device' => [
 						'id' => $device->getId()->toString(),
-						'identifier' => $entity->getId(),
-						'address' => $entity->getIpAddress(),
-						'name' => $entity->getName(),
+						'identifier' => $message->getId(),
+						'address' => $message->getIpAddress(),
+						'name' => $message->getName(),
 					],
 				],
 			);
@@ -122,84 +128,84 @@ final class StoreDevice implements Consumer
 
 		$this->setDeviceProperty(
 			$device->getId(),
-			$entity->getApiKey(),
-			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
+			$message->getApiKey(),
+			MetadataTypes\DataType::STRING,
 			Types\DevicePropertyIdentifier::API_KEY,
-			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::API_KEY),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::API_KEY->value),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
-			$entity->getDeviceKey(),
-			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
+			$message->getDeviceKey(),
+			MetadataTypes\DataType::STRING,
 			Types\DevicePropertyIdentifier::DEVICE_KEY,
-			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::DEVICE_KEY),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::DEVICE_KEY->value),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
-			$entity->getUiid(),
-			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_UCHAR),
+			$message->getUiid(),
+			MetadataTypes\DataType::UCHAR,
 			Types\DevicePropertyIdentifier::UIID,
-			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::UIID),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::UIID->value),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
-			$entity->getBrandName(),
-			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
+			$message->getBrandName(),
+			MetadataTypes\DataType::STRING,
 			Types\DevicePropertyIdentifier::BRAND_NAME,
-			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::BRAND_NAME),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::BRAND_NAME->value),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
-			$entity->getBrandLogo(),
-			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
+			$message->getBrandLogo(),
+			MetadataTypes\DataType::STRING,
 			Types\DevicePropertyIdentifier::BRAND_LOGO,
-			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::BRAND_LOGO),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::BRAND_LOGO->value),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
-			$entity->getProductModel(),
-			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
+			$message->getProductModel(),
+			MetadataTypes\DataType::STRING,
 			Types\DevicePropertyIdentifier::PRODUCT_MODEL,
-			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::PRODUCT_MODEL),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::PRODUCT_MODEL->value),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
-			$entity->getModel(),
-			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
+			$message->getModel(),
+			MetadataTypes\DataType::STRING,
 			Types\DevicePropertyIdentifier::HARDWARE_MODEL,
-			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::HARDWARE_MODEL),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::HARDWARE_MODEL->value),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
-			$entity->getMac(),
-			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
+			$message->getMac(),
+			MetadataTypes\DataType::STRING,
 			Types\DevicePropertyIdentifier::HARDWARE_MAC_ADDRESS,
-			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::HARDWARE_MAC_ADDRESS),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::HARDWARE_MAC_ADDRESS->value),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
-			$entity->getIpAddress(),
-			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
+			$message->getIpAddress(),
+			MetadataTypes\DataType::STRING,
 			Types\DevicePropertyIdentifier::IP_ADDRESS,
-			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::IP_ADDRESS),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::IP_ADDRESS->value),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
-			$entity->getDomain(),
-			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_STRING),
+			$message->getDomain(),
+			MetadataTypes\DataType::STRING,
 			Types\DevicePropertyIdentifier::ADDRESS,
-			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::ADDRESS),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::ADDRESS->value),
 		);
 		$this->setDeviceProperty(
 			$device->getId(),
-			$entity->getPort(),
-			MetadataTypes\DataType::get(MetadataTypes\DataType::DATA_TYPE_UINT),
+			$message->getPort(),
+			MetadataTypes\DataType::UINT,
 			Types\DevicePropertyIdentifier::PORT,
-			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::PORT),
+			DevicesUtilities\Name::createName(Types\DevicePropertyIdentifier::PORT->value),
 		);
 
-		foreach ($entity->getParameters() as $parameter) {
-			if ($parameter->getType()->equalsValue(Types\ParameterType::DEVICE)) {
+		foreach ($message->getParameters() as $parameter) {
+			if ($parameter->getType() === Types\ParameterType::DEVICE) {
 				$findDevicePropertyQuery = new DevicesQueries\Entities\FindDeviceProperties();
 				$findDevicePropertyQuery->forDevice($device);
 				$findDevicePropertyQuery->byIdentifier($parameter->getIdentifier());
@@ -239,8 +245,11 @@ final class StoreDevice implements Consumer
 					$this->logger->debug(
 						'Device dynamic property was created',
 						[
-							'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+							'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 							'type' => 'store-device-message-consumer',
+							'connector' => [
+								'id' => $message->getConnector()->toString(),
+							],
 							'device' => [
 								'id' => $device->getId()->toString(),
 							],
@@ -269,8 +278,11 @@ final class StoreDevice implements Consumer
 					$this->logger->debug(
 						'Device dynamic property was updated',
 						[
-							'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+							'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 							'type' => 'store-device-message-consumer',
+							'connector' => [
+								'id' => $message->getConnector()->toString(),
+							],
 							'device' => [
 								'id' => $device->getId()->toString(),
 							],
@@ -284,18 +296,21 @@ final class StoreDevice implements Consumer
 			}
 		}
 
-		$this->databaseHelper->transaction(function () use ($entity, $device): bool {
-			foreach ($entity->getParameters() as $parameter) {
-				if ($parameter->getType()->equalsValue(Types\ParameterType::CHANNEL)) {
+		$this->databaseHelper->transaction(function () use ($message, $device): bool {
+			foreach ($message->getParameters() as $parameter) {
+				if ($parameter->getType() === Types\ParameterType::CHANNEL) {
 					$findChannelQuery = new Queries\Entities\FindChannels();
 					$findChannelQuery->byIdentifier($parameter->getGroup());
 					$findChannelQuery->forDevice($device);
 
-					$channel = $this->channelsRepository->findOneBy($findChannelQuery, Entities\SonoffChannel::class);
+					$channel = $this->channelsRepository->findOneBy(
+						$findChannelQuery,
+						Entities\Channels\Channel::class,
+					);
 
 					if ($channel === null) {
 						$channel = $this->channelsManager->create(Utils\ArrayHash::from([
-							'entity' => Entities\SonoffChannel::class,
+							'entity' => Entities\Channels\Channel::class,
 							'device' => $device,
 							'identifier' => $parameter->getGroup(),
 						]));
@@ -303,8 +318,11 @@ final class StoreDevice implements Consumer
 						$this->logger->debug(
 							'Device channel was created',
 							[
-								'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+								'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 								'type' => 'store-device-message-consumer',
+								'connector' => [
+									'id' => $message->getConnector()->toString(),
+								],
 								'device' => [
 									'id' => $device->getId()->toString(),
 								],
@@ -338,12 +356,15 @@ final class StoreDevice implements Consumer
 		$this->logger->debug(
 			'Consumed store device message',
 			[
-				'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+				'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 				'type' => 'store-device-message-consumer',
+				'connector' => [
+					'id' => $message->getConnector()->toString(),
+				],
 				'device' => [
 					'id' => $device->getId()->toString(),
 				],
-				'data' => $entity->toArray(),
+				'data' => $message->toArray(),
 			],
 		);
 

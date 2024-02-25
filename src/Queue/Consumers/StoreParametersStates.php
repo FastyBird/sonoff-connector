@@ -7,7 +7,7 @@
  * @copyright      https://www.fastybird.com
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  * @package        FastyBird:SonoffConnector!
- * @subpackage     Consumers
+ * @subpackage     Queue
  * @since          1.0.0
  *
  * @date           27.05.23
@@ -17,31 +17,34 @@ namespace FastyBird\Connector\Sonoff\Queue\Consumers;
 
 use Doctrine\DBAL;
 use FastyBird\Connector\Sonoff;
-use FastyBird\Connector\Sonoff\Entities;
-use FastyBird\Connector\Sonoff\Queue\Consumer;
-use FastyBird\Library\Metadata\Documents as MetadataDocuments;
+use FastyBird\Connector\Sonoff\Documents;
+use FastyBird\Connector\Sonoff\Queries;
+use FastyBird\Connector\Sonoff\Queue;
+use FastyBird\Library\Application\Exceptions as ApplicationExceptions;
+use FastyBird\Library\Application\Helpers as ApplicationHelpers;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
-use FastyBird\Library\Metadata\Utilities as MetadataUtilities;
+use FastyBird\Library\Tools\Exceptions as ToolsExceptions;
+use FastyBird\Module\Devices\Documents as DevicesDocuments;
 use FastyBird\Module\Devices\Entities as DevicesEntities;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
 use FastyBird\Module\Devices\Models as DevicesModels;
 use FastyBird\Module\Devices\Queries as DevicesQueries;
 use FastyBird\Module\Devices\States as DevicesStates;
-use FastyBird\Module\Devices\Utilities as DevicesUtilities;
 use Nette;
 use Nette\Utils;
 use function assert;
+use function React\Async\await;
 
 /**
  * Device state message consumer
  *
  * @package        FastyBird:SonoffConnector!
- * @subpackage     Consumers
+ * @subpackage     Queue
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-final class StoreParametersStates implements Consumer
+final class StoreParametersStates implements Queue\Consumer
 {
 
 	use Nette\SmartObject;
@@ -56,57 +59,59 @@ final class StoreParametersStates implements Consumer
 		private readonly DevicesModels\Entities\Devices\Properties\PropertiesManager $devicesPropertiesManager,
 		private readonly DevicesModels\Entities\Channels\Properties\PropertiesRepository $channelsPropertiesRepository,
 		private readonly DevicesModels\Entities\Channels\Properties\PropertiesManager $channelsPropertiesManager,
-		private readonly DevicesUtilities\DevicePropertiesStates $devicePropertiesStatesManager,
-		private readonly DevicesUtilities\ChannelPropertiesStates $channelPropertiesStatesManager,
-		private readonly DevicesUtilities\Database $databaseHelper,
+		private readonly DevicesModels\States\Async\DevicePropertiesManager $devicePropertiesStatesManager,
+		private readonly DevicesModels\States\Async\ChannelPropertiesManager $channelPropertiesStatesManager,
+		private readonly ApplicationHelpers\Database $databaseHelper,
 	)
 	{
 	}
 
 	/**
+	 * @throws ApplicationExceptions\InvalidState
+	 * @throws ApplicationExceptions\Runtime
 	 * @throws DBAL\Exception
 	 * @throws DevicesExceptions\InvalidArgument
 	 * @throws DevicesExceptions\InvalidState
-	 * @throws DevicesExceptions\Runtime
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\MalformedInput
+	 * @throws ToolsExceptions\InvalidArgument
 	 */
-	public function consume(Entities\Messages\Entity $entity): bool
+	public function consume(Queue\Messages\Message $message): bool
 	{
-		if (!$entity instanceof Entities\Messages\StoreParametersStates) {
+		if (!$message instanceof Queue\Messages\StoreParametersStates) {
 			return false;
 		}
 
-		$findDeviceQuery = new DevicesQueries\Configuration\FindDevices();
-		$findDeviceQuery->byConnectorId($entity->getConnector());
-		$findDeviceQuery->startWithIdentifier($entity->getIdentifier());
-		$findDeviceQuery->byType(Entities\SonoffDevice::TYPE);
+		$findDeviceQuery = new Queries\Configuration\FindDevices();
+		$findDeviceQuery->byConnectorId($message->getConnector());
+		$findDeviceQuery->startWithIdentifier($message->getIdentifier());
 
-		$device = $this->devicesConfigurationRepository->findOneBy($findDeviceQuery);
+		$device = $this->devicesConfigurationRepository->findOneBy(
+			$findDeviceQuery,
+			Documents\Devices\Device::class,
+		);
 
 		if ($device === null) {
 			return true;
 		}
 
-		foreach ($entity->getParameters() as $parameter) {
-			if ($parameter instanceof Entities\Messages\States\DeviceParameterState) {
+		foreach ($message->getParameters() as $parameter) {
+			if ($parameter instanceof Queue\Messages\States\DeviceParameterState) {
 				$findDevicePropertyQuery = new DevicesQueries\Configuration\FindDeviceProperties();
 				$findDevicePropertyQuery->forDevice($device);
 				$findDevicePropertyQuery->byIdentifier($parameter->getName());
 
 				$property = $this->devicesPropertiesConfigurationRepository->findOneBy($findDevicePropertyQuery);
 
-				if ($property instanceof MetadataDocuments\DevicesModule\DeviceDynamicProperty) {
-					$this->devicePropertiesStatesManager->setValue($property, Utils\ArrayHash::from([
-						DevicesStates\Property::ACTUAL_VALUE_FIELD => MetadataUtilities\ValueHelper::transformValueFromDevice(
-							$property->getDataType(),
-							$property->getFormat(),
-							$parameter->getValue(),
-						),
-						DevicesStates\Property::VALID_FIELD => true,
-					]));
-				} elseif ($property instanceof MetadataDocuments\DevicesModule\DeviceVariableProperty) {
+				if ($property instanceof DevicesDocuments\Devices\Properties\Dynamic) {
+					await($this->devicePropertiesStatesManager->set(
+						$property,
+						Utils\ArrayHash::from([
+							DevicesStates\Property::ACTUAL_VALUE_FIELD => $parameter->getValue(),
+						]),
+						MetadataTypes\Sources\Connector::SONOFF,
+					));
+				} elseif ($property instanceof DevicesDocuments\Devices\Properties\Variable) {
 					$this->databaseHelper->transaction(
 						function () use ($property, $parameter): void {
 							$property = $this->devicesPropertiesRepository->find(
@@ -118,23 +123,21 @@ final class StoreParametersStates implements Consumer
 							$this->devicesPropertiesManager->update(
 								$property,
 								Utils\ArrayHash::from([
-									'value' => MetadataUtilities\ValueHelper::transformValueFromDevice(
-										$property->getDataType(),
-										$property->getFormat(),
-										$parameter->getValue(),
-									),
+									'value' => $parameter->getValue(),
 								]),
 							);
 						},
 					);
 				}
-			} elseif ($parameter instanceof Entities\Messages\States\ChannelParameterState) {
-				$findChannelQuery = new DevicesQueries\Configuration\FindChannels();
+			} elseif ($parameter instanceof Queue\Messages\States\ChannelParameterState) {
+				$findChannelQuery = new Queries\Configuration\FindChannels();
 				$findChannelQuery->forDevice($device);
 				$findChannelQuery->byIdentifier($parameter->getGroup());
-				$findChannelQuery->byType(Entities\SonoffChannel::TYPE);
 
-				$channel = $this->channelsConfigurationRepository->findOneBy($findChannelQuery);
+				$channel = $this->channelsConfigurationRepository->findOneBy(
+					$findChannelQuery,
+					Documents\Channels\Channel::class,
+				);
 
 				if ($channel !== null) {
 					$findChannelPropertyQuery = new DevicesQueries\Configuration\FindChannelProperties();
@@ -143,16 +146,15 @@ final class StoreParametersStates implements Consumer
 
 					$property = $this->channelsPropertiesConfigurationRepository->findOneBy($findChannelPropertyQuery);
 
-					if ($property instanceof MetadataDocuments\DevicesModule\ChannelDynamicProperty) {
-						$this->channelPropertiesStatesManager->setValue($property, Utils\ArrayHash::from([
-							DevicesStates\Property::ACTUAL_VALUE_FIELD => MetadataUtilities\ValueHelper::transformValueFromDevice(
-								$property->getDataType(),
-								$property->getFormat(),
-								$parameter->getValue(),
-							),
-							DevicesStates\Property::VALID_FIELD => true,
-						]));
-					} elseif ($property instanceof MetadataDocuments\DevicesModule\ChannelVariableProperty) {
+					if ($property instanceof DevicesDocuments\Channels\Properties\Dynamic) {
+						await($this->channelPropertiesStatesManager->set(
+							$property,
+							Utils\ArrayHash::from([
+								DevicesStates\Property::ACTUAL_VALUE_FIELD => $parameter->getValue(),
+							]),
+							MetadataTypes\Sources\Connector::SONOFF,
+						));
+					} elseif ($property instanceof DevicesDocuments\Channels\Properties\Variable) {
 						$this->databaseHelper->transaction(
 							function () use ($property, $parameter): void {
 								$property = $this->channelsPropertiesRepository->find(
@@ -164,11 +166,7 @@ final class StoreParametersStates implements Consumer
 								$this->channelsPropertiesManager->update(
 									$property,
 									Utils\ArrayHash::from([
-										'value' => MetadataUtilities\ValueHelper::transformValueFromDevice(
-											$property->getDataType(),
-											$property->getFormat(),
-											$parameter->getValue(),
-										),
+										'value' => $parameter->getValue(),
 									]),
 								);
 							},
@@ -181,12 +179,15 @@ final class StoreParametersStates implements Consumer
 		$this->logger->debug(
 			'Consumed store device state message',
 			[
-				'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
+				'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 				'type' => 'status-parameters-states-message-consumer',
+				'connector' => [
+					'id' => $message->getConnector()->toString(),
+				],
 				'device' => [
 					'id' => $device->getId()->toString(),
 				],
-				'data' => $entity->toArray(),
+				'data' => $message->toArray(),
 			],
 		);
 

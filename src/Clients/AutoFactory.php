@@ -15,8 +15,8 @@
 
 namespace FastyBird\Connector\Sonoff\Clients;
 
+use FastyBird\Connector\Sonoff\Documents;
 use FastyBird\Connector\Sonoff\Types;
-use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 
 /**
  * Automatic selection devices client factory
@@ -31,6 +31,6 @@ interface AutoFactory extends ClientFactory
 
 	public const MODE = Types\ClientMode::AUTO;
 
-	public function create(MetadataDocuments\DevicesModule\Connector $connector): Auto;
+	public function create(Documents\Connectors\Connector $connector): Auto;
 
 }

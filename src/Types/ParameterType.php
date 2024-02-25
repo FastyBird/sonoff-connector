@@ -15,9 +15,6 @@
 
 namespace FastyBird\Connector\Sonoff\Types;
 
-use Consistence;
-use function strval;
-
 /**
  * Device parameters types
  *
@@ -26,21 +23,11 @@ use function strval;
  *
  * @author         Adam Kadlec <adam.kadlec@fastybird.com>
  */
-class ParameterType extends Consistence\Enum\Enum
+enum ParameterType: string
 {
 
-	public const DEVICE = 'device';
+	case DEVICE = 'device';
 
-	public const CHANNEL = 'channel';
-
-	public function getValue(): string
-	{
-		return strval(parent::getValue());
-	}
-
-	public function __toString(): string
-	{
-		return self::getValue();
-	}
+	case CHANNEL = 'channel';
 
 }

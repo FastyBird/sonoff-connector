@@ -16,13 +16,12 @@
 namespace FastyBird\Connector\Sonoff\API;
 
 use BadMethodCallException;
-use Evenement;
+use Closure;
 use FastyBird\Connector\Sonoff;
-use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Helpers;
-use FastyBird\Connector\Sonoff\Helpers\Transformer;
 use FastyBird\Connector\Sonoff\Services;
+use FastyBird\Connector\Sonoff\Types;
 use FastyBird\DateTimeFactory;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Schemas as MetadataSchemas;
@@ -72,7 +71,6 @@ final class LanApi
 {
 
 	use Nette\SmartObject;
-	use Evenement\EventEmitterTrait;
 
 	public const DEVICE_PORT = 8_081;
 
@@ -91,12 +89,15 @@ final class LanApi
 	private const MATCH_NAME = '/^(?:[a-zA-Z]+)_(?P<id>[0-9A-Za-z]+)._ewelink._tcp.local$/';
 
 	private const MATCH_DOMAIN = '/^(?:[a-zA-Z]+)_(?P<id>[0-9A-Za-z]+).local$/';
-	// phpcs:ignore SlevomatCodingStandard.Files.LineLength.LineTooLong
+    // phpcs:ignore SlevomatCodingStandard.Files.LineLength.LineTooLong
 	private const MATCH_IP_ADDRESS = '/^((?:[0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])[.]){3}(?:[0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])$/';
 
 	private const GET_DEVICE_INFO_MESSAGE_SCHEMA_FILENAME = 'lan_api_get_device_info.json';
 
 	private const SET_DEVICE_STATE_MESSAGE_SCHEMA_FILENAME = 'lan_api_set_device_state.json';
+
+	/** @var array<Closure(Messages\Message $message): void> */
+	public array $onMessage = [];
 
 	/** @var array<string, string> */
 	private array $encodeKeys = [];
@@ -113,7 +114,7 @@ final class LanApi
 	public function __construct(
 		private readonly Services\HttpClientFactory $httpClientFactory,
 		private readonly Services\MulticastFactory $multicastFactory,
-		private readonly Helpers\Entity $entityHelper,
+		private readonly Helpers\MessageBuilder $entityHelper,
 		private readonly Sonoff\Logger $logger,
 		private readonly DateTimeFactory\Factory $dateTimeFactory,
 		private readonly EventLoop\LoopInterface $eventLoop,
@@ -218,7 +219,7 @@ final class LanApi
 				) {
 					if ($dataEncrypted) {
 						foreach ($data as $index => $row) {
-							$data[$index] = Transformer::decryptMessage(
+							$data[$index] = Helpers\Transformer::decryptMessage(
 								$row,
 								$this->encodeKeys[$deviceData['id']],
 								array_key_exists('iv', $deviceData) ? strval($deviceData['iv']) : '',
@@ -229,47 +230,43 @@ final class LanApi
 					$data = Utils\Json::decode(implode($data), Utils\Json::FORCE_ARRAY);
 					assert(is_array($data));
 
-					$this->emit(
-						'message',
-						[
-							$this->createEntity(
-								Entities\API\Lan\DeviceEvent::class,
-								Utils\ArrayHash::from([
-									'id' => $deviceData['id'],
-									'ip_address' => $deviceIpAddress,
-									'domain' => $deviceDomain,
-									'port' => $devicePort,
-									'type' => $deviceData['type'],
-									'seq' => $deviceData['seq'],
-									'iv' => array_key_exists('iv', $deviceData) ? $deviceData['iv'] : null,
-									'encrypt' => $dataEncrypted,
-									'data' => $this->createEntity(
-										Entities\API\Lan\DeviceEventData::class,
-										Utils\ArrayHash::from($data),
-									),
-								]),
-							),
-						],
+					Utils\Arrays::invoke(
+						$this->onMessage,
+						$this->createEntity(
+							Messages\Response\Lan\DeviceEvent::class,
+							Utils\ArrayHash::from([
+								'id' => $deviceData['id'],
+								'ip_address' => $deviceIpAddress,
+								'domain' => $deviceDomain,
+								'port' => $devicePort,
+								'type' => $deviceData['type'],
+								'seq' => $deviceData['seq'],
+								'iv' => array_key_exists('iv', $deviceData) ? $deviceData['iv'] : null,
+								'encrypt' => $dataEncrypted,
+								'data' => $this->createEntity(
+									Messages\Response\Lan\DeviceEventData::class,
+									Utils\ArrayHash::from($data),
+								),
+							]),
+						),
 					);
 				} else {
-					$this->emit(
-						'message',
-						[
-							$this->createEntity(
-								Entities\API\Lan\DeviceEvent::class,
-								Utils\ArrayHash::from([
-									'id' => $deviceData['id'],
-									'ip_address' => $deviceIpAddress,
-									'domain' => $deviceDomain,
-									'port' => $devicePort,
-									'type' => $deviceData['type'],
-									'seq' => $deviceData['seq'],
-									'iv' => array_key_exists('iv', $deviceData) ? $deviceData['iv'] : null,
-									'encrypt' => true,
-									'data' => null,
-								]),
-							),
-						],
+					Utils\Arrays::invoke(
+						$this->onMessage,
+						$this->createEntity(
+							Messages\Response\Lan\DeviceEvent::class,
+							Utils\ArrayHash::from([
+								'id' => $deviceData['id'],
+								'ip_address' => $deviceIpAddress,
+								'domain' => $deviceDomain,
+								'port' => $devicePort,
+								'type' => $deviceData['type'],
+								'seq' => $deviceData['seq'],
+								'iv' => array_key_exists('iv', $deviceData) ? $deviceData['iv'] : null,
+								'encrypt' => true,
+								'data' => null,
+							]),
+						),
 					);
 				}
 			}
@@ -299,7 +296,7 @@ final class LanApi
 	}
 
 	/**
-	 * @return ($async is true ? Promise\PromiseInterface<Entities\API\Lan\DeviceInfo> : Entities\API\Lan\DeviceInfo)
+	 * @return ($async is true ? Promise\PromiseInterface<Messages\Response\Lan\DeviceInfo> : Messages\Response\Lan\DeviceInfo)
 	 *
 	 * @throws Exceptions\LanApiCall
 	 * @throws Exceptions\LanApiError
@@ -309,7 +306,7 @@ final class LanApi
 		string $ipAddress,
 		int $port,
 		bool $async = true,
-	): Promise\PromiseInterface|Entities\API\Lan\DeviceInfo
+	): Promise\PromiseInterface|Messages\Response\Lan\DeviceInfo
 	{
 		$deferred = new Promise\Deferred();
 
@@ -323,7 +320,7 @@ final class LanApi
 			if (array_key_exists($id, $this->encodeKeys)) {
 				$iv = random_bytes(16);
 
-				$encrypted = Transformer::encryptMessage(
+				$encrypted = Helpers\Transformer::encryptMessage(
 					Utils\Json::encode($payload->data),
 					$this->encodeKeys[$id],
 					base64_encode($iv),
@@ -398,7 +395,7 @@ final class LanApi
 		int $port,
 		string $parameter,
 		string|int|float|bool $value,
-		string|null $group = null,
+		Types\ChannelGroup|null $group = null,
 		int|null $outlet = null,
 		bool $async = true,
 	): Promise\PromiseInterface|bool
@@ -412,7 +409,7 @@ final class LanApi
 			$item->{$parameter} = $value;
 			$item->outlet = $outlet;
 
-			$params->{$group} = [
+			$params->{$group->value} = [
 				$item,
 			];
 
@@ -430,7 +427,7 @@ final class LanApi
 			if (array_key_exists($id, $this->encodeKeys)) {
 				$iv = random_bytes(16);
 
-				$encrypted = Transformer::encryptMessage(
+				$encrypted = Helpers\Transformer::encryptMessage(
 					Utils\Json::encode($payload->data),
 					$this->encodeKeys[$id],
 					base64_encode($iv),
@@ -466,7 +463,7 @@ final class LanApi
 
 		$request = $this->createRequest(
 			RequestMethodInterface::METHOD_POST,
-			sprintf('http://%s:%d/zeroconf/%s', $ipAddress, $port, ($group ?? $parameter)),
+			sprintf('http://%s:%d/zeroconf/%s', $ipAddress, $port, ($group?->value ?? $parameter)),
 			[
 				'Connection' => 'close',
 			],
@@ -502,7 +499,7 @@ final class LanApi
 	private function parseGetDeviceInfo(
 		Message\RequestInterface $request,
 		Message\ResponseInterface $response,
-	): Entities\API\Lan\DeviceInfo
+	): Messages\Response\Lan\DeviceInfo
 	{
 		$body = $this->validateResponseBody($request, $response, self::GET_DEVICE_INFO_MESSAGE_SCHEMA_FILENAME);
 
@@ -521,7 +518,7 @@ final class LanApi
 			);
 		}
 
-		return $this->createEntity(Entities\API\Lan\DeviceInfo::class, $data);
+		return $this->createEntity(Messages\Response\Lan\DeviceInfo::class, $data);
 	}
 
 	/**
@@ -554,7 +551,7 @@ final class LanApi
 	}
 
 	/**
-	 * @template T of Entities\API\Entity
+	 * @template T of Messages\Message
 	 *
 	 * @param class-string<T> $entity
 	 *
@@ -562,7 +559,7 @@ final class LanApi
 	 *
 	 * @throws Exceptions\LanApiError
 	 */
-	private function createEntity(string $entity, Utils\ArrayHash $data): Entities\API\Entity
+	private function createEntity(string $entity, Utils\ArrayHash $data): Messages\Message
 	{
 		try {
 			return $this->entityHelper->create(
@@ -650,20 +647,23 @@ final class LanApi
 	{
 		$deferred = new Promise\Deferred();
 
-		$this->logger->debug(sprintf(
-			'Request: method = %s url = %s',
-			$request->getMethod(),
-			$request->getUri(),
-		), [
-			'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-			'type' => 'lan-api',
-			'request' => [
-				'method' => $request->getMethod(),
-				'url' => strval($request->getUri()),
-				'headers' => $request->getHeaders(),
-				'body' => $request->getContent(),
+		$this->logger->debug(
+			sprintf(
+				'Request: method = %s url = %s',
+				$request->getMethod(),
+				$request->getUri(),
+			),
+			[
+				'source' => MetadataTypes\Sources\Connector::SONOFF->value,
+				'type' => 'lan-api',
+				'request' => [
+					'method' => $request->getMethod(),
+					'url' => strval($request->getUri()),
+					'headers' => $request->getHeaders(),
+					'body' => $request->getContent(),
+				],
 			],
-		]);
+		);
 
 		if ($async) {
 			try {
@@ -690,20 +690,23 @@ final class LanApi
 								return;
 							}
 
-							$this->logger->debug('Received response', [
-								'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-								'type' => 'lan-api',
-								'request' => [
-									'method' => $request->getMethod(),
-									'url' => strval($request->getUri()),
-									'headers' => $request->getHeaders(),
-									'body' => $request->getContent(),
+							$this->logger->debug(
+								'Received response',
+								[
+									'source' => MetadataTypes\Sources\Connector::SONOFF->value,
+									'type' => 'lan-api',
+									'request' => [
+										'method' => $request->getMethod(),
+										'url' => strval($request->getUri()),
+										'headers' => $request->getHeaders(),
+										'body' => $request->getContent(),
+									],
+									'response' => [
+										'code' => $response->getStatusCode(),
+										'body' => $responseBody,
+									],
 								],
-								'response' => [
-									'code' => $response->getStatusCode(),
-									'body' => $responseBody,
-								],
-							]);
+							);
 
 							$deferred->resolve($response);
 						},
@@ -745,20 +748,23 @@ final class LanApi
 				);
 			}
 
-			$this->logger->debug('Received response', [
-				'source' => MetadataTypes\ConnectorSource::SOURCE_CONNECTOR_SONOFF,
-				'type' => 'lan-api',
-				'request' => [
-					'method' => $request->getMethod(),
-					'url' => strval($request->getUri()),
-					'headers' => $request->getHeaders(),
-					'body' => $request->getContent(),
+			$this->logger->debug(
+				'Received response',
+				[
+					'source' => MetadataTypes\Sources\Connector::SONOFF->value,
+					'type' => 'lan-api',
+					'request' => [
+						'method' => $request->getMethod(),
+						'url' => strval($request->getUri()),
+						'headers' => $request->getHeaders(),
+						'body' => $request->getContent(),
+					],
+					'response' => [
+						'code' => $response->getStatusCode(),
+						'body' => $responseBody,
+					],
 				],
-				'response' => [
-					'code' => $response->getStatusCode(),
-					'body' => $responseBody,
-				],
-			]);
+			);
 
 			return $response;
 		} catch (GuzzleHttp\Exception\GuzzleException | InvalidArgumentException $ex) {

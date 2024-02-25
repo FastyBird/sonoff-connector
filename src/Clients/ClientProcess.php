@@ -16,18 +16,23 @@
 namespace FastyBird\Connector\Sonoff\Clients;
 
 use DateTimeInterface;
+use FastyBird\Connector\Sonoff\Documents;
+use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Helpers;
 use FastyBird\DateTimeFactory;
-use FastyBird\Library\Metadata\Documents as MetadataDocuments;
 use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
-use FastyBird\Library\Metadata\Types as MetadataTypes;
+use FastyBird\Library\Tools\Exceptions as ToolsExceptions;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
+use FastyBird\Module\Devices\Types as DevicesTypes;
 use FastyBird\Module\Devices\Utilities as DevicesUtilities;
 use Nette;
 use React\EventLoop;
 use React\Promise;
+use TypeError;
+use ValueError;
 use function array_key_exists;
 use function in_array;
+use function React\Async\async;
 
 /**
  * Client process methods
@@ -50,7 +55,7 @@ abstract class ClientProcess
 
 	protected const CMD_HEARTBEAT = 'heartbeat';
 
-	/** @var array<string, MetadataDocuments\DevicesModule\Device>  */
+	/** @var array<string, Documents\Devices\Device>  */
 	protected array $devices = [];
 
 	/** @var array<string> */
@@ -76,9 +81,14 @@ abstract class ClientProcess
 	/**
 	 * @throws DevicesExceptions\InvalidArgument
 	 * @throws DevicesExceptions\InvalidState
+	 * @throws Exceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\Mapping
 	 * @throws MetadataExceptions\MalformedInput
+	 * @throws ToolsExceptions\InvalidArgument
+	 * @throws TypeError
+	 * @throws ValueError
 	 */
 	protected function handleCommunication(): void
 	{
@@ -102,11 +112,16 @@ abstract class ClientProcess
 	/**
 	 * @throws DevicesExceptions\InvalidArgument
 	 * @throws DevicesExceptions\InvalidState
+	 * @throws Exceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\Mapping
 	 * @throws MetadataExceptions\MalformedInput
+	 * @throws ToolsExceptions\InvalidArgument
+	 * @throws TypeError
+	 * @throws ValueError
 	 */
-	protected function processDevice(MetadataDocuments\DevicesModule\Device $device): bool
+	protected function processDevice(Documents\Devices\Device $device): bool
 	{
 		if ($this->readDeviceInformation($device)) {
 			return true;
@@ -118,11 +133,16 @@ abstract class ClientProcess
 	/**
 	 * @throws DevicesExceptions\InvalidArgument
 	 * @throws DevicesExceptions\InvalidState
+	 * @throws Exceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\Mapping
 	 * @throws MetadataExceptions\MalformedInput
+	 * @throws ToolsExceptions\InvalidArgument
+	 * @throws TypeError
+	 * @throws ValueError
 	 */
-	protected function readDeviceInformation(MetadataDocuments\DevicesModule\Device $device): bool
+	protected function readDeviceInformation(Documents\Devices\Device $device): bool
 	{
 		if (!array_key_exists($device->getId()->toString(), $this->processedDevicesCommands)) {
 			$this->processedDevicesCommands[$device->getId()->toString()] = [];
@@ -146,7 +166,7 @@ abstract class ClientProcess
 
 		$deviceState = $this->deviceConnectionManager->getState($device);
 
-		if ($deviceState->equalsValue(MetadataTypes\ConnectionState::STATE_ALERT)) {
+		if ($deviceState === DevicesTypes\ConnectionState::ALERT) {
 			unset($this->devices[$device->getId()->toString()]);
 
 			return false;
@@ -163,11 +183,16 @@ abstract class ClientProcess
 	/**
 	 * @throws DevicesExceptions\InvalidArgument
 	 * @throws DevicesExceptions\InvalidState
+	 * @throws Exceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\Mapping
 	 * @throws MetadataExceptions\MalformedInput
+	 * @throws ToolsExceptions\InvalidArgument
+	 * @throws TypeError
+	 * @throws ValueError
 	 */
-	protected function readDeviceState(MetadataDocuments\DevicesModule\Device $device): bool
+	protected function readDeviceState(Documents\Devices\Device $device): bool
 	{
 		if (!array_key_exists($device->getId()->toString(), $this->processedDevicesCommands)) {
 			$this->processedDevicesCommands[$device->getId()->toString()] = [];
@@ -191,7 +216,7 @@ abstract class ClientProcess
 
 		$deviceState = $this->deviceConnectionManager->getState($device);
 
-		if ($deviceState->equalsValue(MetadataTypes\ConnectionState::STATE_ALERT)) {
+		if ($deviceState === DevicesTypes\ConnectionState::ALERT) {
 			unset($this->devices[$device->getId()->toString()]);
 
 			return false;
@@ -209,9 +234,9 @@ abstract class ClientProcess
 	{
 		$this->handlerTimer = $this->eventLoop->addTimer(
 			self::HANDLER_PROCESSING_INTERVAL,
-			function (): void {
+			async(function (): void {
 				$this->handleCommunication();
-			},
+			}),
 		);
 	}
 
@@ -219,12 +244,14 @@ abstract class ClientProcess
 	 * @return Promise\PromiseInterface<bool>
 	 */
 	abstract protected function readInformation(
-		MetadataDocuments\DevicesModule\Device $device,
+		Documents\Devices\Device $device,
 	): Promise\PromiseInterface;
 
 	/**
 	 * @return Promise\PromiseInterface<bool>
 	 */
-	abstract protected function readState(MetadataDocuments\DevicesModule\Device $device): Promise\PromiseInterface;
+	abstract protected function readState(
+		Documents\Devices\Device $device,
+	): Promise\PromiseInterface;
 
 }
