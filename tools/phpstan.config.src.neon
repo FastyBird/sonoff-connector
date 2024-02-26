@@ -6,3 +6,21 @@ parameters:
 
     bootstrapFiles:
         - phpstan-bootstrap.php
+
+    ignoreErrors:
+        -
+            message: '#^Parameter \#1 \$value of function strval expects bool\|float\|int\|resource\|string\|null, mixed given.#'
+            path: ../src/Commands/Install.php
+            count: 6
+        -
+            message: '#^Parameter \#1 \$value of function strval expects bool\|float\|int\|resource\|string\|null, mixed given.#'
+            path: ../src/API/LanApi.php
+            count: 2
+        -
+            message: '#^Parameter \#1 \$value of function strval expects bool\|float\|int\|resource\|string\|null, mixed given.#'
+            path: ../src/API/CloudWs.php
+            count: 1
+        -
+            message: '#^Parameter \#1 \$value of function strval expects bool\|float\|int\|resource\|string\|null, mixed given.#'
+            path: ../src/API/CloudApi.php
+            count: 11

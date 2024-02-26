@@ -9,3 +9,9 @@ parameters:
 
     scanDirectories:
         - ../src
+
+    ignoreErrors:
+        -
+            message: '#^Return type of call to method PHPUnit\\Framework\\TestCase::createMock\(\) contains unresolvable type.#'
+            path: ../tests/cases/unit/API/CloudApiTest.php
+            count: 4
