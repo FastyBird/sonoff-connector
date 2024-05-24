@@ -93,6 +93,7 @@ final class Connector implements DevicesConnectors\Connector
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
 	 * @throws MetadataExceptions\MalformedInput
+	 * @throws MetadataExceptions\Mapping
 	 * @throws RuntimeException
 	 * @throws TypeError
 	 * @throws ValueError

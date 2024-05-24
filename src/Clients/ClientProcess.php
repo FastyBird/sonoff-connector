@@ -230,6 +230,18 @@ abstract class ClientProcess
 		return true;
 	}
 
+	/**
+	 * @throws DevicesExceptions\InvalidArgument
+	 * @throws DevicesExceptions\InvalidState
+	 * @throws Exceptions\InvalidArgument
+	 * @throws MetadataExceptions\InvalidArgument
+	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\Mapping
+	 * @throws MetadataExceptions\MalformedInput
+	 * @throws ToolsExceptions\InvalidArgument
+	 * @throws TypeError
+	 * @throws ValueError
+	 */
 	protected function registerLoopHandler(): void
 	{
 		$this->handlerTimer = $this->eventLoop->addTimer(

@@ -81,6 +81,7 @@ final class Cloud extends ClientProcess implements Client
 	 * @throws InvalidArgumentException
 	 * @throws MetadataExceptions\InvalidArgument
 	 * @throws MetadataExceptions\InvalidState
+	 * @throws MetadataExceptions\Mapping
 	 * @throws RuntimeException
 	 * @throws TypeError
 	 * @throws ValueError
