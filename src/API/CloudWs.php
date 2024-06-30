@@ -712,7 +712,7 @@ final class CloudWs
 		try {
 			return $this->entityHelper->create(
 				$entity,
-				(array) Utils\Json::decode(Utils\Json::encode($data), Utils\Json::FORCE_ARRAY),
+				(array) Utils\Json::decode(Utils\Json::encode($data), forceArrays: true),
 			);
 		} catch (Exceptions\Runtime $ex) {
 			throw new Exceptions\CloudWsError('Could not map data to entity', $ex->getCode(), $ex);

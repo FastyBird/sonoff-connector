@@ -119,7 +119,7 @@ final class MessageBuilder
 			try {
 				return $this->create(
 					$entity,
-					(array) Utils\Json::decode(Utils\Json::encode($validated), Utils\Json::FORCE_ARRAY),
+					(array) Utils\Json::decode(Utils\Json::encode($validated), forceArrays: true),
 				);
 			} catch (Exceptions\Runtime $ex) {
 				throw new Exceptions\Runtime('Could not map data to entity', $ex->getCode(), $ex);

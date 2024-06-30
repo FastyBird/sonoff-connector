@@ -48,6 +48,7 @@ use function in_array;
 use function md5;
 use function sprintf;
 use function str_contains;
+use function str_starts_with;
 use function strval;
 use const DIRECTORY_SEPARATOR;
 
@@ -653,7 +654,7 @@ final class CloudApi
 
 		if (str_contains($this->username, '@')) {
 			$payload->email = $this->username;
-		} elseif (Utils\Strings::startsWith($this->username, '+')) {
+		} elseif (str_starts_with($this->username, '+')) {
 			$payload->phoneNumber = $this->username;
 		} else {
 			$payload->phoneNumber = '+' . $this->username;
@@ -1080,7 +1081,7 @@ final class CloudApi
 		try {
 			return $this->entityHelper->create(
 				$entity,
-				(array) Utils\Json::decode(Utils\Json::encode($data), Utils\Json::FORCE_ARRAY),
+				(array) Utils\Json::decode(Utils\Json::encode($data), forceArrays: true),
 			);
 		} catch (Exceptions\Runtime $ex) {
 			throw new Exceptions\CloudApiError('Could not map data to entity', $ex->getCode(), $ex);
@@ -1142,7 +1143,7 @@ final class CloudApi
 		$deferred = new Promise\Deferred();
 
 		if (
-			Utils\Strings::contains(strval($request->getUri()), self::USER_REFRESH_API_ENDPOINT)
+			str_contains(strval($request->getUri()), self::USER_REFRESH_API_ENDPOINT)
 			&& $this->tokensAcquired?->diff($this->dateTimeFactory->getNow())->s >= self::ACCESS_TOKEN_VALID_TIME
 			&& $this->refreshToken !== null
 		) {

@@ -227,7 +227,7 @@ final class LanApi
 						}
 					}
 
-					$data = Utils\Json::decode(implode($data), Utils\Json::FORCE_ARRAY);
+					$data = Utils\Json::decode(implode($data), forceArrays: true);
 					assert(is_array($data));
 
 					Utils\Arrays::invoke(
@@ -564,7 +564,7 @@ final class LanApi
 		try {
 			return $this->entityHelper->create(
 				$entity,
-				(array) Utils\Json::decode(Utils\Json::encode($data), Utils\Json::FORCE_ARRAY),
+				(array) Utils\Json::decode(Utils\Json::encode($data), forceArrays: true),
 			);
 		} catch (Exceptions\Runtime $ex) {
 			throw new Exceptions\LanApiError('Could not map data to entity', $ex->getCode(), $ex);
