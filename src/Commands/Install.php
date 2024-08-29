@@ -75,7 +75,7 @@ class Install extends Console\Command\Command
 		private readonly DevicesModels\Entities\Devices\DevicesRepository $devicesRepository,
 		private readonly DevicesModels\Entities\Devices\DevicesManager $devicesManager,
 		private readonly ApplicationHelpers\Database $databaseHelper,
-		private readonly DateTimeFactory\Factory $dateTimeFactory,
+		private readonly DateTimeFactory\Clock $clock,
 		private readonly Localization\Translator $translator,
 		string|null $name = null,
 	)
@@ -823,7 +823,7 @@ class Install extends Console\Command\Command
 			throw new Exceptions\InvalidState('Something went wrong, console output is not configured');
 		}
 
-		$executedTime = $this->dateTimeFactory->getNow();
+		$executedTime = $this->clock->getNow();
 
 		$symfonyApp = $this->getApplication();
 

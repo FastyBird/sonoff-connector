@@ -69,7 +69,7 @@ final class WriteDevicePropertyState implements Queue\Consumer
 		private readonly DevicesModels\Configuration\Devices\Repository $devicesConfigurationRepository,
 		private readonly DevicesModels\Configuration\Devices\Properties\Repository $devicesPropertiesConfigurationRepository,
 		private readonly DevicesModels\States\Async\DevicePropertiesManager $devicePropertiesStatesManager,
-		private readonly DateTimeFactory\Factory $dateTimeFactory,
+		private readonly DateTimeFactory\Clock $clock,
 	)
 	{
 	}
@@ -224,7 +224,7 @@ final class WriteDevicePropertyState implements Queue\Consumer
 			return true;
 		}
 
-		$now = $this->dateTimeFactory->getNow();
+		$now = $this->clock->getNow();
 		$pending = $state->getPending();
 
 		if (

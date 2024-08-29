@@ -72,7 +72,7 @@ abstract class ClientProcess
 	public function __construct(
 		protected readonly Helpers\Device $deviceHelper,
 		protected readonly DevicesUtilities\DeviceConnection $deviceConnectionManager,
-		protected readonly DateTimeFactory\Factory $dateTimeFactory,
+		protected readonly DateTimeFactory\Clock $clock,
 		protected readonly EventLoop\LoopInterface $eventLoop,
 	)
 	{
@@ -154,7 +154,7 @@ abstract class ClientProcess
 			if (
 				$cmdResult instanceof DateTimeInterface
 				&& (
-					$this->dateTimeFactory->getNow()->getTimestamp() - $cmdResult->getTimestamp()
+					$this->clock->getNow()->getTimestamp() - $cmdResult->getTimestamp()
 					< $this->deviceHelper->getHeartbeatDelay($device)
 				)
 			) {
@@ -162,7 +162,7 @@ abstract class ClientProcess
 			}
 		}
 
-		$this->processedDevicesCommands[$device->getId()->toString()][self::CMD_HEARTBEAT] = $this->dateTimeFactory->getNow();
+		$this->processedDevicesCommands[$device->getId()->toString()][self::CMD_HEARTBEAT] = $this->clock->getNow();
 
 		$deviceState = $this->deviceConnectionManager->getState($device);
 
@@ -174,7 +174,7 @@ abstract class ClientProcess
 
 		$this->readInformation($device)
 			->then(function () use ($device): void {
-				$this->processedDevicesCommands[$device->getId()->toString()][self::CMD_HEARTBEAT] = $this->dateTimeFactory->getNow();
+				$this->processedDevicesCommands[$device->getId()->toString()][self::CMD_HEARTBEAT] = $this->clock->getNow();
 			});
 
 		return true;
@@ -204,7 +204,7 @@ abstract class ClientProcess
 			if (
 				$cmdResult instanceof DateTimeInterface
 				&& (
-					$this->dateTimeFactory->getNow()->getTimestamp() - $cmdResult->getTimestamp()
+					$this->clock->getNow()->getTimestamp() - $cmdResult->getTimestamp()
 					< $this->deviceHelper->getStateReadingDelay($device)
 				)
 			) {
@@ -212,7 +212,7 @@ abstract class ClientProcess
 			}
 		}
 
-		$this->processedDevicesCommands[$device->getId()->toString()][self::CMD_STATE] = $this->dateTimeFactory->getNow();
+		$this->processedDevicesCommands[$device->getId()->toString()][self::CMD_STATE] = $this->clock->getNow();
 
 		$deviceState = $this->deviceConnectionManager->getState($device);
 
@@ -224,7 +224,7 @@ abstract class ClientProcess
 
 		$this->readState($device)
 			->then(function () use ($device): void {
-				$this->processedDevicesCommands[$device->getId()->toString()][self::CMD_STATE] = $this->dateTimeFactory->getNow();
+				$this->processedDevicesCommands[$device->getId()->toString()][self::CMD_STATE] = $this->clock->getNow();
 			});
 
 		return true;

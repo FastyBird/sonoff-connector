@@ -116,7 +116,7 @@ final class LanApi
 		private readonly Services\MulticastFactory $multicastFactory,
 		private readonly Helpers\MessageBuilder $entityHelper,
 		private readonly Sonoff\Logger $logger,
-		private readonly DateTimeFactory\Factory $dateTimeFactory,
+		private readonly DateTimeFactory\Clock $clock,
 		private readonly EventLoop\LoopInterface $eventLoop,
 		private readonly MetadataSchemas\Validator $schemaValidator,
 	)
@@ -311,7 +311,7 @@ final class LanApi
 		$deferred = new Promise\Deferred();
 
 		$payload = new stdClass();
-		$payload->sequence = strval(intval($this->dateTimeFactory->getNow()->format('Uv')));
+		$payload->sequence = strval(intval($this->clock->getNow()->format('Uv')));
 		$payload->deviceid = $id;
 		$payload->selfApikey = '123';
 		$payload->data = new stdClass();
@@ -418,7 +418,7 @@ final class LanApi
 		}
 
 		$payload = new stdClass();
-		$payload->sequence = strval(intval($this->dateTimeFactory->getNow()->format('Uv')));
+		$payload->sequence = strval(intval($this->clock->getNow()->format('Uv')));
 		$payload->deviceid = $id;
 		$payload->selfApikey = '123';
 		$payload->data = $params;

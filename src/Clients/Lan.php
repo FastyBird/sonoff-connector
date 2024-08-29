@@ -58,7 +58,7 @@ final class Lan extends ClientProcess implements Client
 	public function __construct(
 		Helpers\Device $deviceHelper,
 		DevicesUtilities\DeviceConnection $deviceConnectionManager,
-		DateTimeFactory\Factory $dateTimeFactory,
+		DateTimeFactory\Clock $clock,
 		EventLoop\LoopInterface $eventLoop,
 		private readonly Documents\Connectors\Connector $connector,
 		private readonly bool $autoMode,
@@ -73,7 +73,7 @@ final class Lan extends ClientProcess implements Client
 		parent::__construct(
 			$deviceHelper,
 			$deviceConnectionManager,
-			$dateTimeFactory,
+			$clock,
 			$eventLoop,
 		);
 	}
