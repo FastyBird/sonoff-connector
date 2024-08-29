@@ -15,6 +15,7 @@
 
 namespace FastyBird\Connector\Sonoff\Commands;
 
+use DateTimeImmutable;
 use DateTimeInterface;
 use FastyBird\Connector\Sonoff\Documents;
 use FastyBird\Connector\Sonoff\Exceptions;
@@ -110,6 +111,10 @@ class Discover extends Console\Command\Command
 		if ($symfonyApp === null) {
 			return Console\Command\Command::FAILURE;
 		}
+
+		$executedTime = $this->clock->getNow();
+		assert($executedTime instanceof DateTimeImmutable);
+		$this->executedTime = $executedTime->modify('-5 second');
 
 		$io = new Style\SymfonyStyle($input, $output);
 
@@ -286,8 +291,6 @@ class Discover extends Console\Command\Command
 		}
 
 		$io->info((string) $this->translator->translate('//sonoff-connector.cmd.discover.messages.starting'));
-
-		$this->executedTime = $this->clock->getNow();
 
 		$serviceCmd = $symfonyApp->find(DevicesCommands\Connector::NAME);
 
