@@ -16,12 +16,13 @@
 namespace FastyBird\Connector\Sonoff\Writers;
 
 use FastyBird\Connector\Sonoff\Documents;
-use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Queries;
 use FastyBird\Connector\Sonoff\Queue;
+use FastyBird\Library\Application\Helpers as ApplicationHelpers;
+use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Events as DevicesEvents;
-use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
 use Symfony\Component\EventDispatcher;
+use Throwable;
 
 /**
  * Event based properties writer
@@ -46,87 +47,95 @@ class Event extends Periodic implements Writer, EventDispatcher\EventSubscriberI
 		];
 	}
 
-	/**
-	 * @throws DevicesExceptions\InvalidState
-	 * @throws Exceptions\Runtime
-	 */
 	public function stateChanged(
 		// phpcs:ignore SlevomatCodingStandard.Files.LineLength.LineTooLong
 		DevicesEvents\DevicePropertyStateEntityCreated|DevicesEvents\DevicePropertyStateEntityUpdated|DevicesEvents\ChannelPropertyStateEntityCreated|DevicesEvents\ChannelPropertyStateEntityUpdated $event,
 	): void
 	{
-		if (
-			$event->getGet()->getExpectedValue() === null
-			|| $event->getGet()->getPending() !== true
-		) {
-			return;
-		}
-
-		if (
-			$event instanceof DevicesEvents\DevicePropertyStateEntityCreated
-			|| $event instanceof DevicesEvents\DevicePropertyStateEntityUpdated
-		) {
-			$findDeviceQuery = new Queries\Configuration\FindDevices();
-			$findDeviceQuery->forConnector($this->connector);
-			$findDeviceQuery->byId($event->getProperty()->getDevice());
-
-			$device = $this->devicesConfigurationRepository->findOneBy(
-				$findDeviceQuery,
-				Documents\Devices\Device::class,
-			);
-
-			if ($device === null) {
+		try {
+			if (
+				$event->getGet()->getExpectedValue() === null
+				|| $event->getGet()->getPending() !== true
+			) {
 				return;
 			}
 
-			$this->queue->append(
-				$this->entityHelper->create(
-					Queue\Messages\WriteDevicePropertyState::class,
-					[
-						'connector' => $this->connector->getId(),
-						'device' => $device->getId(),
-						'property' => $event->getProperty()->getId(),
-						'state' => $event->getGet()->toArray(),
-					],
-				),
-			);
-		} else {
-			$findChannelQuery = new Queries\Configuration\FindChannels();
-			$findChannelQuery->byId($event->getProperty()->getChannel());
+			if (
+				$event instanceof DevicesEvents\DevicePropertyStateEntityCreated
+				|| $event instanceof DevicesEvents\DevicePropertyStateEntityUpdated
+			) {
+				$findDeviceQuery = new Queries\Configuration\FindDevices();
+				$findDeviceQuery->forConnector($this->connector);
+				$findDeviceQuery->byId($event->getProperty()->getDevice());
 
-			$channel = $this->channelsConfigurationRepository->findOneBy(
-				$findChannelQuery,
-				Documents\Channels\Channel::class,
-			);
+				$device = $this->devicesConfigurationRepository->findOneBy(
+					$findDeviceQuery,
+					Documents\Devices\Device::class,
+				);
 
-			if ($channel === null) {
-				return;
+				if ($device === null) {
+					return;
+				}
+
+				$this->queue->append(
+					$this->entityHelper->create(
+						Queue\Messages\WriteDevicePropertyState::class,
+						[
+							'connector' => $this->connector->getId(),
+							'device' => $device->getId(),
+							'property' => $event->getProperty()->getId(),
+							'state' => $event->getGet()->toArray(),
+						],
+					),
+				);
+			} else {
+				$findChannelQuery = new Queries\Configuration\FindChannels();
+				$findChannelQuery->byId($event->getProperty()->getChannel());
+
+				$channel = $this->channelsConfigurationRepository->findOneBy(
+					$findChannelQuery,
+					Documents\Channels\Channel::class,
+				);
+
+				if ($channel === null) {
+					return;
+				}
+
+				$findDeviceQuery = new Queries\Configuration\FindDevices();
+				$findDeviceQuery->forConnector($this->connector);
+				$findDeviceQuery->byId($channel->getDevice());
+
+				$device = $this->devicesConfigurationRepository->findOneBy(
+					$findDeviceQuery,
+					Documents\Devices\Device::class,
+				);
+
+				if ($device === null) {
+					return;
+				}
+
+				$this->queue->append(
+					$this->entityHelper->create(
+						Queue\Messages\WriteChannelPropertyState::class,
+						[
+							'connector' => $this->connector->getId(),
+							'device' => $device->getId(),
+							'channel' => $channel->getId(),
+							'property' => $event->getProperty()->getId(),
+							'state' => $event->getGet()->toArray(),
+						],
+					),
+				);
 			}
-
-			$findDeviceQuery = new Queries\Configuration\FindDevices();
-			$findDeviceQuery->forConnector($this->connector);
-			$findDeviceQuery->byId($channel->getDevice());
-
-			$device = $this->devicesConfigurationRepository->findOneBy(
-				$findDeviceQuery,
-				Documents\Devices\Device::class,
-			);
-
-			if ($device === null) {
-				return;
-			}
-
-			$this->queue->append(
-				$this->entityHelper->create(
-					Queue\Messages\WriteChannelPropertyState::class,
-					[
-						'connector' => $this->connector->getId(),
-						'device' => $device->getId(),
-						'channel' => $channel->getId(),
-						'property' => $event->getProperty()->getId(),
-						'state' => $event->getGet()->toArray(),
-					],
-				),
+		} catch (Throwable $ex) {
+			// Log caught exception
+			$this->logger->error(
+				'Characteristic value could not be prepared for writing',
+				[
+					'source' => MetadataTypes\Sources\Connector::SONOFF->value,
+					'type' => 'event-writer',
+					'exception' => ApplicationHelpers\Logger::buildException($ex),
+				],
 			);
 		}
 	}

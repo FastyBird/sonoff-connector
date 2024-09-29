@@ -40,9 +40,9 @@ final class Constants
 
 	public const CHANNEL_GROUP = '/^(?P<group>[a-zA-Z]+)(_(?P<outlet>[0-9]+))?$/';
 
-	public const STATE_READING_DELAY = 5_000.0;
+	public const STATE_READING_DELAY = 300.0;
 
-	public const HEARTBEAT_DELAY = 2_500.0;
+	public const HEARTBEAT_DELAY = 150.0;
 
 	public const WRITE_DEBOUNCE_DELAY = 2_000.0;
 
