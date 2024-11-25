@@ -21,8 +21,8 @@ use FastyBird\Connector\Sonoff\Entities;
 use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Queries;
 use FastyBird\Connector\Sonoff\Types;
-use FastyBird\Library\Application\Exceptions as ApplicationExceptions;
-use FastyBird\Library\Application\Helpers as ApplicationHelpers;
+use FastyBird\Core\Tools\Exceptions as ToolsExceptions;
+use FastyBird\Core\Tools\Helpers as ToolsHelpers;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Entities as DevicesEntities;
 use FastyBird\Module\Devices\Models as DevicesModels;
@@ -40,7 +40,7 @@ use Ramsey\Uuid;
  * @property-read DevicesModels\Entities\Devices\DevicesRepository $devicesRepository
  * @property-read DevicesModels\Entities\Devices\Properties\PropertiesRepository $devicesPropertiesRepository
  * @property-read DevicesModels\Entities\Devices\Properties\PropertiesManager $devicesPropertiesManager
- * @property-read ApplicationHelpers\Database $databaseHelper
+ * @property-read ToolsHelpers\Database $databaseHelper
  * @property-read Sonoff\Logger $logger
  */
 trait DeviceProperty
@@ -49,10 +49,10 @@ trait DeviceProperty
 	/**
 	 * @param string|array<int, string>|array<int, string|int|float|array<int, string|int|float>|Utils\ArrayHash|null>|array<int, array<int, string|array<int, string|int|float|bool>|Utils\ArrayHash|null>>|null $format
 	 *
-	 * @throws ApplicationExceptions\InvalidState
-	 * @throws ApplicationExceptions\Runtime
 	 * @throws DBAL\Exception
 	 * @throws Exceptions\InvalidArgument
+	 * @throws ToolsExceptions\InvalidState
+	 * @throws ToolsExceptions\Runtime
 	 */
 	private function setDeviceProperty(
 		Uuid\UuidInterface $deviceId,

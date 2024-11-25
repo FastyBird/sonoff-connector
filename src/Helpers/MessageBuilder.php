@@ -19,8 +19,8 @@ use FastyBird\Connector\Sonoff;
 use FastyBird\Connector\Sonoff\API;
 use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Queue;
-use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
-use FastyBird\Library\Metadata\Schemas as MetadataSchemas;
+use FastyBird\Core\Tools\Exceptions as ToolsExceptions;
+use FastyBird\Core\Tools\Schemas as ToolsSchemas;
 use Nette;
 use Nette\Utils;
 use Orisai\ObjectMapper;
@@ -50,7 +50,7 @@ final class MessageBuilder
 
 	public function __construct(
 		private readonly ObjectMapper\Processing\Processor $processor,
-		private readonly MetadataSchemas\Validator $schemaValidator,
+		private readonly ToolsSchemas\Validator $schemaValidator,
 	)
 	{
 	}
@@ -107,9 +107,9 @@ final class MessageBuilder
 			try {
 				$validated = $this->schemaValidator->validate(Utils\Json::encode($data), $this->getSchema($type));
 
-			} catch (MetadataExceptions\InvalidData) {
+			} catch (ToolsExceptions\InvalidData) {
 				continue;
-			} catch (MetadataExceptions\Logic | MetadataExceptions\MalformedInput | Utils\JsonException $ex) {
+			} catch (ToolsExceptions\Logic | ToolsExceptions\MalformedInput | Utils\JsonException $ex) {
 				throw new Exceptions\Runtime('Could not validate received response payload', $ex->getCode(), $ex);
 			}
 

@@ -23,8 +23,9 @@ use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Helpers;
 use FastyBird\Connector\Sonoff\Queue;
 use FastyBird\Connector\Sonoff\Types;
-use FastyBird\Library\Application\Helpers as ApplicationHelpers;
-use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
+use FastyBird\Core\Application\Exceptions as ApplicationExceptions;
+use FastyBird\Core\Tools\Exceptions as ToolsExceptions;
+use FastyBird\Core\Tools\Helpers as ToolsHelpers;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Events as DevicesEvents;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
@@ -92,10 +93,10 @@ final class Discovery
 	}
 
 	/**
+	 * @throws ApplicationExceptions\InvalidArgument
+	 * @throws ApplicationExceptions\InvalidState
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\InvalidState
-	 * @throws MetadataExceptions\InvalidArgument
-	 * @throws MetadataExceptions\InvalidState
 	 * @throws Throwable
 	 */
 	public function discover(): void
@@ -131,8 +132,8 @@ final class Discovery
 	/**
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\InvalidArgument
-	 * @throws MetadataExceptions\InvalidArgument
-	 * @throws MetadataExceptions\InvalidState
+	 * @throws ToolsExceptions\InvalidArgument
+	 * @throws ToolsExceptions\InvalidState
 	 * @throws TypeError
 	 * @throws ValueError
 	 */
@@ -154,8 +155,8 @@ final class Discovery
 	 * @throws Exceptions\InvalidArgument
 	 * @throws Exceptions\CloudApiCall
 	 * @throws Exceptions\CloudApiError
-	 * @throws MetadataExceptions\InvalidArgument
-	 * @throws MetadataExceptions\InvalidState
+	 * @throws ToolsExceptions\InvalidArgument
+	 * @throws ToolsExceptions\InvalidState
 	 * @throws TypeError
 	 * @throws ValueError
 	 */
@@ -182,7 +183,7 @@ final class Discovery
 				[
 					'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 					'type' => 'discovery-client',
-					'exception' => ApplicationHelpers\Logger::buildException($ex),
+					'exception' => ToolsHelpers\Logger::buildException($ex),
 				],
 			);
 
@@ -203,7 +204,7 @@ final class Discovery
 							[
 								'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 								'type' => 'discovery-client',
-								'exception' => ApplicationHelpers\Logger::buildException($ex),
+								'exception' => ToolsHelpers\Logger::buildException($ex),
 							],
 						);
 
@@ -216,7 +217,7 @@ final class Discovery
 					[
 						'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 						'type' => 'discovery-client',
-						'exception' => ApplicationHelpers\Logger::buildException($ex),
+						'exception' => ToolsHelpers\Logger::buildException($ex),
 					],
 				);
 
@@ -284,7 +285,7 @@ final class Discovery
 					[
 						'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 						'type' => 'discovery-client',
-						'exception' => ApplicationHelpers\Logger::buildException($ex),
+						'exception' => ToolsHelpers\Logger::buildException($ex),
 						'device' => [
 							'id' => $device->getDeviceId(),
 							'uiid' => $device->getExtra()->getUiid(),
@@ -299,7 +300,7 @@ final class Discovery
 					[
 						'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 						'type' => 'discovery-client',
-						'exception' => ApplicationHelpers\Logger::buildException($ex),
+						'exception' => ToolsHelpers\Logger::buildException($ex),
 						'device' => [
 							'id' => $device->getDeviceId(),
 							'uiid' => $device->getExtra()->getUiid(),
@@ -453,7 +454,7 @@ final class Discovery
 					[
 						'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 						'type' => 'discovery-client',
-						'exception' => ApplicationHelpers\Logger::buildException($ex),
+						'exception' => ToolsHelpers\Logger::buildException($ex),
 						'device' => $device->toArray(),
 					],
 				);
@@ -484,8 +485,8 @@ final class Discovery
 	/**
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\InvalidArgument
-	 * @throws MetadataExceptions\InvalidArgument
-	 * @throws MetadataExceptions\InvalidState
+	 * @throws ToolsExceptions\InvalidArgument
+	 * @throws ToolsExceptions\InvalidState
 	 * @throws TypeError
 	 * @throws ValueError
 	 */

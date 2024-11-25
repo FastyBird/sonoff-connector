@@ -15,7 +15,7 @@ use FastyBird\Connector\Sonoff\Services;
 use FastyBird\Connector\Sonoff\Subscribers;
 use FastyBird\Connector\Sonoff\Tests;
 use FastyBird\Connector\Sonoff\Writers;
-use FastyBird\Library\Application\Exceptions as ApplicationExceptions;
+use FastyBird\Core\Application\Exceptions as ApplicationExceptions;
 use Nette;
 
 final class SonoffExtensionTest extends Tests\Cases\Unit\BaseTestCase

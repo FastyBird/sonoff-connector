@@ -22,9 +22,10 @@ use FastyBird\Connector\Sonoff\Exceptions;
 use FastyBird\Connector\Sonoff\Helpers;
 use FastyBird\Connector\Sonoff\Queries;
 use FastyBird\Connector\Sonoff\Queue;
+use FastyBird\Core\Application\Exceptions as ApplicationExceptions;
+use FastyBird\Core\Tools\Exceptions as ToolsExceptions;
+use FastyBird\Core\Tools\Helpers as ToolsHelpers;
 use FastyBird\DateTimeFactory;
-use FastyBird\Library\Application\Helpers as ApplicationHelpers;
-use FastyBird\Library\Metadata\Exceptions as MetadataExceptions;
 use FastyBird\Library\Metadata\Types as MetadataTypes;
 use FastyBird\Module\Devices\Events as DevicesEvents;
 use FastyBird\Module\Devices\Exceptions as DevicesExceptions;
@@ -76,12 +77,12 @@ final class Cloud extends ClientProcess implements Client
 	}
 
 	/**
+	 * @throws ApplicationExceptions\InvalidArgument
+	 * @throws ApplicationExceptions\InvalidState
+	 * @throws ApplicationExceptions\Mapping
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\CloudApiCall
 	 * @throws InvalidArgumentException
-	 * @throws MetadataExceptions\InvalidArgument
-	 * @throws MetadataExceptions\InvalidState
-	 * @throws MetadataExceptions\Mapping
 	 * @throws RuntimeException
 	 * @throws TypeError
 	 * @throws ValueError
@@ -149,7 +150,7 @@ final class Cloud extends ClientProcess implements Client
 					[
 						'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 						'type' => 'cloud-client',
-						'exception' => ApplicationHelpers\Logger::buildException($ex),
+						'exception' => ToolsHelpers\Logger::buildException($ex),
 						'connector' => [
 							'id' => $this->connector->getId()->toString(),
 						],
@@ -184,7 +185,7 @@ final class Cloud extends ClientProcess implements Client
 						[
 							'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 							'type' => 'cloud-client',
-							'exception' => ApplicationHelpers\Logger::buildException($ex),
+							'exception' => ToolsHelpers\Logger::buildException($ex),
 							'connector' => [
 								'id' => $this->connector->getId()->toString(),
 							],
@@ -224,8 +225,8 @@ final class Cloud extends ClientProcess implements Client
 	 * @throws DevicesExceptions\InvalidState
 	 * @throws Exceptions\InvalidArgument
 	 * @throws Exceptions\InvalidState
-	 * @throws MetadataExceptions\InvalidArgument
-	 * @throws MetadataExceptions\InvalidState
+	 * @throws ToolsExceptions\InvalidArgument
+	 * @throws ToolsExceptions\InvalidState
 	 * @throws TypeError
 	 * @throws ValueError
 	 */
@@ -249,8 +250,8 @@ final class Cloud extends ClientProcess implements Client
 	 * @throws Exceptions\InvalidArgument
 	 * @throws Exceptions\CloudApiCall
 	 * @throws Exceptions\CloudApiError
-	 * @throws MetadataExceptions\InvalidArgument
-	 * @throws MetadataExceptions\InvalidState
+	 * @throws ToolsExceptions\InvalidArgument
+	 * @throws ToolsExceptions\InvalidState
 	 * @throws TypeError
 	 * @throws ValueError
 	 */
@@ -285,7 +286,7 @@ final class Cloud extends ClientProcess implements Client
 						[
 							'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 							'type' => 'cloud-client',
-							'exception' => ApplicationHelpers\Logger::buildException($ex),
+							'exception' => ToolsHelpers\Logger::buildException($ex),
 							'connector' => [
 								'id' => $this->connector->getId()->toString(),
 							],
@@ -335,8 +336,8 @@ final class Cloud extends ClientProcess implements Client
 	 * @throws Exceptions\CloudApiCall
 	 * @throws Exceptions\CloudApiError
 	 * @throws Exceptions\InvalidState
-	 * @throws MetadataExceptions\InvalidArgument
-	 * @throws MetadataExceptions\InvalidState
+	 * @throws ToolsExceptions\InvalidArgument
+	 * @throws ToolsExceptions\InvalidState
 	 * @throws TypeError
 	 * @throws ValueError
 	 */
@@ -376,7 +377,7 @@ final class Cloud extends ClientProcess implements Client
 										[
 											'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 											'type' => 'cloud-client',
-											'exception' => ApplicationHelpers\Logger::buildException($ex),
+											'exception' => ToolsHelpers\Logger::buildException($ex),
 											'connector' => [
 												'id' => $this->connector->getId()->toString(),
 											],
@@ -430,7 +431,7 @@ final class Cloud extends ClientProcess implements Client
 							[
 								'source' => MetadataTypes\Sources\Connector::SONOFF->value,
 								'type' => 'cloud-client',
-								'exception' => ApplicationHelpers\Logger::buildException($ex),
+								'exception' => ToolsHelpers\Logger::buildException($ex),
 								'connector' => [
 									'id' => $this->connector->getId()->toString(),
 								],
